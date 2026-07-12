@@ -74,10 +74,11 @@
 
 ## Implementation notes
 
-- 41 routes have placeholder `page.tsx` files across 4 route groups (marketing, auth, seller, storefront).
+- All 41 routes across 4 route groups (marketing, auth, seller, storefront) are fully implemented with feature-complete UI.
 - Each route group has its own `layout.tsx`: marketing header/footer, auth centered card, seller sidebar workspace, storefront branded header.
 - Auth pages (`signin`, `recover`) do **not** inherit the seller workspace sidebar.
-- Route placeholders are minimal: an `<h1>` with the page title and a `<p>` describing the future content.
-- Viewer-applicable pages include a provisional `ViewerBadge` component indicating read-only access.
+- All seller pages consume data via client port interfaces and mock adapters (deterministic fixture data).
+- Viewer-applicable pages include a `ViewerBadge` component and conditionally hide action buttons for viewer role.
 - Role matrix is **provisional** (see `ROLE_MATRIX.md`). Frontend route visibility is not an authorization boundary.
-- No actual feature logic exists yet; each step will replace the placeholder with the real implementation.
+- All storefront admin routes (`/storefront/*`) share a sub-navigation component (Profile/Delivery/Payments/Preview).
+- M01-S08 completed all remaining routes: storefront admin (4), analytics, billing, team, settings, audit.
