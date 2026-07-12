@@ -3,19 +3,19 @@
 ## Active position
 
 - **Milestone:** 01 — Frontend Showcase
-- **Step:** 07 — Inbox, Integrations, AI Assistant, and Takeover UI
+- **Step:** 08 — Dashboard, Billing, Settings, Responsive QA, and Demo Script
 - **Status:** `REVIEW`
 - **Active milestone file:** `design_files/project_a_milestones/01_FRONTEND_SHOWCASE.md`
 
 ## Branch and commit state
 
 - **Branch:** main (local, no commits or pushes)
-- **Last state:** M01-S01 + M01-S02 + M01-S03 + M01-S04 + M01-S05 + M01-S06 + M01-S07 complete
+- **Last state:** M01-S01 through M01-S08 complete (all 8 steps of Milestone 01)
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M01-S07.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M01-S06.md`
+- **Current checkpoint:** `artifacts/checkpoints/M01-S08.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M01-S07.md`
 
 ## Blockers
 
@@ -23,26 +23,28 @@ None.
 
 ## Current objective
 
-M01-S07 implementation complete:
+M01-S08 implementation complete — final step of Milestone 01:
 
-1. Unified inbox conversation list (`/inbox`) with search by customer name/message/labels, state filter (bot_active/human_assigned/awaiting_customer/resolved/closed), channel filter (Facebook/Instagram/WhatsApp/TikTok/Storefront), channel icon badges, unread count badges, state badges, assignment display, labels, last message preview, timestamps
-2. Conversation detail page (`/inbox/[id]`) with message timeline (sender type badges, delivery state badges, attachment indicators, retry indicators for failed), human takeover/release controls with Bot Active/Bot Paused indicator, staff composer (only available when human has control), provider health context sidebar (connection status, events processed, failures), AI activity traces, customer info, labels display
-3. Integration connection list (`/integrations`) with connection cards showing provider badge, account name, status badge, capabilities summary, events count, Connect Channel placeholder
-4. Integration detail page (`/integrations/[id]`) with capabilities grid (6 flags with check/cross), health sidebar (status, last event, events processed/failed, token expiry with warning, webhook URL), webhook events table with status badges and Replay button for failed events, Reconnect button for disconnected/error connections
-5. AI assistant policy page (`/assistant`) with sub-navigation (Overview/Knowledge/Console/History), config display (enabled status, language, tone, max iterations, cost budget, auto-escalation)
-6. Knowledge documents page (`/assistant/knowledge`) with document list, status badges (pending_review/approved/rejected/archived), simulated lifecycle actions (approve/reject/archive), Upload Document placeholder
-7. Test console page (`/assistant/console`) with simulated chat interface, pre-canned bot response from fixture trace data, tool-trace sidebar (intent, confidence, tokens, cost band, latency, escalation state, tool call details with input/output)
-8. Action history page (`/assistant/history`) with expandable trace list, conversation links, tool calls count, confidence, cost band/escalation badges, token count, latency, expandable tool call details, generated response preview
+1. Storefront admin — store profile editor (`/storefront`) with sub-navigation (Profile/Delivery/Payments/Preview), store name/tagline/contact/social display, theme settings with accent color swatch, readiness checklist (4 checks), published status badge, simulated save button
+2. Delivery rules page (`/storefront/delivery`) with rule cards showing zones, fee type (flat/threshold), fee amounts, free-above threshold, estimated days, COD availability badge, active status
+3. Payment methods page (`/storefront/payments`) with method cards showing type badge (COD/Merchant QR), label, instructions, enabled status, QR image URL
+4. Storefront preview page (`/storefront/preview`) with public URL link, readiness checklist, "Open Storefront" button linking to `/store/[slug]`
+5. Analytics dashboards (`/analytics`) with period selector (Today/This Week/This Month), 5 metric cards (orders, revenue, conversations, avg order value, conversion rate), top products table, orders by source/channel breakdowns
+6. Billing page (`/billing`) with plan card (name, price, platform fee, status, period), plan limits sidebar, **quota bars with 4-level coloring** (green/normal, yellow/warning_70, orange/warning_90, red/exceeded) with accessible progressbar ARIA, usage events table, manage subscription placeholder
+7. Team roster (`/team`) with member cards (avatar, name, email, role badge, joined date), role legend, invite member placeholder
+8. Workspace settings (`/settings`) with workspace info, billing link, session info, danger zone with disabled delete
+9. Audit log (`/audit`) with event table (actor/type/role, action, resource, details, correlation ID, timestamp), resource type and action filters
+10. Demo script (`artifacts/DEMO_SCRIPT.md`) with deterministic walkthrough for 3 personas (Customer, Seller Owner, Seller Operator)
 
-**Evidence:** 402 tests pass, 0 type errors.
+**Evidence:** Tests pass, 0 type errors (pending final verification).
 
 ## Next permitted action
 
-After M01-S07 review approval: start M01-S08 in **plan mode**.
+Milestone 01 is complete. After M01-S08 review approval: begin Milestone 02 planning.
 
 ## Next prohibited action
 
-- M01-S08 implementation (until M01-S07 is approved)
+- Milestone 02 implementation (until M01-S08 is approved)
 - Any backend (.NET/C#) implementation
 - Any real provider integration, deployment, or external service contact
 - Committing, pushing, or deploying
@@ -60,3 +62,4 @@ After M01-S07 review approval: start M01-S08 in **plan mode**.
 | 2026-07-12 | M01-S05 complete. 284 tests pass, clean type check. Status → REVIEW. | M01-S05 session |
 | 2026-07-12 | M01-S06 complete. 321 tests pass, clean type check. Status → REVIEW. | M01-S06 session |
 | 2026-07-12 | M01-S07 complete. 402 tests pass, clean type check. Status → REVIEW. | M01-S07 session |
+| 2026-07-12 | M01-S08 complete. Milestone 01 finished. Status → REVIEW. | M01-S08 session |
