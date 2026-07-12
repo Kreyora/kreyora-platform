@@ -1,30 +1,105 @@
-export default function SellerLayout({ children }: { children: React.ReactNode }) {
+"use client";
+
+import Link from "next/link";
+import { SessionProvider, useSessionLoader } from "@/hooks/use-session";
+import { SidebarNav } from "@/components/seller/sidebar-nav";
+import { ProfileMenu } from "@/components/seller/profile-menu";
+import { MobileNav } from "@/components/seller/mobile-nav";
+import { RoleSwitcher } from "@/components/seller/role-switcher";
+
+function NotificationBell() {
   return (
-    <div className="flex min-h-full">
-      <aside className="hidden md:flex w-60 flex-col border-r border-(--color-border) bg-(--color-canvas) px-4 py-6">
-        <span className="text-sm font-bold text-(--color-ink-primary) mb-6">Kreyora</span>
-        <nav className="flex flex-col gap-1 text-sm text-(--color-ink-secondary)">
-          <span className="px-2 py-1.5 rounded-md">Dashboard</span>
-          <span className="px-2 py-1.5 rounded-md">Catalog</span>
-          <span className="px-2 py-1.5 rounded-md">Orders</span>
-          <span className="px-2 py-1.5 rounded-md">Inbox</span>
-          <span className="px-2 py-1.5 rounded-md">Storefront</span>
-          <span className="px-2 py-1.5 rounded-md">Integrations</span>
-          <span className="px-2 py-1.5 rounded-md">Assistant</span>
-          <span className="px-2 py-1.5 rounded-md">Analytics</span>
-          <span className="px-2 py-1.5 rounded-md">Billing</span>
-          <span className="px-2 py-1.5 rounded-md">Team</span>
-          <span className="px-2 py-1.5 rounded-md">Settings</span>
-          <span className="px-2 py-1.5 rounded-md">Audit</span>
-        </nav>
-      </aside>
-      <div className="flex-1 flex flex-col">
-        <header className="border-b border-(--color-border) px-6 py-3 flex items-center justify-between">
-          <span className="text-sm font-semibold text-(--color-ink-primary)">Seller Workspace</span>
-          <span className="text-xs text-(--color-ink-secondary)">Simulated session</span>
-        </header>
-        <main className="flex-1 px-6 py-6">{children}</main>
-      </div>
-    </div>
+    <button
+      type="button"
+      className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-ink-secondary)] transition-colors duration-[var(--duration-hover)] ease-[var(--easing-default)] hover:bg-[var(--color-canvas-subtle)] hover:text-[var(--color-ink-primary)]"
+      aria-label="Notifications"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--color-danger)]" />
+    </button>
   );
+}
+
+function SellerShellInner({ children }: { children: React.ReactNode }) {
+  const sessionState = useSessionLoader();
+  const { session, isLoading, effectiveRole } = sessionState;
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-full items-center justify-center">
+        <div className="text-sm text-[var(--color-ink-secondary)]">
+          Loading workspace...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SessionProvider value={sessionState}>
+      <div className="flex min-h-full">
+        {/* Desktop sidebar */}
+        <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-canvas)] md:flex">
+          <div className="border-b border-[var(--color-border)] px-4 py-4">
+            <Link
+              href="/dashboard"
+              className="text-sm font-bold text-[var(--color-ink-primary)]"
+            >
+              Kreyora
+            </Link>
+            <p className="mt-0.5 text-xs text-[var(--color-ink-secondary)]">
+              {session?.tenant.name ?? "Workspace"}
+            </p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-3 py-4">
+            <SidebarNav role={effectiveRole} />
+          </div>
+
+          <div className="border-t border-[var(--color-border)] px-3 py-3">
+            <RoleSwitcher />
+          </div>
+        </aside>
+
+        {/* Main area */}
+        <div className="flex flex-1 flex-col">
+          {/* Top bar */}
+          <header className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-canvas)] px-4 py-2 md:px-6">
+            <div className="flex items-center gap-2">
+              <MobileNav />
+              <span className="text-sm font-semibold text-[var(--color-ink-primary)] md:hidden">
+                {session?.tenant.name ?? "Workspace"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <NotificationBell />
+              <ProfileMenu />
+            </div>
+          </header>
+
+          <main className="flex-1 px-5 py-6 md:px-8">{children}</main>
+        </div>
+      </div>
+    </SessionProvider>
+  );
+}
+
+export default function SellerLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <SellerShellInner>{children}</SellerShellInner>;
 }

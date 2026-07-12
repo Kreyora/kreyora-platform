@@ -47,21 +47,23 @@ describe("Marketing — route file verification", () => {
 });
 
 describe("Marketing — auth route references corrected to M01-S03", () => {
-  const authPages = [
-    { file: "signin/page.tsx", label: "signin" },
-    { file: "recover/page.tsx", label: "recover" },
-  ];
+  it("signin page is a real implementation (not a placeholder)", () => {
+    const content = fs.readFileSync(
+      path.join(APP_DIR, "(auth)", "signin/page.tsx"),
+      "utf-8",
+    );
+    expect(content).toContain("Sign in");
+    expect(content).not.toContain("M01-S02");
+  });
 
-  for (const page of authPages) {
-    it(`${page.label} references M01-S03, not M01-S02`, () => {
-      const content = fs.readFileSync(
-        path.join(APP_DIR, "(auth)", page.file),
-        "utf-8",
-      );
-      expect(content).toContain("M01-S03");
-      expect(content).not.toContain("M01-S02");
-    });
-  }
+  it("recover page is a real implementation (not a placeholder)", () => {
+    const content = fs.readFileSync(
+      path.join(APP_DIR, "(auth)", "recover/page.tsx"),
+      "utf-8",
+    );
+    expect(content).toContain("Account recovery");
+    expect(content).not.toContain("M01-S02");
+  });
 
   it("ROUTE_INVENTORY.md assigns auth routes to M01-S03", () => {
     const inventory = fs.readFileSync(
