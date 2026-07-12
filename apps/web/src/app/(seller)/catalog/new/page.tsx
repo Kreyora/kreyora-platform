@@ -1,10 +1,56 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useClients } from "@/lib/providers/client-provider";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ProductForm } from "@/components/seller/product-form";
+import type { Collection } from "@/lib/types";
+
 export default function NewProductPage() {
+  const { catalog } = useClients();
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    catalog.getCollections().then((c) => {
+      setCollections(c);
+      setIsLoading(false);
+    });
+  }, [catalog]);
+
+  if (isLoading) {
+    return (
+      <div>
+        <Skeleton className="mb-4 h-4 w-48" />
+        <Skeleton className="mb-6 h-8 w-40" />
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-11 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <h1 className="text-heading-page text-(--color-ink-primary)">New Product</h1>
-      <p className="mt-4 text-body-app text-(--color-ink-secondary)">
-        This page will be implemented in M01-S04.
-      </p>
+      {/* Breadcrumb */}
+      <nav className="mb-4 text-sm text-[var(--color-ink-secondary)]" aria-label="Breadcrumb">
+        <Link href="/catalog" className="hover:underline">
+          Catalog
+        </Link>
+        <span className="mx-2" aria-hidden="true">/</span>
+        <span className="text-[var(--color-ink-primary)]">New Product</span>
+      </nav>
+
+      <h1 className="mb-6 text-heading-page text-[var(--color-ink-primary)]">
+        Create Product
+      </h1>
+
+      <div className="max-w-2xl">
+        <ProductForm collections={collections} />
+      </div>
     </div>
   );
 }
