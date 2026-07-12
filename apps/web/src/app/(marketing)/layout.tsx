@@ -1,21 +1,26 @@
-export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+import type { Metadata } from "next";
+import { MarketingHeader } from "@/components/marketing/header";
+import { MarketingFooter } from "@/components/marketing/footer";
+
+export const metadata: Metadata = {
+  title: {
+    template: "%s | Kreyora",
+    default: "Kreyora — Social Commerce OS for Nepal",
+  },
+  description:
+    "The reliable commerce layer behind a seller's social DMs. Manage catalog, orders, inbox, and AI assistant from one workspace.",
+};
+
+export default function MarketingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col min-h-full">
-      <header className="border-b border-(--color-border) px-6 py-4">
-        <nav className="mx-auto max-w-[90rem] flex items-center justify-between">
-          <span className="text-lg font-bold text-(--color-ink-primary)">Kreyora</span>
-          <div className="flex gap-4 text-sm text-(--color-ink-secondary)">
-            <span>Features</span>
-            <span>Pricing</span>
-            <span>Demo</span>
-            <span>Contact</span>
-          </div>
-        </nav>
-      </header>
+    <div className="flex min-h-full flex-col">
+      <MarketingHeader />
       <main className="flex-1">{children}</main>
-      <footer className="border-t border-(--color-border) px-6 py-8 text-center text-xs text-(--color-ink-secondary)">
-        © 2026 Kreyora — Placeholder footer. Not connected to a live service.
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }
