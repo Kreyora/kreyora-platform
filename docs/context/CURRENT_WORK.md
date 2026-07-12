@@ -3,19 +3,19 @@
 ## Active position
 
 - **Milestone:** 01 — Frontend Showcase
-- **Step:** 06 — Orders, Payments, Fulfilment, and Notifications UI
+- **Step:** 07 — Inbox, Integrations, AI Assistant, and Takeover UI
 - **Status:** `REVIEW`
 - **Active milestone file:** `design_files/project_a_milestones/01_FRONTEND_SHOWCASE.md`
 
 ## Branch and commit state
 
 - **Branch:** main (local, no commits or pushes)
-- **Last state:** M01-S01 + M01-S02 + M01-S03 + M01-S04 + M01-S05 + M01-S06 complete
+- **Last state:** M01-S01 + M01-S02 + M01-S03 + M01-S04 + M01-S05 + M01-S06 + M01-S07 complete
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M01-S06.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M01-S05.md`
+- **Current checkpoint:** `artifacts/checkpoints/M01-S07.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M01-S06.md`
 
 ## Blockers
 
@@ -23,23 +23,26 @@ None.
 
 ## Current objective
 
-M01-S06 implementation complete:
+M01-S07 implementation complete:
 
-1. Order list page (`/orders`) with search by order number/customer name/phone, status/source/payment filters, three independent status badges per order (order, payment, fulfilment), responsive table + mobile cards, ViewerBadge, loading skeleton, empty state
-2. Order detail page (`/orders/[id]`) with breadcrumb, header with three status badges + source badge, immutable financial snapshot (items table with SKU/qty/price/total, subtotal, delivery fee, total), customer snapshot (name, phone, email), delivery snapshot (address, contact), payment section (method, payment attempts table with status badges and proof placeholder), inventory allocation (per-variant availability), activity timeline (chronological with actor/action/reason/details), notification delivery status (simulated SMS entries with delivered/pending badges)
-3. Order action policy (`getAllowedActions` utility) mapping status × payment × fulfilment × payment method × role to permitted actions (confirm, cancel, verify/reject QR, mark COD collected, prepare, dispatch, deliver). Viewer role returns no actions.
-4. Action buttons on detail page sidebar, confirmation dialogs with actor preview, optional reason textarea for destructive actions, simulated execution appending to local activity log, success feedback
-5. 37 new tests: route file verification, list page (search, filters, badges, responsive), detail page (getOrder, getOrderActivity, getPaymentAttempts, financial/customer/delivery/payment sections, timeline, notifications, actions, disclaimers), getAllowedActions policy unit tests (11 cases covering all status transitions and viewer restriction)
+1. Unified inbox conversation list (`/inbox`) with search by customer name/message/labels, state filter (bot_active/human_assigned/awaiting_customer/resolved/closed), channel filter (Facebook/Instagram/WhatsApp/TikTok/Storefront), channel icon badges, unread count badges, state badges, assignment display, labels, last message preview, timestamps
+2. Conversation detail page (`/inbox/[id]`) with message timeline (sender type badges, delivery state badges, attachment indicators, retry indicators for failed), human takeover/release controls with Bot Active/Bot Paused indicator, staff composer (only available when human has control), provider health context sidebar (connection status, events processed, failures), AI activity traces, customer info, labels display
+3. Integration connection list (`/integrations`) with connection cards showing provider badge, account name, status badge, capabilities summary, events count, Connect Channel placeholder
+4. Integration detail page (`/integrations/[id]`) with capabilities grid (6 flags with check/cross), health sidebar (status, last event, events processed/failed, token expiry with warning, webhook URL), webhook events table with status badges and Replay button for failed events, Reconnect button for disconnected/error connections
+5. AI assistant policy page (`/assistant`) with sub-navigation (Overview/Knowledge/Console/History), config display (enabled status, language, tone, max iterations, cost budget, auto-escalation)
+6. Knowledge documents page (`/assistant/knowledge`) with document list, status badges (pending_review/approved/rejected/archived), simulated lifecycle actions (approve/reject/archive), Upload Document placeholder
+7. Test console page (`/assistant/console`) with simulated chat interface, pre-canned bot response from fixture trace data, tool-trace sidebar (intent, confidence, tokens, cost band, latency, escalation state, tool call details with input/output)
+8. Action history page (`/assistant/history`) with expandable trace list, conversation links, tool calls count, confidence, cost band/escalation badges, token count, latency, expandable tool call details, generated response preview
 
-**Evidence:** 321 tests pass, 0 type errors.
+**Evidence:** 402 tests pass, 0 type errors.
 
 ## Next permitted action
 
-After M01-S06 review approval: start M01-S07 in **plan mode**.
+After M01-S07 review approval: start M01-S08 in **plan mode**.
 
 ## Next prohibited action
 
-- M01-S07 implementation (until M01-S06 is approved)
+- M01-S08 implementation (until M01-S07 is approved)
 - Any backend (.NET/C#) implementation
 - Any real provider integration, deployment, or external service contact
 - Committing, pushing, or deploying
@@ -56,3 +59,4 @@ After M01-S06 review approval: start M01-S07 in **plan mode**.
 | 2026-07-12 | M01-S04 complete. 219 tests pass, clean type check. Status → REVIEW. | M01-S04 session |
 | 2026-07-12 | M01-S05 complete. 284 tests pass, clean type check. Status → REVIEW. | M01-S05 session |
 | 2026-07-12 | M01-S06 complete. 321 tests pass, clean type check. Status → REVIEW. | M01-S06 session |
+| 2026-07-12 | M01-S07 complete. 402 tests pass, clean type check. Status → REVIEW. | M01-S07 session |
