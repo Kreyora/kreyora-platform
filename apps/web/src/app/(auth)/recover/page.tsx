@@ -5,7 +5,7 @@ export default function RecoverPage() {
         Account Recovery
       </h1>
       <p className="mt-4 text-body-app text-(--color-ink-secondary)">
-        This page will be implemented in M01-S02.
+        This page will be implemented in M01-S03.
       </p>
     </div>
   );

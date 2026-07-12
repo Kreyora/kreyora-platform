@@ -3,7 +3,7 @@ export default function SignInPage() {
     <div>
       <h1 className="text-heading-page text-(--color-ink-primary)">Sign In</h1>
       <p className="mt-4 text-body-app text-(--color-ink-secondary)">
-        This page will be implemented in M01-S02.
+        This page will be implemented in M01-S03.
       </p>
     </div>
   );
