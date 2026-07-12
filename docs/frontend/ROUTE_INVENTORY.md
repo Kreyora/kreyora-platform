@@ -42,23 +42,23 @@
 | `/inventory/low-stock` | Seller owner / operator | M01-S04 | Cross-product low-stock alerts |
 | `/orders` | Seller owner / operator | M01-S06 | Order list with filters |
 | `/orders/[id]` | Seller owner / operator | M01-S06 | Order detail + fulfillment actions |
-| `/inbox` | Seller operator | M01-S06 | Conversation list (all channels) |
-| `/inbox/[id]` | Seller operator | M01-S06 | Conversation thread + AI handoff |
-| `/storefront` | Seller owner | M01-S07 | Storefront config (profile, SEO) |
-| `/storefront/delivery` | Seller owner | M01-S07 | Delivery rules and zones |
-| `/storefront/payments` | Seller owner | M01-S07 | Payment method configuration |
-| `/storefront/preview` | Seller owner | M01-S07 | Live preview of published storefront |
-| `/integrations` | Seller owner / admin | M01-S08 | Channel connection list |
-| `/integrations/[id]` | Seller owner / admin | M01-S08 | Connection detail + health |
-| `/assistant` | Seller owner / admin | M01-S09 | AI assistant overview |
-| `/assistant/knowledge` | Seller owner / admin | M01-S09 | Knowledge base management |
-| `/assistant/console` | Seller owner / admin | M01-S09 | Live assistant test console |
-| `/assistant/history` | Seller owner / admin | M01-S09 | AI action log |
-| `/analytics` | Seller owner | M01-S10 | Revenue, conversion, channel dashboards |
-| `/billing` | Seller owner | M01-S10 | Plan, subscription, quota, usage |
-| `/team` | Seller owner / admin | M01-S10 | Team member management |
-| `/settings` | Seller owner | M01-S10 | Workspace-level settings |
-| `/audit` | Seller owner | M01-S10 | Audit event log |
+| `/inbox` | Seller operator | M01-S07 | Conversation list (all channels) |
+| `/inbox/[id]` | Seller operator | M01-S07 | Conversation thread + AI handoff |
+| `/storefront` | Seller owner | M01-S08 | Storefront config (profile, SEO) |
+| `/storefront/delivery` | Seller owner | M01-S08 | Delivery rules and zones |
+| `/storefront/payments` | Seller owner | M01-S08 | Payment method configuration |
+| `/storefront/preview` | Seller owner | M01-S08 | Live preview of published storefront |
+| `/integrations` | Seller owner / admin | M01-S07 | Channel connection list |
+| `/integrations/[id]` | Seller owner / admin | M01-S07 | Connection detail + health |
+| `/assistant` | Seller owner / admin | M01-S07 | AI assistant overview |
+| `/assistant/knowledge` | Seller owner / admin | M01-S07 | Knowledge base management |
+| `/assistant/console` | Seller owner / admin | M01-S07 | Live assistant test console |
+| `/assistant/history` | Seller owner / admin | M01-S07 | AI action log |
+| `/analytics` | Seller owner | M01-S08 | Revenue, conversion, channel dashboards |
+| `/billing` | Seller owner | M01-S08 | Plan, subscription, quota, usage |
+| `/team` | Seller owner / admin | M01-S08 | Team member management |
+| `/settings` | Seller owner | M01-S08 | Workspace-level settings |
+| `/audit` | Seller owner | M01-S08 | Audit event log |
 
 ## Storefront routes
 
