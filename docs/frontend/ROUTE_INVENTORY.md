@@ -40,8 +40,8 @@
 | `/catalog/[id]` | Seller owner / operator | M01-S04 | Edit product detail |
 | `/catalog/[id]/inventory` | Seller owner / operator | M01-S04 | Per-product inventory adjustments |
 | `/inventory/low-stock` | Seller owner / operator | M01-S04 | Cross-product low-stock alerts |
-| `/orders` | Seller owner / operator | M01-S05 | Order list with filters |
-| `/orders/[id]` | Seller owner / operator | M01-S05 | Order detail + fulfillment actions |
+| `/orders` | Seller owner / operator | M01-S06 | Order list with filters |
+| `/orders/[id]` | Seller owner / operator | M01-S06 | Order detail + fulfillment actions |
 | `/inbox` | Seller operator | M01-S06 | Conversation list (all channels) |
 | `/inbox/[id]` | Seller operator | M01-S06 | Conversation thread + AI handoff |
 | `/storefront` | Seller owner | M01-S07 | Storefront config (profile, SEO) |
