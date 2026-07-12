@@ -25,8 +25,8 @@
 
 | Path | Persona | Step | Notes |
 |---|---|---|---|
-| `/signin` | Seller (unauthenticated) | M01-S02 | Email + password, social OAuth |
-| `/recover` | Seller (unauthenticated) | M01-S02 | Password recovery |
+| `/signin` | Seller (unauthenticated) | M01-S03 | Email + password, social OAuth |
+| `/recover` | Seller (unauthenticated) | M01-S03 | Password recovery |
 
 ## Seller routes
 
