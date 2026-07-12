@@ -3,19 +3,19 @@
 ## Active position
 
 - **Milestone:** 01 — Frontend Showcase
-- **Step:** 04 — Catalog and Inventory Management UI
+- **Step:** 05 — Public Storefront, Cart, and Checkout UI
 - **Status:** `REVIEW`
 - **Active milestone file:** `design_files/project_a_milestones/01_FRONTEND_SHOWCASE.md`
 
 ## Branch and commit state
 
 - **Branch:** main (local, no commits or pushes)
-- **Last state:** M01-S01 + M01-S02 + M01-S03 + M01-S04 complete
+- **Last state:** M01-S01 + M01-S02 + M01-S03 + M01-S04 + M01-S05 complete
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M01-S04.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M01-S03.md`
+- **Current checkpoint:** `artifacts/checkpoints/M01-S05.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M01-S04.md`
 
 ## Blockers
 
@@ -23,25 +23,28 @@ None.
 
 ## Current objective
 
-M01-S04 implementation complete:
+M01-S05 implementation complete:
 
-1. Product list page (`/catalog`) with search by title/description/tags, collection filter, publish-state filter, status badges (draft/published/unpublished/archived), responsive table (desktop) + card layout (mobile), "Add product" button (hidden for viewer), empty state, loading skeleton
-2. Shared product form component with title, description, slug (auto-generated), publish state, collections checkboxes, tags, variants table (edit mode), media grid (edit mode), simulated save/delete, viewer-aware disabled state
-3. Create product page (`/catalog/new`) with breadcrumb, empty form, collections fetch
-4. Edit product page (`/catalog/[id]`) with Radix Tabs (Details / Variants / Media / Inventory), pre-filled form from `getProduct`, variants table with options/pricing, media grid with dimensions, delete confirmation dialog
-5. Product inventory page (`/catalog/[id]/inventory`) with per-variant inventory cards (on-hand/committed/available + low-stock badge), stock ledger table with movement type badges, reservations table with state badges, simulated stock adjustment form with success feedback, viewer-aware
-6. Low-stock alerts page (`/inventory/low-stock`) with table from `getLowStock()`, danger badges, "View inventory" links mapped to correct product IDs, responsive desktop table + mobile cards, empty state
-7. All simulated operations clearly labeled with disclaimers
+1. Store layout with dynamic header (store name, cart icon with count badge) and footer (contact, social, demo disclaimer) from `StorefrontClient.getStore()`
+2. Cart context (`CartProvider` + `useCart`) with add/remove/update/clear, item count, subtotal calculation, duplicate variant merging
+3. Store home page (`/store/[slug]`) with hero banner, tagline, collection cards, published product grid, search filtering
+4. Collection page (`/store/[slug]/collection/[id]`) with filtered product grid, breadcrumb, empty state
+5. Product detail page (`/store/[slug]/product/[id]`) with image gallery, variant selector, availability from inventory, compare-at pricing, quantity controls, add-to-cart with feedback
+6. Cart page (`/store/[slug]/cart`) with line items, quantity controls, remove, order summary, subtotal, empty cart state
+7. Checkout page (`/store/[slug]/checkout`) with contact info, delivery address, delivery rule selection, payment method selection (COD/QR), order summary sidebar, duplicate-submit protection, `createQuote()` then `submitOrder()`
+8. Order confirmation page (`/store/[slug]/confirmation/[orderId]`) with order number, status, items, delivery, payment, support links
+9. Order lookup page (`/store/[slug]/order-lookup`) with order number search, order details display, timeline, not-found state
+10. All simulated operations clearly labeled with disclaimers
 
-**Evidence:** 219 tests pass, 0 type errors.
+**Evidence:** 284 tests pass, 0 type errors.
 
 ## Next permitted action
 
-After M01-S04 review approval: start M01-S05 in **plan mode**.
+After M01-S05 review approval: start M01-S06 in **plan mode**.
 
 ## Next prohibited action
 
-- M01-S05 implementation (until M01-S04 is approved)
+- M01-S06 implementation (until M01-S05 is approved)
 - Any backend (.NET/C#) implementation
 - Any real provider integration, deployment, or external service contact
 - Committing, pushing, or deploying
@@ -56,3 +59,4 @@ After M01-S04 review approval: start M01-S05 in **plan mode**.
 | 2026-07-12 | M01-S02 complete. 116 tests pass, clean type check. Status → REVIEW. | M01-S02 session |
 | 2026-07-12 | M01-S03 complete. 169 tests pass, clean type check. Status → REVIEW. | M01-S03 session |
 | 2026-07-12 | M01-S04 complete. 219 tests pass, clean type check. Status → REVIEW. | M01-S04 session |
+| 2026-07-12 | M01-S05 complete. 284 tests pass, clean type check. Status → REVIEW. | M01-S05 session |

@@ -64,13 +64,13 @@
 
 | Path | Persona | Step | Notes |
 |---|---|---|---|
-| `/store/[slug]` | Customer | M01-S07 | Store home (collections, featured products) |
-| `/store/[slug]/collection/[id]` | Customer | M01-S07 | Collection product grid |
-| `/store/[slug]/product/[id]` | Customer | M01-S07 | Product detail page |
-| `/store/[slug]/cart` | Customer | M01-S07 | Shopping cart |
-| `/store/[slug]/checkout` | Customer | M01-S07 | Checkout flow |
-| `/store/[slug]/confirmation/[orderId]` | Customer | M01-S07 | Order confirmation |
-| `/store/[slug]/order-lookup` | Customer | M01-S07 | Track order by number |
+| `/store/[slug]` | Customer | M01-S05 | Store home (collections, featured products) |
+| `/store/[slug]/collection/[id]` | Customer | M01-S05 | Collection product grid |
+| `/store/[slug]/product/[id]` | Customer | M01-S05 | Product detail page |
+| `/store/[slug]/cart` | Customer | M01-S05 | Shopping cart |
+| `/store/[slug]/checkout` | Customer | M01-S05 | Checkout flow |
+| `/store/[slug]/confirmation/[orderId]` | Customer | M01-S05 | Order confirmation |
+| `/store/[slug]/order-lookup` | Customer | M01-S05 | Track order by number |
 
 ## Implementation notes
 
