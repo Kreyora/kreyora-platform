@@ -1,0 +1,312 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Kreyora — Design System Tokens
+   Source: FRONTEND_DESIGN_DIRECTION.md
+   ============================================================ */
+
+@theme {
+  /* Color — Canvas & Ink */
+  --color-canvas: #ffffff;
+  --color-canvas-subtle: #f5f5f2;
+  --color-ink-primary: #111111;
+  --color-ink-secondary: #626262;
+  --color-border: #d9d9d5;
+  --color-surface-dark: #1e2021;
+  --color-on-dark: #f5f5f2;
+
+  /* Color — Semantic (WCAG AA verified against canvas and dark surface) */
+  --color-success: #1a7a3a;
+  --color-success-subtle: #e8f5ec;
+  --color-warning: #9a6700;
+  --color-warning-subtle: #fff8e1;
+  --color-danger: #c93131;
+  --color-danger-subtle: #fce8e8;
+  --color-info: #1a6fb5;
+  --color-info-subtle: #e6f0fa;
+
+  /* Color — Interactive */
+  --color-focus-ring: #1a6fb5;
+
+  /* Spacing scale (rem) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+  --space-44: 11rem;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.08);
+
+  /* Motion */
+  --duration-press: 120ms;
+  --duration-hover: 180ms;
+  --duration-overlay: 250ms;
+  --duration-entrance: 400ms;
+  --stagger-delay: 50ms;
+  --easing-default: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================================
+   Global Resets & Base Styles
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-canvas);
+  color: var(--color-ink-primary);
+  font-family:
+    "Inter",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Noto Sans Devanagari",
+    "Noto Sans",
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   Typography — Fluid Scale via clamp()
+   ============================================================ */
+
+.text-display-hero {
+  font-size: clamp(2.625rem, 5vw + 1rem, 7rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.text-display-section {
+  font-size: clamp(2rem, 3vw + 1rem, 4.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.text-heading-page {
+  font-size: clamp(1.75rem, 1.5vw + 1rem, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.text-body-marketing {
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.text-body-app {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-meta {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+/* ============================================================
+   Grid — 12/8/4 Responsive Columns
+   ============================================================ */
+
+.grid-marketing {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .grid-marketing {
+    grid-template-columns: repeat(8, 1fr);
+    padding-inline: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-marketing {
+    grid-template-columns: repeat(12, 1fr);
+    padding-inline: 3rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-marketing {
+    padding-inline: 4rem;
+  }
+}
+
+/* ============================================================
+   Motion — Keyframes
+   ============================================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--duration-entrance) var(--easing-default) both;
+}
+
+.animate-fade-out {
+  animation: fadeOut var(--duration-overlay) var(--easing-default) both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight var(--duration-overlay) var(--easing-default) both;
+}
+
+.animate-slide-out-right {
+  animation: slideOutRight var(--duration-overlay) var(--easing-default) both;
+}
+
+/* Stagger support for child elements */
+.stagger-children > * {
+  animation: fadeIn var(--duration-entrance) var(--easing-default) both;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: calc(var(--stagger-delay) * 0); }
+.stagger-children > *:nth-child(2) { animation-delay: calc(var(--stagger-delay) * 1); }
+.stagger-children > *:nth-child(3) { animation-delay: calc(var(--stagger-delay) * 2); }
+.stagger-children > *:nth-child(4) { animation-delay: calc(var(--stagger-delay) * 3); }
+.stagger-children > *:nth-child(5) { animation-delay: calc(var(--stagger-delay) * 4); }
+.stagger-children > *:nth-child(6) { animation-delay: calc(var(--stagger-delay) * 5); }
+.stagger-children > *:nth-child(7) { animation-delay: calc(var(--stagger-delay) * 6); }
+
+/* ============================================================
+   Reduced Motion — Nuanced Override
+   Removes decorative/nonessential motion while preserving
+   functional behavior (focus, dialog, toast, navigation).
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Disable smooth scrolling */
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  /* Remove decorative entrance/exit animations */
+  .animate-fade-in,
+  .animate-fade-out,
+  .animate-slide-in-right,
+  .animate-slide-out-right {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Remove stagger timing */
+  .stagger-children > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Make hover/press transitions instant, but don't remove them
+     so state changes remain visible */
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Disable decorative transforms */
+  .hover\:translate-y-px:hover,
+  .hover\:-translate-y-0\.5:hover,
+  .hover\:-translate-y-1:hover {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+   Focus — Visible Ring
+   ============================================================ */
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Border Utility
+   ============================================================ */
+
+.border-hairline {
+  border: 1px solid var(--color-border);
+}

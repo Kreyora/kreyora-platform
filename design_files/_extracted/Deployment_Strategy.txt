@@ -1,0 +1,80 @@
+Deployment Strategy and Infrastructure Plan
+Deployment Strategy
+Start with low-cost cloud hosting. Avoid dedicated servers and GPUs initially.
+
+The system uses external AI APIs, so application servers do not require GPU resources.
+Initial Free or Low Cost Setup
+Frontend:
+- Vercel free tier or similar
+
+Backend:
+- Cloud free tier VM/container options where available
+
+Database:
+- Managed PostgreSQL free tiers or low-cost managed database
+
+Storage:
+- Object storage for product images
+
+AI:
+- External AI API usage based billing
+Production Architecture
+Internet
+|
+CDN / Reverse Proxy
+|
+ASP.NET Core .NET 10 API
+|
+PostgreSQL
+|
+Redis
+|
+Background Workers
+|
+External AI Providers
+
+Use Docker containers for portability.
+Resource Requirements Early Stage
+For MVP:
+Backend: 1-2 CPU, 2-4 GB RAM
+Database: 1-2 CPU, 2-4 GB RAM
+Redis: small instance
+Storage: scalable object storage
+
+No GPU required.
+Scaling Strategy
+When growth happens:
+
+Application:
+Add multiple API instances behind load balancer.
+
+Database:
+Upgrade resources, add read replicas.
+
+Workers:
+Increase background processing nodes.
+
+AI:
+Use model routing:
+cheap model for simple questions,
+advanced model for complex cases.
+Operational Requirements
+Implement:
+- Monitoring
+- Error tracking
+- Logs
+- Backups
+- Secret management
+- CI/CD deployment
+- Health checks
+Cloud Options
+Possible providers:
+- Azure (strong .NET ecosystem)
+- AWS
+- Google Cloud
+- DigitalOcean
+- Render
+- Railway
+- Fly.io
+
+Start inexpensive, migrate as usage grows.

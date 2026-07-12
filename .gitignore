@@ -1,0 +1,81 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.local
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json.example
+
+# Node.js
+node_modules/
+.next/
+out/
+.turbo/
+.vercel/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+packages/
+*.nupkg
+project.lock.json
+TestResults/
+BenchmarkDotNet.Artifacts/
+
+# Build outputs
+dist/
+build/
+publish/
+*.tgz
+
+# IDE and editor files
+.vs/
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude personal/local files
+.claude/local/
+.claude/settings.local.json
+
+# Test outputs
+coverage/
+*.lcov
+playwright-report/
+test-results/
+
+# Local databases and storage
+*.db
+*.sqlite
+*.sqlite3
+data/
+postgres-data/
+redis-data/
+storage/
+
+# Temporary and generated files
+tmp/
+temp/
+*.tmp
+*.log
+screenshots/
+*.generated.*
+
+# Docker
+docker-compose.override.yml

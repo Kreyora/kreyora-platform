@@ -1,0 +1,30 @@
+AI Coding Prompts - Building the Application Step by Step
+Purpose
+These prompts guide an AI coding assistant to build the application step by step using .NET 10.
+Step 1 - Architecture
+Prompt:
+Design a production-grade .NET 10 solution using Clean Architecture, Domain Driven Design, CQRS, PostgreSQL, Entity Framework Core, and modular boundaries. Generate the folder structure and explain every project.
+Step 2 - Backend Foundation
+Prompt:
+Create authentication, tenant management, users, roles, configuration, database migrations, logging, validation, and API conventions.
+Step 3 - Inventory Module
+Prompt:
+Implement Product, ProductVariant, Inventory, StockMovement, and Reservation modules. Include concurrency handling and business rules.
+Step 4 - Social Integration
+Prompt:
+Implement webhook architecture for WhatsApp, Instagram, and Facebook. Create channel abstractions so providers can be replaced.
+Step 5 - AI Agent
+Prompt:
+Create an AI orchestration layer with tool calling. Implement tools for product search, inventory lookup, pricing, order creation, and escalation.
+Step 6 - Knowledge Base
+Prompt:
+Implement seller knowledge documents, embeddings, vector search, and RAG retrieval.
+Step 7 - Frontend
+Prompt:
+Create seller dashboard pages for inventory, products, orders, conversations, AI settings, and analytics.
+Step 8 - Testing
+Prompt:
+Create unit tests, integration tests, API tests, security tests, and load tests.
+Step 9 - Deployment
+Prompt:
+Create Docker files, CI/CD pipelines, environment configuration, migrations, monitoring, and cloud deployment strategy.

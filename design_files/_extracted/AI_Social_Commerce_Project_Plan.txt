@@ -1,0 +1,110 @@
+AI Social Commerce Platform - Full Project Plan
+Project Vision
+Build a scalable AI-powered social commerce operating system for Instagram, Facebook, and WhatsApp sellers.
+The platform manages inventory, sellers, products, customers, conversations, orders, and an AI sales assistant.
+
+Core principle:
+AI is not the source of truth. Inventory, pricing, orders, and business rules remain in the application database. AI uses controlled tools to query and execute business actions.
+Main Features
+1. Multi-tenant seller management
+2. Social channel connections
+3. Product catalog and variants
+4. Inventory management
+5. Customer management
+6. Unified conversation inbox
+7. AI sales assistant
+8. Product identification from images, links, and text
+9. Order creation and reservation
+10. Human takeover workflow
+11. Analytics and reporting
+Recommended Architecture (.NET 10)
+Use a modular monolith first, designed for future microservice extraction.
+
+Backend:
+- ASP.NET Core .NET 10 Web API
+- Clean Architecture
+- Domain Driven Design
+- CQRS with MediatR
+- Entity Framework Core
+- PostgreSQL
+- Redis
+- Background jobs with Hangfire
+
+Frontend:
+- Next.js or Blazor Web App
+
+Infrastructure:
+- Docker
+- CI/CD
+- Cloud deployment
+
+Architecture layers:
+Domain -> Application -> Infrastructure -> API
+AI Architecture
+Do not train a custom AI model initially.
+
+Use external AI providers.
+Implement:
+- Tool calling
+- Retrieval Augmented Generation (RAG)
+- Seller knowledge base
+- Conversation memory
+- Confidence scoring
+- Human escalation
+
+AI tools:
+- SearchProducts
+- CheckInventory
+- GetPrice
+- GetShippingInfo
+- CreateOrder
+- ReserveInventory
+- EscalateToHuman
+Product Identification
+Support:
+- Product images using vision models and embeddings
+- Product links mapped from social posts
+- Screenshots using OCR and vision analysis
+- Natural language product search
+
+Never allow AI to guess inventory. Confirm products through application services.
+Database Design
+Main entities:
+Seller
+SocialChannel
+Product
+ProductVariant
+Inventory
+InventoryReservation
+Customer
+Conversation
+Message
+Order
+OrderItem
+KnowledgeDocument
+AIActionLog
+Security and Reliability
+Important requirements:
+- Multi-tenant data isolation
+- Encrypted social tokens
+- Audit logging
+- Role based access control
+- Rate limiting
+- Webhook validation
+- Idempotent message processing
+- Inventory locking during reservations
+Development Roadmap
+Phase 1:
+Seller dashboard, products, inventory, authentication.
+
+Phase 2:
+WhatsApp integration and AI replies.
+
+Phase 3:
+Orders, reservations, human takeover.
+
+Phase 4:
+Instagram and Facebook integrations.
+
+Phase 5:
+Advanced AI sales automation and analytics.

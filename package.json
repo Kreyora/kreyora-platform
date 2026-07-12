@@ -1,0 +1,12 @@
+{
+  "name": "kreyora",
+  "private": true,
+  "packageManager": "pnpm@11.12.0",
+  "scripts": {
+    "dev": "pnpm --filter @kreyora/web dev",
+    "build": "pnpm --filter @kreyora/web build",
+    "lint": "pnpm --filter @kreyora/web lint",
+    "test": "pnpm --filter @kreyora/web test",
+    "test:watch": "pnpm --filter @kreyora/web test:watch"
+  }
+}
