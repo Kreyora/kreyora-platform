@@ -3,19 +3,19 @@
 ## Active position
 
 - **Milestone:** 02 — Engineering and Backend Foundation
-- **Step:** 02 — API Conventions, Configuration, and Observability
+- **Step:** 03 — PostgreSQL, EF Core, Migrations, and Durable Primitives
 - **Status:** `COMPLETE`
 - **Active milestone file:** `docs/milestones/02_ENGINEERING_FOUNDATION.md`
 
 ## Branch and commit state
 
 - **Branch:** main (local, no commits or pushes)
-- **Last state:** M01 complete, M02-S01 complete, M02-S02 complete
+- **Last state:** M01 complete, M02-S01 complete, M02-S02 complete, M02-S03 complete
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M02-S02.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M02-S01.md`
+- **Current checkpoint:** `artifacts/checkpoints/M02-S03.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M02-S02.md`
 
 ## Blockers
 
@@ -23,31 +23,30 @@ None.
 
 ## Current objective
 
-M02-S02 implementation complete — API conventions, configuration, and observability:
+M02-S03 implementation complete — PostgreSQL, EF Core, migrations, and durable primitives:
 
-1. Domain abstractions: `ITimeProvider` (testable clock), `IdGenerator` (ULID-based sortable IDs)
-2. Application models: `Result<T>` (discriminated success/failure), `PagedResult<T>`, `PageRequest`, `ErrorDetail`
-3. Correlation ID middleware: reads/generates `X-Correlation-ID`, pushes to Serilog LogContext
-4. Global exception handler: catches unhandled exceptions, returns RFC 7807 ProblemDetails with correlation ID
-5. ProblemDetailsFactory: consistent 400/403/404/409/500 RFC 7807 responses
-6. Serilog structured logging with `SensitiveDataEnricher` redacting Authorization, Password, Token, etc.
-7. Typed configuration (`AppSettings`, `DatabaseSettings`, `CorsSettings`) validated at startup
-8. API versioning (`/v1/...`) with `Asp.Versioning.Mvc`
-9. Health endpoints: `/health`, `/health/live`, `/health/ready` with tag filtering
-10. OpenAPI generation at `/openapi/v1.json`
-11. JSON conventions: camelCase, enum-as-string, ignore null
-12. DI registration boundaries: `AddApplication()`, `AddInfrastructure()`
-13. Environment template: `.env.template` with all documented keys
+1. Domain base entities: `BaseEntity` (Id/CreatedAt/ModifiedAt), `ITenantOwned`, `IAuditable`
+2. EF Core with `Npgsql.EntityFrameworkCore.PostgreSQL` and `EFCore.NamingConventions` (snake_case)
+3. `AppDbContext` with auto-stamp timestamps, snake_case conventions, configuration-from-assembly
+4. Infrastructure durable-message entities: `OutboxMessage`, `InboxMessage`, `IdempotencyRecord`
+5. EF configurations with unique constraints, filtered indexes
+6. `IUnitOfWork` abstraction in Application, `UnitOfWork` implementation in Infrastructure
+7. `MigrationRunner` for controlled, observable migration execution
+8. `DesignTimeDbContextFactory` for `dotnet ef` CLI
+9. `InitialCreate` migration with three snake_case tables
+10. `PostgresFixture` with Testcontainers (`postgres:16-alpine`)
+11. 7 new persistence integration tests (migration, transaction, idempotency, outbox)
+12. DI wiring: optional DbContext registration when connection string is configured
 
-**Evidence:** 54 tests pass, 0 build warnings/errors.
+**Evidence:** 61 tests pass, 0 build warnings/errors.
 
 ## Next permitted action
 
-Plan and implement M02-S03: PostgreSQL, EF Core, migrations, and durable primitives.
+Plan and implement M02-S04: Aspire/Docker — AppHost orchestration, Hangfire, Dockerfiles, docker-compose, one-command startup.
 
 ## Next prohibited action
 
-- Skipping to M02-S04+ without completing M02-S03
+- Skipping to M02-S05+ without completing M02-S04
 - Any real provider integration, deployment, or external service contact
 - Committing, pushing, or deploying
 
@@ -67,3 +66,4 @@ Plan and implement M02-S03: PostgreSQL, EF Core, migrations, and durable primiti
 | 2026-07-12 | M01-S08 complete. Milestone 01 finished. Status → REVIEW. | M01-S08 session |
 | 2026-07-27 | M02-S01 complete. 11 tests pass, 0 build errors. Status → COMPLETE. | M02-S01 session |
 | 2026-07-27 | M02-S02 complete. 54 tests pass, 0 build errors. Status → COMPLETE. | M02-S02 session |
+| 2026-07-27 | M02-S03 complete. 61 tests pass, 0 build errors. Status → COMPLETE. | M02-S03 session |
