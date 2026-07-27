@@ -84,11 +84,11 @@ body {
   background-color: var(--color-canvas);
   color: var(--color-ink-primary);
   font-family:
-    "Inter",
+    var(--font-inter),
     ui-sans-serif,
     system-ui,
     -apple-system,
-    "Noto Sans Devanagari",
+    var(--font-noto-devanagari),
     "Noto Sans",
     sans-serif;
   font-size: 1rem;

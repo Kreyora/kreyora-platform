@@ -33,7 +33,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${notoDevanagari.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col font-[family-name:var(--font-inter),family-name:var(--font-noto-devanagari)]">
+      <body className="min-h-full flex flex-col">
         <ClientProvider>
           <DemoIndicator />
           {children}

@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/tests/
+**/.git/
+**/.vs/
+**/.vscode/
+**/node_modules/
+**/*.user
+**/*.suo
+**/Thumbs.db
+.env

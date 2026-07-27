@@ -111,10 +111,10 @@ export default function FeaturesPage() {
                 "grid gap-12 md:items-start md:gap-16",
                 i % 2 === 0
                   ? "md:grid-cols-[1fr_1fr]"
-                  : "md:grid-cols-[1fr_1fr] md:[direction:rtl] md:[&>*]:text-left md:[&>*]:[direction:ltr]",
+                  : "md:grid-cols-[1fr_1fr]",
               ].join(" ")}
             >
-              <div>
+              <div className={i % 2 !== 0 ? "md:order-2" : ""}>
                 <p className="text-meta font-semibold uppercase tracking-wider text-[var(--color-ink-secondary)]">
                   {String(i + 1).padStart(2, "0")}
                 </p>
@@ -139,7 +139,7 @@ export default function FeaturesPage() {
                   ))}
                 </ul>
               </div>
-              <div className="flex items-center justify-center rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-canvas-subtle)] p-12">
+              <div className={`flex items-center justify-center rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-canvas-subtle)] p-12${i % 2 !== 0 ? " md:order-1" : ""}`}>
                 <span className="text-meta text-[var(--color-ink-secondary)]">
                   Interface preview — upcoming step
                 </span>
