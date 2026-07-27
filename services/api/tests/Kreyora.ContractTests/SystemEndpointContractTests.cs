@@ -43,4 +43,30 @@ public class SystemEndpointContractTests : IClassFixture<WebApplicationFactory<K
 
         Assert.True(response.Headers.Contains("api-supported-versions"));
     }
+
+    [Fact]
+    public async Task SystemInfo_EchoesCorrelationId()
+    {
+        var correlationId = Guid.NewGuid().ToString();
+        var request = new HttpRequestMessage(HttpMethod.Get, "/v1/system/info");
+        request.Headers.Add("X-Correlation-ID", correlationId);
+
+        var response = await _client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        Assert.True(response.Headers.Contains("X-Correlation-ID"));
+        var echoedId = response.Headers.GetValues("X-Correlation-ID").First();
+        Assert.Equal(correlationId, echoedId);
+    }
+
+    [Fact]
+    public async Task SystemInfo_GeneratesCorrelationIdWhenNotProvided()
+    {
+        var response = await _client.GetAsync("/v1/system/info");
+        response.EnsureSuccessStatusCode();
+
+        Assert.True(response.Headers.Contains("X-Correlation-ID"));
+        var generatedId = response.Headers.GetValues("X-Correlation-ID").First();
+        Assert.False(string.IsNullOrWhiteSpace(generatedId));
+    }
 }

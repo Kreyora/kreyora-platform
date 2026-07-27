@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "generate:api": "openapi-typescript http://localhost:5001/openapi/v1.json -o src/lib/api/generated/v1.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.19",
@@ -32,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.5",
     "tailwindcss": "^4.3.3",
     "typescript": "^5",

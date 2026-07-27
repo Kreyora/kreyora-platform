@@ -69,6 +69,21 @@ builder.Services
 
 builder.Services.AddOpenApi();
 
+var corsSettings = builder.Configuration.GetSection(CorsSettings.SectionName).Get<CorsSettings>();
+if (corsSettings?.AllowedOrigins is { Length: > 0 })
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+        {
+            policy.WithOrigins(corsSettings.AllowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .WithExposedHeaders("X-Correlation-ID", "api-supported-versions");
+        });
+    });
+}
+
 var app = builder.Build();
 
 if (args.Contains("--migrate"))
@@ -96,6 +111,7 @@ if (app.Environment.IsDevelopment())
     }
 }
 
+app.UseCors();
 app.UseHttpsRedirection();
 app.MapServiceDefaults();
 app.MapControllers();

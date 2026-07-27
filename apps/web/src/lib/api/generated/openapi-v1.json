@@ -1,0 +1,31 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Kreyora.WebApi | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5030/"
+    }
+  ],
+  "paths": {
+    "/v1/System/info": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "System"
+    }
+  ]
+}
