@@ -35,7 +35,7 @@ Cancellation, reservation release, stock allocation/commitment, and notification
 
 ## Prompt 02 — COD and merchant-QR payment domain
 
-> Implement store payment configuration, PaymentAttempt, manual payment evidence/proof reference, verification decision, COD collection record, and provider-neutral transaction references. For merchant QR, support optional authorized proof upload through the existing media-security boundary, `awaiting_verification`, accept/reject with reason, amount/reference checks, and immutable verification audit. For COD, keep payment pending through fulfilment and allow authorized collection recording according to policy. Do not create a fake eSewa/Khalti integration. Add migrations, commands/queries, endpoints, authorization, idempotency, and tests.
+> Implement store payment configuration, PaymentAttempt, manual payment evidence/proof reference, verification decision, COD collection record, and provider-neutral transaction references. For merchant QR, support optional authorized proof upload through the existing media-security boundary, `awaiting_verification`, accept/reject with reason, amount/reference checks, and immutable verification audit. For COD, keep payment pending through fulfilment and allow authorized collection recording according to policy. Do not create a fake eSewa/Khalti integration. Add migrations, service methods, endpoints, authorization, idempotency, and tests.
 
 **Review checkpoint:** approve payment model, proof handling, who can mark paid, and audit evidence.
 

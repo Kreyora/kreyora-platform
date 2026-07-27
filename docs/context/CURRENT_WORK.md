@@ -2,20 +2,20 @@
 
 ## Active position
 
-- **Milestone:** 01 — Frontend Showcase
-- **Step:** 08 — Dashboard, Billing, Settings, Responsive QA, and Demo Script
-- **Status:** `REVIEW`
-- **Active milestone file:** `design_files/project_a_milestones/01_FRONTEND_SHOWCASE.md`
+- **Milestone:** 02 — Backend Foundation
+- **Step:** 01 — Monorepo and Solution Topology
+- **Status:** `COMPLETE`
+- **Active milestone file:** `docs/milestones/02_BACKEND_FOUNDATION.md`
 
 ## Branch and commit state
 
 - **Branch:** main (local, no commits or pushes)
-- **Last state:** M01-S01 through M01-S08 complete (all 8 steps of Milestone 01)
+- **Last state:** M01 complete, M02-S01 complete
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M01-S08.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M01-S07.md`
+- **Current checkpoint:** `artifacts/checkpoints/M02-S01.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M01-S08.md`
 
 ## Blockers
 
@@ -23,29 +23,31 @@ None.
 
 ## Current objective
 
-M01-S08 implementation complete — final step of Milestone 01:
+M02-S01 implementation complete — monorepo and solution topology:
 
-1. Storefront admin — store profile editor (`/storefront`) with sub-navigation (Profile/Delivery/Payments/Preview), store name/tagline/contact/social display, theme settings with accent color swatch, readiness checklist (4 checks), published status badge, simulated save button
-2. Delivery rules page (`/storefront/delivery`) with rule cards showing zones, fee type (flat/threshold), fee amounts, free-above threshold, estimated days, COD availability badge, active status
-3. Payment methods page (`/storefront/payments`) with method cards showing type badge (COD/Merchant QR), label, instructions, enabled status, QR image URL
-4. Storefront preview page (`/storefront/preview`) with public URL link, readiness checklist, "Open Storefront" button linking to `/store/[slug]`
-5. Analytics dashboards (`/analytics`) with period selector (Today/This Week/This Month), 5 metric cards (orders, revenue, conversations, avg order value, conversion rate), top products table, orders by source/channel breakdowns
-6. Billing page (`/billing`) with plan card (name, price, platform fee, status, period), plan limits sidebar, **quota bars with 4-level coloring** (green/normal, yellow/warning_70, orange/warning_90, red/exceeded) with accessible progressbar ARIA, usage events table, manage subscription placeholder
-7. Team roster (`/team`) with member cards (avatar, name, email, role badge, joined date), role legend, invite member placeholder
-8. Workspace settings (`/settings`) with workspace info, billing link, session info, danger zone with disabled delete
-9. Audit log (`/audit`) with event table (actor/type/role, action, resource, details, correlation ID, timestamp), resource type and action filters
-10. Demo script (`artifacts/DEMO_SCRIPT.md`) with deterministic walkthrough for 3 personas (Customer, Seller Owner, Seller Operator)
+1. `global.json` pinning .NET SDK 10.0.103
+2. Root `.editorconfig` for C#, JSON, YAML, Markdown
+3. `services/api/Directory.Build.props` with common properties (net10.0, nullable, implicit usings, warnings-as-errors)
+4. `services/api/tests/Directory.Build.props` with CA1707 suppression for test naming conventions
+5. `services/api/Kreyora.slnx` (.NET 10 XML solution format) with 10 projects
+6. Source projects: Domain, Application, Infrastructure, WebApi, ServiceDefaults, AppHost
+7. Test projects: UnitTests, IntegrationTests, ArchitectureTests, ContractTests
+8. Project references enforcing: Domain → (no deps) → Application → Infrastructure → WebApi
+9. `SystemController` with `/v1/system/info` endpoint
+10. `ServiceDefaults/Extensions.cs` with health check at `/health`
+11. 6 architecture tests (NetArchTest.Rules) enforcing layer boundaries
+12. 2 unit smoke tests, 2 integration tests (WebApplicationFactory), 1 contract test
+13. Aspire via NuGet packages (not deprecated workload)
 
-**Evidence:** Tests pass, 0 type errors (pending final verification).
+**Evidence:** `dotnet build` — 0 warnings, 0 errors. `dotnet test` — 11/11 pass.
 
 ## Next permitted action
 
-Milestone 01 is complete. After M01-S08 review approval: begin Milestone 02 planning.
+Plan and implement M02-S02: API conventions.
 
 ## Next prohibited action
 
-- Milestone 02 implementation (until M01-S08 is approved)
-- Any backend (.NET/C#) implementation
+- Skipping to M02-S03+ without completing M02-S02
 - Any real provider integration, deployment, or external service contact
 - Committing, pushing, or deploying
 
@@ -63,3 +65,4 @@ Milestone 01 is complete. After M01-S08 review approval: begin Milestone 02 plan
 | 2026-07-12 | M01-S06 complete. 321 tests pass, clean type check. Status → REVIEW. | M01-S06 session |
 | 2026-07-12 | M01-S07 complete. 402 tests pass, clean type check. Status → REVIEW. | M01-S07 session |
 | 2026-07-12 | M01-S08 complete. Milestone 01 finished. Status → REVIEW. | M01-S08 session |
+| 2026-07-27 | M02-S01 complete. 11 tests pass, 0 build errors. Status → COMPLETE. | M02-S01 session |

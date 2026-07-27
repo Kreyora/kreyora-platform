@@ -85,7 +85,7 @@ Saney is a **Nepal-focused social commerce OS** for Meta/TikTok sellers that con
 
 Our docs define a **.NET 10 modular monolith** social commerce OS with:
 
-- Clean Architecture + DDD + CQRS (MediatR)
+- Clean Architecture + DDD + service-layer pattern with traditional controllers (no MediatR/CQRS — see ADR-001)
 - PostgreSQL + EF Core multi-tenancy
 - Redis + Hangfire
 - Meta Graph channel providers (WhatsApp, IG, FB) first; TikTok less explicit
@@ -421,7 +421,7 @@ Additional implicit principles that should be made explicit in the final bluepri
 | Topic | Existing decision | Status | Step 4 action |
 |---|---|---|---|
 | Backend | ASP.NET Core / .NET 10 Web API. | Locked. | Retain. |
-| Architecture | Modular monolith; Clean Architecture, DDD and CQRS/MediatR. | Locked intent. | Define practical module boundaries and avoid ceremony where it does not protect invariants. |
+| Architecture | Modular monolith; Clean Architecture, DDD, service-layer with traditional controllers (no MediatR/CQRS — ADR-001). | Locked. | Define practical module boundaries. Use service interfaces for business logic, not command/query handler pipelines. |
 | Layers | `Domain → Application → Infrastructure → WebApi`. | Locked. | Retain dependency direction and module contracts. |
 | Database | PostgreSQL with EF Core. | Locked. | Retain; define migrations, indexes, tenant strategy and transaction boundaries. |
 | Multi-tenancy | Seller tenant, EF Core global filter/custom interceptor; optional Finbuckle. | Direction set, implementation open. | Choose one mechanism and document background-job/webhook tenant resolution. |
@@ -459,7 +459,7 @@ The master plan’s project structure is a sound starting point:
 ```text
 src/
 ├── Domain/          entities, value objects, domain events and invariants
-├── Application/     use cases/CQRS, validation, contracts and AI tool boundary
+├── Application/     service interfaces, DTOs, validation, contracts and AI tool boundary
 ├── Infrastructure/  EF Core/Postgres, Identity, Redis, Hangfire, providers
 └── WebApi/          HTTP API, webhook receivers, middleware and composition root
 ```
@@ -485,7 +485,7 @@ What is under-specified:
 
 ### 8.5 AI architecture audit
 
-The proposed AI design is unusually solid where it matters: it explicitly protects source-of-truth commerce data. It uses external providers rather than premature custom training; tool calls map to application commands/queries; RAG serves merchant FAQ/shipping/refund context; confidence scoring supports escalation; and `AIActionLog` enables review.
+The proposed AI design is unusually solid where it matters: it explicitly protects source-of-truth commerce data. It uses external providers rather than premature custom training; tool calls map to application service methods; RAG serves merchant FAQ/shipping/refund context; confidence scoring supports escalation; and `AIActionLog` enables review.
 
 **Existing tools:** `SearchProducts`, `CheckInventory`, `GetPrice`, `GetShippingInfo`, `CreateOrder`, `ReserveInventory`, `EscalateToHuman`.
 
@@ -520,7 +520,7 @@ The master document contains ten prompts, while the divided prompt document cont
 3. **The product roadmap under-scopes storefront, payment, delivery and billing.** Existing Phases 1–5 can create a technically sound inbox AI but not a Saney-class commerce product.
 4. **Channel scope is optimistic.** WhatsApp first then Instagram/Facebook is sensible; platform approval/API capability must be treated as an external dependency. TikTok is absent.
 5. **AI image identification is premature for MVP.** It adds vision/OCR/evaluation/media complexity before the catalog and order path are proven.
-6. **“CQRS/DDD/Clean Architecture” needs proportionality.** Enforce invariants and module boundaries, but avoid layer abstractions or MediatR use where they provide no product value.
+6. **Clean Architecture needs proportionality.** Enforce invariants and module boundaries. Use a service-layer pattern with traditional controllers instead of MediatR/CQRS (ADR-001).
 7. **Automated production migrations need controls.** Unconditional migration-on-startup is unsafe once zero-downtime deployments or multiple API instances exist.
 8. **SaaS economics are missing.** No plan, quota, metering, subscription, fee ledger or VAT/commercial ownership is defined.
 
@@ -746,7 +746,7 @@ apps/
 services/
   api/src/
     Domain/                   # aggregates, value objects, invariants, domain events
-    Application/              # commands/queries, policies, provider-neutral contracts
+    Application/              # service interfaces, DTOs, policies, provider-neutral contracts
     Infrastructure/           # EF/Identity/Redis/Hangfire/storage/providers
     WebApi/                   # REST, webhooks, auth, tenancy and composition
   worker/                     # optional host if jobs are not co-hosted initially
@@ -761,7 +761,7 @@ Start with a single API host plus Hangfire worker process only if resource press
 
 ### 10.3 Modular backend architecture
 
-Modules own their domain rules and application use cases. Cross-module reads use stable query contracts; cross-module side effects use domain/integration events or explicit application orchestrators. Modules must not reach directly into another module’s EF repositories.
+Modules own their domain rules and application services. Cross-module reads use stable query contracts; cross-module side effects use domain/integration events or explicit application orchestrators. Modules must not reach directly into another module’s EF repositories.
 
 | Module | Owns | Key responsibilities |
 |---|---|---|
@@ -1039,7 +1039,7 @@ Use one prompt at a time after its prerequisites are met. Each prompt assumes th
 
 #### Prompt 2 — Catalog, media and inventory correctness
 
-> Implement Milestone 3. Create Catalog and Inventory modules with Product, ProductVariant, product media references, publication state, inventory balance, append-only StockMovement and expiring InventoryReservation. Implement commands/queries for seller product management, stock adjustment, reserve/release/commit inventory and published catalog reads. Use PostgreSQL transactions/concurrency controls so concurrent reservation attempts cannot oversell. Every aggregate is tenant-scoped and audited. Add seller catalog/inventory pages and media upload authorization contract (not a public bucket). Write unit/integration tests for isolation, stock reconciliation, duplicate idempotency keys, expiry and high-contention reservation.
+> Implement Milestone 3. Create Catalog and Inventory modules with Product, ProductVariant, product media references, publication state, inventory balance, append-only StockMovement and expiring InventoryReservation. Implement service methods for seller product management, stock adjustment, reserve/release/commit inventory and published catalog reads. Use PostgreSQL transactions/concurrency controls so concurrent reservation attempts cannot oversell. Every aggregate is tenant-scoped and audited. Add seller catalog/inventory pages and media upload authorization contract (not a public bucket). Write unit/integration tests for isolation, stock reconciliation, duplicate idempotency keys, expiry and high-contention reservation.
 
 #### Prompt 3 — Storefront, delivery, checkout and canonical orders
 

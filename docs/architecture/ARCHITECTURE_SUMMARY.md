@@ -1,6 +1,6 @@
 # Architecture Summary
 
-> Navigation document. `design_files/plan.md` remains the authoritative architecture reference, especially Sections 10 and 11.
+> Navigation document. `docs/plan/plan.md` remains the authoritative architecture reference, especially Sections 10 and 11.
 
 ## System surfaces
 
@@ -10,6 +10,13 @@
 | Public storefront | Next.js + TypeScript | Tenant-branded product pages, cart, checkout, order lookup |
 | API | ASP.NET Core .NET 10 | REST endpoints, webhooks, background jobs |
 | Worker | Hangfire (co-hosted or separate) | Async jobs: reservation expiry, outbox, notifications, integration events |
+
+## Backend pattern
+
+- **Controllers:** Traditional `[ApiController]` classes. Thin dispatchers — inject service interfaces, return results.
+- **Service layer:** Application-layer service interfaces (e.g., `IOrderService`, `ICatalogService`) define business operations. Implementations in Infrastructure orchestrate domain logic, repositories, and external providers.
+- **No MediatR/CQRS:** Business operations use direct service calls, not command/query handler pipelines. See ADR-001.
+- **Dependency direction:** `Domain → Application → Infrastructure → WebApi` (locked).
 
 ## Module boundaries
 
@@ -37,7 +44,7 @@ Modules own their domain rules. Cross-module communication uses stable query con
 - Every tenant-owned table has `TenantId` and composite indexes for common reads.
 - Append-only records: StockMovement, UsageEvent, AuditEvent, WebhookEvent, payment transactions, outbox.
 - Financial/order snapshots are immutable — later catalog changes cannot rewrite commercial history.
-- See `design_files/plan.md` §10.10 for table/index details.
+- See `docs/plan/plan.md` §10.10 for table/index details.
 
 ## Tenant boundary
 
@@ -45,7 +52,7 @@ Modules own their domain rules. Cross-module communication uses stable query con
 - Context resolved from: authenticated membership (seller API), connection identifier (webhooks), persisted tenant ID (jobs/outbox), verified hostname (storefront).
 - EF query filters as defense-in-depth; explicit ownership verification on every command.
 - Object storage paths use tenant prefix; cache keys include tenant.
-- See `design_files/plan.md` §10.5.
+- See `docs/plan/plan.md` §10.5.
 
 ## Primary state machines
 
@@ -67,7 +74,7 @@ Provider webhook → signature verification → persist immutable WebhookEvent
 → outbound response via outbox → provider send worker → delivery result/retry
 ```
 
-See `design_files/plan.md` §10.6 for `IChannelProvider` contract and reliability design.
+See `docs/plan/plan.md` §10.6 for `IChannelProvider` contract and reliability design.
 
 ## AI tool/RAG boundary
 
@@ -76,7 +83,7 @@ See `design_files/plan.md` §10.6 for `IChannelProvider` contract and reliabilit
 - Catalog, inventory, pricing, delivery, payment, and order data always come from tools, never RAG.
 - Tool loops have iteration, cost, and time budgets.
 - Human takeover immediately stops AI with an audit event.
-- See `design_files/plan.md` §10.7.
+- See `docs/plan/plan.md` §10.7.
 
 ## Deployment topology
 
@@ -89,4 +96,4 @@ One VPS with Docker Compose: Caddy, Next.js, ASP.NET Core API + Hangfire, Postgr
 ### Growth
 Separate API/worker hosts, managed PostgreSQL, Redis, expanded CDN.
 
-See `design_files/Divided Plans/Deployment_Strategy_and_Infrastructure_Plan.md` for full topology.
+See `docs/plan/divided/Deployment_Strategy_and_Infrastructure_Plan.md` for full topology.

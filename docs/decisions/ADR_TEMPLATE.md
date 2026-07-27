@@ -8,7 +8,7 @@
 
 ## Context
 
-Describe the decision, constraints, evidence, and why it is required now. Reference the relevant section of `design_files/plan.md` or milestone file.
+Describe the decision, constraints, evidence, and why it is required now. Reference the relevant section of `docs/plan/plan.md` or milestone file.
 
 ## Decision
 

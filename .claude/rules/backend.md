@@ -10,16 +10,23 @@ Applies to: C#, .NET, API controllers, domain/application/infrastructure layers,
 - WebApi/Worker compose modules; they do not contain business logic.
 - Modules interact via stable query contracts, domain/integration events, or explicit application orchestrators — never by reaching into another module's repositories.
 
+## API style
+
+- Use traditional `[ApiController]` controllers, not Minimal APIs.
+- Controllers are thin dispatchers — inject service interfaces, return results.
+- No MediatR or CQRS. Use service interfaces (e.g., `IOrderService`, `ICatalogService`) in the Application layer.
+- Service implementations live in Infrastructure and contain business orchestration logic.
+
 ## Tenant scoping
 
 - Every tenant-owned entity, query, cache key, job payload, storage path, and provider event must include `TenantId`.
 - EF query filters are defense-in-depth, not the only barrier.
-- Every command explicitly verifies tenant ownership of referenced IDs.
+- Every service method explicitly verifies tenant ownership of referenced IDs.
 - Never trust an arbitrary tenant header; resolve context from authenticated membership, connection identifier, or persisted job tenant.
 
 ## Authorization
 
-- Server-side policy-based authorization on every endpoint and command.
+- Server-side policy-based authorization on every endpoint and service method.
 - Roles: Owner, Admin, Operator, Viewer, and audited PlatformSupport.
 - Privileged operations require authorization check and audit event.
 
@@ -58,4 +65,6 @@ Applies to: C#, .NET, API controllers, domain/application/infrastructure layers,
 ## Business logic placement
 
 - No business logic in controllers or AI tools.
-- Controllers dispatch to application commands/queries; AI tools call application services.
+- Controllers inject application service interfaces and delegate all business logic to them.
+- AI tools call application services — never repositories or DbContext directly.
+- Service interfaces are defined in the Application layer; implementations live in Infrastructure.

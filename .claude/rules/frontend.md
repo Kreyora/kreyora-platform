@@ -40,7 +40,7 @@ Every major route must handle: loading, empty, error, validation, permission-den
 
 ## Visual direction
 
-- Follow `design_files/project_a_milestones/FRONTEND_DESIGN_DIRECTION.md` for all visual decisions.
+- Follow `docs/milestones/FRONTEND_DESIGN_DIRECTION.md` for all visual decisions.
 - White canvas, bold near-black editorial typography, generous whitespace, deliberate grid, restrained neutral components, product-led color, and smooth minimal motion.
 
 ## Tests

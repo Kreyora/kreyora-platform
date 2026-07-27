@@ -12,7 +12,7 @@ Review implementation work for the active milestone prompt step against the appr
 
 1. Read `docs/context/CURRENT_WORK.md` to identify the active milestone and step.
 2. Read the active milestone file to understand the prompt requirements and acceptance criteria.
-3. Read `design_files/plan.md` Sections 10–11 for architecture constraints.
+3. Read `docs/plan/plan.md` Sections 10–11 for architecture constraints.
 4. Read the relevant `.claude/rules/` files (frontend, backend, testing).
 5. Review the Git diff for the current step.
 6. Review all new and modified tests.

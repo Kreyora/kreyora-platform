@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kreyora.Domain\Kreyora.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
