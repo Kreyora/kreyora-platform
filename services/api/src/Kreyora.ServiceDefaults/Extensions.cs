@@ -1,20 +1,16 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Kreyora.ServiceDefaults;
 
-/// <summary>
-/// Aspire-compatible service defaults. Will be expanded in M02-S04 when the
-/// Aspire workload is installed. For now this provides a minimal health-check
-/// registration so the WebApi project can reference it without errors.
-/// </summary>
 public static class Extensions
 {
     public static IServiceCollection AddServiceDefaults(this IServiceCollection services)
     {
         services.AddHealthChecks()
-            .AddCheck("self", () => HealthCheckResult.Healthy());
+            .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live", "ready"]);
 
         return services;
     }
@@ -22,6 +18,17 @@ public static class Extensions
     public static WebApplication MapServiceDefaults(this WebApplication app)
     {
         app.MapHealthChecks("/health");
+
+        app.MapHealthChecks("/health/live", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("live")
+        });
+
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready")
+        });
+
         return app;
     }
 }
