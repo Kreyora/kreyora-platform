@@ -16,6 +16,11 @@ public static class DependencyInjection
         services.AddSingleton<Domain.Abstractions.ITimeProvider, SystemTimeProvider>();
 
         var connectionString = configuration.GetValue<string>("Database:ConnectionString");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            connectionString = configuration.GetConnectionString("kreyora");
+        }
+
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
             services.AddDbContext<AppDbContext>(options =>

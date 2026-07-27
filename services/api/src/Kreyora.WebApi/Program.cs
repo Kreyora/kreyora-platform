@@ -8,7 +8,11 @@ using Kreyora.Infrastructure.Correlation;
 using Kreyora.Infrastructure.Errors;
 using Kreyora.Infrastructure.Logging;
 using Kreyora.ServiceDefaults;
+using Hangfire;
+using Kreyora.Infrastructure.BackgroundJobs;
+using Kreyora.Infrastructure.Persistence;
 using Kreyora.WebApi.Configuration;
+using Kreyora.WebApi.Seeding;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +44,7 @@ builder.Services
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHangfireServices(builder.Configuration);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -66,6 +71,17 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+if (args.Contains("--migrate"))
+{
+    await MigrationRunner.ApplyMigrationsAsync(app.Services);
+    return;
+}
+
+if (args.Contains("--seed"))
+{
+    await DevSeedHook.SeedDevelopmentDataAsync(app.Services);
+}
+
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -73,6 +89,11 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    if (app.Services.GetService<JobStorage>() is not null)
+    {
+        app.MapHangfireDashboard("/hangfire");
+    }
 }
 
 app.UseHttpsRedirection();

@@ -1,8 +1,17 @@
-﻿// Aspire AppHost — will be expanded in M02-S04 with PostgreSQL,
-// Redis, and other resource definitions.
+﻿var builder = DistributedApplication.CreateBuilder(args);
 
-var builder = DistributedApplication.CreateBuilder(args);
+var postgres = builder.AddPostgres("postgres")
+    .WithLifetime(ContainerLifetime.Persistent);
 
-// M02-S04 will register: postgres, api project, etc.
+var db = postgres.AddDatabase("kreyora");
+
+var api = builder.AddProject<Projects.Kreyora_WebApi>("api")
+    .WithReference(db)
+    .WaitFor(db);
+
+builder.AddNextJsApp("web", "../../../apps/web")
+    .WithReference(api)
+    .WithHttpEndpoint(port: 3000, env: "PORT")
+    .WaitFor(api);
 
 builder.Build().Run();

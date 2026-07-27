@@ -1,0 +1,13 @@
+**/node_modules/
+**/.next/
+**/.git/
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/coverage/
+**/*.user
+**/*.suo
+**/Thumbs.db
+**/.env
+**/tests/
