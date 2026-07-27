@@ -3,53 +3,50 @@
 ## Active position
 
 - **Milestone:** 02 — Engineering and Backend Foundation
-- **Step:** 04 — Aspire, Docker, Local Dependencies, and Developer Workflow
+- **Step:** 05 — Frontend Contract Adapters and Generated Types
 - **Status:** `COMPLETE`
 - **Active milestone file:** `docs/milestones/02_ENGINEERING_FOUNDATION.md`
 
 ## Branch and commit state
 
 - **Branch:** main (local, no commits or pushes)
-- **Last state:** M01 complete, M02-S01 complete, M02-S02 complete, M02-S03 complete, M02-S04 complete
+- **Last state:** M01 complete, M02-S01 through M02-S05 complete
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M02-S04.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M02-S03.md`
+- **Current checkpoint:** `artifacts/checkpoints/M02-S05.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M02-S04.md`
 
 ## Blockers
 
-None. (CSS build issue resolved — root cause was `font-[family-name:...]` arbitrary value with colons in `layout.tsx`.)
+None.
 
 ## Current objective
 
-M02-S04 implementation complete — Aspire, Docker, and developer workflow:
+M02-S05 implementation complete — frontend contract adapters and generated types:
 
-1. AppHost upgraded to Aspire 13 SDK (`Aspire.AppHost.Sdk/13.4.6`)
-2. `Aspire.Hosting.PostgreSQL` + `Aspire.Hosting.JavaScript` wired in AppHost
-3. AppHost orchestrates PostgreSQL container, API project, and Next.js frontend
-4. Infrastructure DI accepts Aspire-injected connection strings (`ConnectionStrings:kreyora` fallback)
-5. `--migrate` CLI argument for controlled migration execution
-6. Hangfire with PostgreSQL storage (`Hangfire.AspNetCore` 1.8.24, `Hangfire.PostgreSql` 1.21.1)
-7. Dev-only Hangfire dashboard at `/hangfire` (guarded by service availability check)
-8. `DevSeedHook` placeholder for future business seed data (`--seed` CLI argument)
-9. Multi-stage API Dockerfile (SDK build → aspnet runtime, non-root user)
-10. Multi-stage web Dockerfile (pnpm + Next.js standalone output, non-root user)
-11. `docker-compose.yml` with PostgreSQL, API, and web services
-12. `docker-compose.override.yml` for development overrides
-13. `.dockerignore` files for API, web, and root context
-14. `next.config.ts` updated with `output: "standalone"` for Docker deployments
-15. Fixed CSS build error — root cause was `font-[family-name:var(--font-inter),...]` arbitrary value with colons in `layout.tsx` that generated CSS postcss couldn't re-parse
+1. `apiFetch` base client with correlation ID forwarding, RFC 7807 error parsing, and typed responses
+2. `ApiClientError` class mapping from ProblemDetails shape
+3. `NEXT_PUBLIC_API_URL` env var for runtime adapter switching
+4. CORS middleware wired in `Program.cs` using `CorsSettings.AllowedOrigins`
+5. `openapi-typescript` codegen installed, `generate:api` script added
+6. Generated TypeScript types from the live OpenAPI spec (`v1.ts`)
+7. `API_CONTRACT_STRATEGY.md` documenting the transport vs view-model type separation
+8. `ClientProvider` refactored: `USING_FIXTURE_ADAPTERS` now driven by `NEXT_PUBLIC_API_URL`
+9. `apiSystemClient` real adapter for `/v1/system/info` endpoint
+10. `ApiStatus` dev-only connectivity proof component
+11. 12 new frontend tests (api-client, adapter switching, system client)
+12. 2 new backend contract tests (correlation ID echo and generation)
 
-**Evidence:** 61 backend tests pass (0 build errors), 482 frontend tests pass, both Docker images build successfully.
+**Evidence:** 63 backend tests pass (0 build errors), 494 frontend tests pass, production build succeeds.
 
 ## Next permitted action
 
-Plan and implement M02-S05 (next step per milestone plan).
+Plan and implement M02-S06 (next step per milestone plan).
 
 ## Next prohibited action
 
-- Skipping to M02-S06+ without completing M02-S05
+- Skipping to M02-S07+ without completing M02-S06
 - Any real provider integration, deployment, or external service contact
 - Committing, pushing, or deploying
 
@@ -71,3 +68,4 @@ Plan and implement M02-S05 (next step per milestone plan).
 | 2026-07-27 | M02-S02 complete. 54 tests pass, 0 build errors. Status → COMPLETE. | M02-S02 session |
 | 2026-07-27 | M02-S03 complete. 61 tests pass, 0 build errors. Status → COMPLETE. | M02-S03 session |
 | 2026-07-27 | M02-S04 complete. 61 backend + 482 frontend tests pass. Both Docker images build. Status → COMPLETE. | M02-S04 session |
+| 2026-07-28 | M02-S05 complete. 63 backend + 494 frontend tests pass. Contract adapters wired. Status → COMPLETE. | M02-S05 session |

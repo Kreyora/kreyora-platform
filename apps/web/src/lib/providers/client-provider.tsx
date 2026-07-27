@@ -31,11 +31,11 @@ import {
 } from "@/lib/adapters/mock";
 
 /**
- * Whether the application is using mock/fixture adapters.
- * This flag is used by the DemoIndicator component to decide visibility
- * and will be replaced by a real adapter check in production configuration.
+ * Determined at build time from the NEXT_PUBLIC_API_URL env var.
+ * When the var is set the app uses real API adapters; otherwise mock/fixture
+ * adapters power the demo mode.
  */
-export const USING_FIXTURE_ADAPTERS = true;
+export const USING_FIXTURE_ADAPTERS = !process.env.NEXT_PUBLIC_API_URL;
 
 if (
   USING_FIXTURE_ADAPTERS &&
@@ -44,8 +44,8 @@ if (
 ) {
   console.warn(
     "[Kreyora] Fixture adapters are active in a production build. " +
-      "This is almost certainly a misconfiguration. Set USING_FIXTURE_ADAPTERS " +
-      "to false and provide real API adapters before deploying.",
+      "Set the NEXT_PUBLIC_API_URL environment variable to connect to the " +
+      "real API before deploying.",
   );
 }
 
