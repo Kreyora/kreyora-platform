@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kreyora.Infrastructure\Kreyora.Infrastructure.csproj" />
+    <ProjectReference Include="..\Kreyora.Application\Kreyora.Application.csproj" />
+    <ProjectReference Include="..\Kreyora.ServiceDefaults\Kreyora.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

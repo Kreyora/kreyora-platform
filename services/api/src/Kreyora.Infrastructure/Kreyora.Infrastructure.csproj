@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kreyora.Application\Kreyora.Application.csproj" />
+  </ItemGroup>
+
+</Project>

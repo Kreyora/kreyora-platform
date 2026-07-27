@@ -53,7 +53,7 @@ Created the durable repository-based memory system for AI-assisted development o
 - **Components/modules changed:** None (no application code exists)
 - **Runtime or data flow:** Not applicable
 - **Key invariants enforced:** Source hierarchy, architecture invariants documented; authoritative files referenced, not duplicated
-- **Compatibility with prior work:** All existing `design_files/` preserved unchanged
+- **Compatibility with prior work:** All existing planning documents preserved unchanged (later moved from `design_files/` to `docs/plan/` and `docs/milestones/`)
 
 ## Files changed
 
@@ -93,7 +93,7 @@ Created the durable repository-based memory system for AI-assisted development o
 |---|---|---|
 | Required files exist | Glob all expected paths | All 19 files present |
 | CLAUDE.md line count | Count lines | Under 200 |
-| No authoritative files changed | Compare design_files/ | Unchanged |
+| No authoritative files changed | Compare docs/plan/ and docs/milestones/ (moved from design_files/) | Unchanged |
 | Cross-references valid | Verify all file paths in CONTEXT_MANIFEST and CLAUDE.md | All point to existing files |
 | No conflicts with source hierarchy | Review for contradictions | None found |
 | Git initialized | `git status` | Clean working tree with untracked bootstrap files |
@@ -113,8 +113,8 @@ Not applicable — no frontend implementation in this step.
 
 - **ADRs created or changed:** None. Baseline architecture from `plan.md` §10 documented in ADR_INDEX.md
 - **Assumptions made:**
-  - The milestone file path convention `design_files/project_a_milestones/` is the canonical location
-  - The existing `CHECKPOINT_TEMPLATE.md` and `ADR_TEMPLATE.md` in `design_files/project_a_milestones/` are the source templates (content preserved in the `artifacts/` and `docs/decisions/` copies)
+  - The milestone file path convention `docs/milestones/` is the canonical location
+  - The existing `CHECKPOINT_TEMPLATE.md` and `ADR_TEMPLATE.md` in `docs/milestones/` are the source templates (content preserved in the `artifacts/` and `docs/decisions/` copies)
 - **External evidence used:** None
 
 ## Known issues and risks
@@ -127,7 +127,7 @@ Not applicable — no frontend implementation in this step.
 
 1. Verify all 19 files listed above exist in the repository.
 2. Confirm `CLAUDE.md` is under 200 lines.
-3. Confirm no files under `design_files/` were modified.
+3. Confirm no planning documents were modified (now in `docs/plan/` and `docs/milestones/`).
 4. Read `CLAUDE.md` and verify it references the correct source hierarchy and architecture invariants.
 5. Read `docs/context/CURRENT_WORK.md` and verify it shows M01-S01 NOT STARTED.
 6. Read `docs/context/CONTEXT_MANIFEST.md` and verify all file paths resolve.

@@ -30,7 +30,7 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 
 ## Prompt 01 — Store entity, readiness, settings, and publication
 
-> Implement the Storefront administration domain with Store, platform slug, status, controlled brand/theme settings, contact/social links, policy content, product publication scope, delivery/payment readiness placeholders, and one-active-store-per-tenant entitlement rule. Define readiness checks that explain every blocker and prevent public purchasing before catalog, delivery, and payment requirements pass. Implement seller commands/queries, authorization, audit, idempotency, mappings, indexes, migration, and tests. Do not implement public checkout yet.
+> Implement the Storefront administration domain with Store, platform slug, status, controlled brand/theme settings, contact/social links, policy content, product publication scope, delivery/payment readiness placeholders, and one-active-store-per-tenant entitlement rule. Define readiness checks that explain every blocker and prevent public purchasing before catalog, delivery, and payment requirements pass. Implement seller service methods, authorization, audit, idempotency, mappings, indexes, migration, and tests. Do not implement public checkout yet.
 
 **Review checkpoint:** approve store model, safe theme boundary, slug rules, readiness output, and publication behavior.
 

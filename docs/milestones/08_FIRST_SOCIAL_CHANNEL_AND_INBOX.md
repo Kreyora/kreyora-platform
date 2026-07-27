@@ -50,7 +50,7 @@ Human takeover is a transactional conversation-state change checked by outbound 
 
 ## Prompt 04 — Customer identities, conversations, and messages
 
-> Implement CustomerChannelIdentity, Customer, Conversation, Message, external references, assignment metadata, labels, unread state, and automation ownership state. Define deterministic rules for conversation lookup/creation and identity linkage within a tenant/connection. Store only necessary provider/customer fields and apply retention/redaction policies. Consume normalized provider events idempotently and update delivery state without duplicating messages. Add migrations, commands/queries, indexes, isolation tests, and out-of-order event tests.
+> Implement CustomerChannelIdentity, Customer, Conversation, Message, external references, assignment metadata, labels, unread state, and automation ownership state. Define deterministic rules for conversation lookup/creation and identity linkage within a tenant/connection. Store only necessary provider/customer fields and apply retention/redaction policies. Consume normalized provider events idempotently and update delivery state without duplicating messages. Add migrations, service methods, indexes, isolation tests, and out-of-order event tests.
 
 **Review checkpoint:** approve identity boundaries, data minimization, conversation rules, and message timeline evidence.
 

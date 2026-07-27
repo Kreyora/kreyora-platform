@@ -1,6 +1,6 @@
 # Kreyora — Project Context
 
-> Derived from `design_files/plan.md`, `design_files/Divided Plans/AI_Social_Commerce_Project_Plan.md`, and `design_files/project_a_milestones/00_MASTER_INDEX.md`. This is a navigation summary, not a replacement for the authoritative sources.
+> Derived from `docs/plan/plan.md`, `docs/plan/divided/AI_Social_Commerce_Project_Plan.md`, and `docs/milestones/00_MASTER_INDEX.md`. This is a navigation summary, not a replacement for the authoritative sources.
 
 ## Product definition
 
@@ -30,7 +30,7 @@ signup → workspace → catalog → storefront publication → social enquiry
 ## Selected architecture
 
 - **Frontend:** Next.js + strict TypeScript (seller workspace + public storefront)
-- **Backend:** ASP.NET Core .NET 10 modular monolith
+- **Backend:** ASP.NET Core .NET 10 modular monolith with traditional `[ApiController]` controllers and service-layer pattern (no MediatR/CQRS — see ADR-001)
 - **Data:** PostgreSQL + EF Core with mandatory tenant scoping
 - **Identity:** ASP.NET Core Identity, memberships, policy-based RBAC
 - **Jobs:** Hangfire with PostgreSQL storage (Redis optional, not MVP)
@@ -38,7 +38,7 @@ signup → workspace → catalog → storefront publication → social enquiry
 - **Deployment:** Docker, .NET Aspire locally, GitHub Actions/GHCR
 - **AI:** Provider-neutral orchestration with tool-calling and tenant-scoped RAG
 
-See `design_files/plan.md` Section 10.2 for the full locked stack.
+See `docs/plan/plan.md` Section 10.2 for the full locked stack and ADR-001 for the service-layer decision.
 
 ## Security and AI principles
 
@@ -74,7 +74,7 @@ See `design_files/plan.md` Section 10.2 for the full locked stack.
 ## Current implementation state
 
 - **Phase:** Implementation
-- **Active milestone:** 01 — Frontend Showcase
-- **Active step:** 01 — Route inventory, design system, and mock architecture
-- **Status:** REVIEW (awaiting approval, amendments applied)
-- **Repository:** pnpm monorepo. `apps/web/` contains Next.js 16 application with design system (Inter + Noto Sans Devanagari), 20 UI components (6 Radix-based), 13 mock adapters, 41 route placeholders across 4 route groups, 92 passing tests
+- **Active milestone:** 01 — Frontend Showcase (complete, all 8 steps)
+- **Next milestone:** 02 — Engineering and Backend Foundation
+- **Status:** M01 COMPLETE, M02 NOT STARTED
+- **Repository:** pnpm monorepo. `apps/web/` contains Next.js application with design system (Inter + Noto Sans Devanagari), 20 UI components (6 Radix-based), 13 mock adapters, 41 fully implemented routes across 4 route groups, 482 passing tests
