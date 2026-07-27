@@ -26,7 +26,7 @@ Never silently resolve a conflict. Record the conflict, recommendation, decision
 - Product: Nepal-focused, multi-tenant social-commerce operating system.
 - Frontend: Next.js with TypeScript, mobile-first seller workspace and public storefront.
 - Frontend design: dominant white canvas, bold near-black editorial typography, deliberate whitespace/grid, minimal neutral components, product-led color, and restrained accessible motion as defined in `FRONTEND_DESIGN_DIRECTION.md`.
-- Backend: ASP.NET Core .NET 10 modular monolith.
+- Backend: ASP.NET Core .NET 10 modular monolith with traditional controllers and service-layer pattern (no MediatR/CQRS — ADR-001).
 - Data: PostgreSQL with EF Core and mandatory tenant scoping.
 - Identity: ASP.NET Core Identity, tenant memberships, policy-based RBAC.
 - Jobs: Hangfire with PostgreSQL storage for MVP. Redis is optional, not an MVP dependency.

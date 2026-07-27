@@ -28,13 +28,13 @@ Purchasability requires an active store later, a published product/variant, a va
 
 ## Prompt 01 — Catalog and variant domain
 
-> Implement the Catalog module with Product, ProductVariant, canonical NPR price facts, publication state, optional category/collection primitives needed by the approved UI, and validation/readiness rules. Define stable IDs/slugs, SKU uniqueness per tenant, variant option representation, status transitions, and update concurrency. Persist with tenant-aware mappings and indexes. Add commands/queries, authorization, idempotency for retryable creates, audit events, migrations, and domain/integration tests. Do not implement inventory or public storefront projection yet.
+> Implement the Catalog module with Product, ProductVariant, canonical NPR price facts, publication state, optional category/collection primitives needed by the approved UI, and validation/readiness rules. Define stable IDs/slugs, SKU uniqueness per tenant, variant option representation, status transitions, and update concurrency. Persist with tenant-aware mappings and indexes. Add service methods, authorization, idempotency for retryable creates, audit events, migrations, and domain/integration tests. Do not implement inventory or public storefront projection yet.
 
 **Review checkpoint:** approve the catalog model, price ownership, publication rules, and API-independent tests.
 
 ## Prompt 02 — Stock ledger, balances, and adjustments
 
-> Implement InventoryItem and append-only StockMovement for receipts, corrections, damage, reservation commit/release effects, and other approved reasons. Derive or transactionally maintain on-hand, reserved, and available balances with a documented consistency model. Stock adjustments require authorization, reason, idempotency key, actor, tenant, and audit event. Prevent negative quantities except through an explicitly rejected-by-default policy. Add migrations, commands/queries, reconciliation logic, and tests for duplicate requests, corrections, and cross-tenant isolation.
+> Implement InventoryItem and append-only StockMovement for receipts, corrections, damage, reservation commit/release effects, and other approved reasons. Derive or transactionally maintain on-hand, reserved, and available balances with a documented consistency model. Stock adjustments require authorization, reason, idempotency key, actor, tenant, and audit event. Prevent negative quantities except through an explicitly rejected-by-default policy. Add migrations, service methods, reconciliation logic, and tests for duplicate requests, corrections, and cross-tenant isolation.
 
 **Review checkpoint:** approve ledger semantics, balance calculations, adjustment permissions, and reconciliation evidence.
 

@@ -11,7 +11,7 @@ Review implementation work for security, tenant isolation, data protection, and 
 ## Procedure
 
 1. Read `docs/context/CURRENT_WORK.md` to identify the active milestone and step.
-2. Read `design_files/plan.md` Sections 10.5 (tenancy), 10.6 (integrations), 10.7 (AI), 10.9 (payments), and 10.11 (security).
+2. Read `docs/plan/plan.md` Sections 10.5 (tenancy), 10.6 (integrations), 10.7 (AI), 10.9 (payments), and 10.11 (security).
 3. Review the Git diff for the current step.
 4. Inspect all paths that handle authentication, authorization, tenant resolution, secrets, PII, webhooks, payments, AI boundaries, or file uploads.
 

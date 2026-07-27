@@ -18,20 +18,22 @@
 
 ## Active decisions
 
-No ADRs have been created yet. The baseline architecture is defined in `design_files/plan.md` Sections 10–11 and the invariants listed in `CLAUDE.md`.
+| ADR | Title | Status | Date | Superseded by |
+|---|---|---|---|---|
+| ADR-001 | Service-layer pattern with traditional controllers (no MediatR/CQRS) | `Accepted` | 2026-07-27 | — |
 
 ## Index
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
-| — | — | — | — | — |
+| ADR-001 | Service-layer pattern with traditional controllers (no MediatR/CQRS) | `Accepted` | 2026-07-27 | — |
 
 ## Baseline architecture (pre-ADR)
 
-The following decisions are documented in `design_files/plan.md` §10.2 and §10.13 and are treated as accepted unless a future ADR changes them:
+The following decisions are documented in `docs/plan/plan.md` §10.2 and §10.13 and are treated as accepted unless a future ADR changes them:
 
 - Next.js + TypeScript frontend
-- ASP.NET Core .NET 10 modular monolith backend
+- ASP.NET Core .NET 10 modular monolith backend with traditional controllers and service-layer pattern (ADR-001)
 - PostgreSQL + EF Core with mandatory tenant scoping
 - ASP.NET Core Identity with policy-based RBAC
 - Hangfire + PostgreSQL storage (Redis optional, not MVP)

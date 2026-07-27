@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kreyora.AppHost/Kreyora.AppHost.csproj" />
+    <Project Path="src/Kreyora.Application/Kreyora.Application.csproj" />
+    <Project Path="src/Kreyora.Domain/Kreyora.Domain.csproj" />
+    <Project Path="src/Kreyora.Infrastructure/Kreyora.Infrastructure.csproj" />
+    <Project Path="src/Kreyora.ServiceDefaults/Kreyora.ServiceDefaults.csproj" />
+    <Project Path="src/Kreyora.WebApi/Kreyora.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kreyora.ArchitectureTests/Kreyora.ArchitectureTests.csproj" />
+    <Project Path="tests/Kreyora.ContractTests/Kreyora.ContractTests.csproj" />
+    <Project Path="tests/Kreyora.IntegrationTests/Kreyora.IntegrationTests.csproj" />
+    <Project Path="tests/Kreyora.UnitTests/Kreyora.UnitTests.csproj" />
+  </Folder>
+</Solution>

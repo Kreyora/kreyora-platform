@@ -9,11 +9,11 @@ Kreyora is a Nepal-focused, multi-tenant social-commerce operating system. It co
 When instructions conflict, use this authority order:
 
 1. Accepted Architecture Decision Records (`docs/decisions/`)
-2. `design_files/plan.md`, especially Sections 10 and 11
-3. The active milestone file under `design_files/project_a_milestones/`
-4. `design_files/project_a_milestones/00_MASTER_INDEX.md`
-5. Supporting Markdown plans in `design_files/Divided Plans/`
-6. `design_files/Kreyora.docx` as the original reference
+2. `docs/plan/plan.md`, especially Sections 10 and 11
+3. The active milestone file under `docs/milestones/`
+4. `docs/milestones/00_MASTER_INDEX.md`
+5. Supporting Markdown plans in `docs/plan/divided/`
+6. `Kreyora.docx` as the original reference (historical, not in repository)
 
 Never silently resolve a conflict. Record it in an ADR.
 
@@ -23,7 +23,7 @@ These are locked unless an accepted ADR changes them:
 
 - Nepal-focused multi-tenant social-commerce operating system
 - Next.js with strict TypeScript for seller and storefront interfaces
-- ASP.NET Core .NET 10 modular-monolith backend
+- ASP.NET Core .NET 10 modular-monolith backend with traditional `[ApiController]` controllers and service-layer pattern (no MediatR/CQRS)
 - PostgreSQL with EF Core
 - ASP.NET Core Identity, tenant memberships, and policy-based RBAC
 - Hangfire with PostgreSQL storage for MVP
@@ -44,9 +44,9 @@ At the beginning of every implementation task:
 
 1. Read `docs/context/CURRENT_WORK.md`
 2. Read `docs/context/CONTEXT_MANIFEST.md`
-3. Read `design_files/project_a_milestones/00_MASTER_INDEX.md`
+3. Read `docs/milestones/00_MASTER_INDEX.md`
 4. Read only the active milestone file indicated by `CURRENT_WORK.md`
-5. Read the relevant sections of `design_files/plan.md` (Sections 10–11 for architecture; the active milestone section for step details)
+5. Read the relevant sections of `docs/plan/plan.md` (Sections 10–11 for architecture; the active milestone section for step details)
 6. Read applicable accepted ADRs listed in `docs/decisions/ADR_INDEX.md`
 7. Read the previous checkpoint from `artifacts/checkpoints/`
 8. Inspect Git status and recent relevant commits
@@ -88,10 +88,10 @@ Every implementation step must report:
 
 | Purpose | Path |
 |---|---|
-| Master plan | `design_files/plan.md` |
-| Milestone index | `design_files/project_a_milestones/00_MASTER_INDEX.md` |
+| Master plan | `docs/plan/plan.md` |
+| Milestone index | `docs/milestones/00_MASTER_INDEX.md` |
 | Active milestone | See `docs/context/CURRENT_WORK.md` |
-| Design direction | `design_files/project_a_milestones/FRONTEND_DESIGN_DIRECTION.md` |
+| Design direction | `docs/milestones/FRONTEND_DESIGN_DIRECTION.md` |
 | Current work state | `docs/context/CURRENT_WORK.md` |
 | Context manifest | `docs/context/CONTEXT_MANIFEST.md` |
 | Session recovery | `docs/context/SESSION_START.md` |
