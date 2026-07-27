@@ -5,12 +5,18 @@ public class SmokeTests
     [Fact]
     public void DomainAssembly_CanBeLoaded()
     {
-        Assert.NotNull(Domain.DomainAssemblyMarker.AssemblyName);
+        Assert.NotNull(Kreyora.Domain.DomainAssemblyMarker.AssemblyName);
     }
 
     [Fact]
     public void ApplicationAssembly_CanBeLoaded()
     {
-        Assert.NotNull(Application.ApplicationAssemblyMarker.AssemblyName);
+        Assert.NotNull(Kreyora.Application.ApplicationAssemblyMarker.AssemblyName);
+    }
+
+    [Fact]
+    public void InfrastructureAssembly_CanBeLoaded()
+    {
+        Assert.NotNull(Kreyora.Infrastructure.InfrastructureAssemblyMarker.AssemblyName);
     }
 }
