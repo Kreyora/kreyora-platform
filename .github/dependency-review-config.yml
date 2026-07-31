@@ -1,0 +1,3 @@
+fail-on-severity: high
+license-check: false
+comment-summary-in-pr: never

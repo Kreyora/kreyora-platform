@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
   );
 
   useEffect(() => {
-    load(period);
+    void Promise.resolve().then(() => load(period));
   }, [period, load]);
 
   const handlePeriodChange = (p: Period) => {

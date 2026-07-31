@@ -1,12 +1,15 @@
 {
   "name": "kreyora",
   "private": true,
-  "packageManager": "pnpm@11.12.0",
+  "packageManager": "pnpm@11.13.0",
   "scripts": {
     "dev": "pnpm --filter @kreyora/web dev",
     "build": "pnpm --filter @kreyora/web build",
     "lint": "pnpm --filter @kreyora/web lint",
+    "typecheck": "pnpm --filter @kreyora/web typecheck",
     "test": "pnpm --filter @kreyora/web test",
-    "test:watch": "pnpm --filter @kreyora/web test:watch"
+    "test:watch": "pnpm --filter @kreyora/web test:watch",
+    "generate:api": "pnpm --filter @kreyora/web generate:api",
+    "ci:frontend": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   }
 }

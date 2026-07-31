@@ -7,18 +7,16 @@ import { ApiClientError } from "@/lib/api/errors";
 type Status = "idle" | "loading" | "connected" | "error";
 
 export function ApiStatus() {
-  const [status, setStatus] = useState<Status>("idle");
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const isDev = process.env.NODE_ENV === "development";
+  const [status, setStatus] = useState<Status>(() => (apiUrl && isDev ? "loading" : "idle"));
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [correlationId, setCorrelationId] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const isDev = process.env.NODE_ENV === "development";
-
   useEffect(() => {
     if (!apiUrl || !isDev) return;
 
-    setStatus("loading");
     apiSystemClient
       .getInfo()
       .then((data) => {

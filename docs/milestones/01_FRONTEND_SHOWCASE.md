@@ -71,14 +71,14 @@ Every major route needs realistic loading, empty, error, validation, permission-
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | Route inventory, design system, and mock architecture | `NOT STARTED` |
-| 02 | Marketing site and guided product demo | `NOT STARTED` |
-| 03 | Seller shell, authentication screens, and onboarding | `NOT STARTED` |
-| 04 | Catalog, inventory, and storefront-management UI | `NOT STARTED` |
-| 05 | Public storefront, cart, and checkout UI | `NOT STARTED` |
-| 06 | Orders, payments, fulfilment, and notifications UI | `NOT STARTED` |
-| 07 | Inbox, integrations, AI assistant, and takeover UI | `NOT STARTED` |
-| 08 | Dashboard, billing, settings, responsive QA, and demo script | `NOT STARTED` |
+| 01 | Route inventory, design system, and mock architecture | `APPROVED` |
+| 02 | Marketing site and guided product demo | `APPROVED` |
+| 03 | Seller shell, authentication screens, and onboarding | `APPROVED` |
+| 04 | Catalog, inventory, and storefront-management UI | `APPROVED` |
+| 05 | Public storefront, cart, and checkout UI | `APPROVED` |
+| 06 | Orders, payments, fulfilment, and notifications UI | `APPROVED` |
+| 07 | Inbox, integrations, AI assistant, and takeover UI | `APPROVED` |
+| 08 | Dashboard, billing, settings, responsive QA, and demo script | `APPROVED` |
 
 ## Prompt 01 — Route inventory, design system, and mock architecture
 
