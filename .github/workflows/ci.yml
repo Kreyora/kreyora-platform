@@ -1,0 +1,167 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  backend:
+    name: Backend quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore Kreyora.slnx
+        working-directory: services/api
+      - name: Verify formatting
+        run: dotnet format Kreyora.slnx --verify-no-changes --no-restore
+        working-directory: services/api
+      - name: Build
+        run: dotnet build Kreyora.slnx --configuration Release --no-restore
+        working-directory: services/api
+      - name: Test
+        run: dotnet test Kreyora.slnx --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --results-directory TestResults
+        working-directory: services/api
+      - name: Upload failed backend test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: services/api/TestResults/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  frontend:
+    name: Frontend quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint, type check, test, and build
+        run: pnpm ci:frontend
+
+  contract-and-migration:
+    name: Contract and migration validation
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: kreyora_ci
+          POSTGRES_USER: kreyora
+          POSTGRES_PASSWORD: kreyora_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kreyora -d kreyora_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      Database__ConnectionString: Host=127.0.0.1;Port=5432;Database=kreyora_ci;Username=kreyora;Password=kreyora_ci
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Restore dependencies
+        run: |
+          dotnet restore Kreyora.slnx
+          pnpm install --frozen-lockfile
+      - name: Build API
+        run: dotnet build Kreyora.slnx --configuration Release --no-restore
+        working-directory: services/api
+      - name: Apply migrations through the controlled runner
+        run: dotnet run --configuration Release --no-build --project src/Kreyora.WebApi/Kreyora.WebApi.csproj -- --migrate
+        working-directory: services/api
+      - name: Start API for OpenAPI validation
+        run: |
+          dotnet run --configuration Release --no-build --project src/Kreyora.WebApi/Kreyora.WebApi.csproj -- --urls http://127.0.0.1:5001 > "$RUNNER_TEMP/kreyora-api.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/kreyora-api.pid"
+          for _ in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:5001/openapi/v1.json > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/kreyora-api.log"
+          exit 1
+        working-directory: services/api
+      - name: Regenerate OpenAPI transport files
+        run: KREYORA_OPENAPI_URL=http://127.0.0.1:5001/openapi/v1.json pnpm generate:api
+      - name: Verify OpenAPI files are current
+        run: git diff --exit-code -- apps/web/src/lib/api/generated/openapi-v1.json apps/web/src/lib/api/generated/v1.ts
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/kreyora-api.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/kreyora-api.pid")" || true
+          fi
+      - name: Upload API log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-migration-api-log
+          path: ${{ runner.temp }}/kreyora-api.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+  docker:
+    name: Docker build validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build API image
+        run: docker build --file services/api/Dockerfile services/api
+      - name: Build web image
+        run: docker build --file apps/web/Dockerfile .
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/dependency-review-action@v5
+        with:
+          config-file: .github/dependency-review-config.yml

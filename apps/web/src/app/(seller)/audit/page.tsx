@@ -37,7 +37,7 @@ export default function AuditPage() {
   }, [audit, resourceFilter, actionFilter]);
 
   useEffect(() => {
-    load();
+    void Promise.resolve().then(load);
   }, [load]);
 
   return (
