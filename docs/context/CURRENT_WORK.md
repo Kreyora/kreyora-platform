@@ -25,20 +25,20 @@ None.
 
 M02-S06 implementation is complete and awaiting review:
 
-1. Push/PR GitHub Actions workflow with least-privilege read permission and superseded-run cancellation
+1. Pull-request GitHub Actions workflow with least-privilege read permission and superseded-run cancellation
 2. Backend formatting, Release build, and all test-project gates
 3. Frontend frozen install, lint, explicit type check, Vitest, and production-build gates
-4. Controlled PostgreSQL migration, live OpenAPI regeneration, and generated-file zero-diff validation
-5. Docker build-only validation plus Gitleaks and high-severity Dependency Review policy
+4. Migration and OpenAPI checks retained for local/future CI use but disabled from automatic PR execution
+5. Gitleaks PR scan with repository-managed license; Dependency Review configuration retained but its unsupported job disabled
 6. Deterministic pnpm/OpenAPI scripts and a reproducible web Docker workspace install
 7. CI conventions documentation and corrected versioned Codex handoff configuration guidance
 8. Clean-copy evidence in `artifacts/checkpoints/M02-S06.md`
 
-**Evidence:** isolated-copy proof passed: 63 backend tests, 494 frontend tests, migration validation, zero-diff OpenAPI generation, both Docker builds, Gitleaks, and workflow actionlint. GitHub-hosted CI execution and Dependency Review entitlement remain reviewer/repository-owner checks.
+**Evidence:** isolated-copy proof passed: 63 backend tests, 494 frontend tests, migration validation, zero-diff OpenAPI generation, both Docker builds, Gitleaks, and workflow actionlint. The M02-S06 amendment upgrades pnpm to 11.13.0, keeps automatic PR quality/security checks, and makes Docker validation manual-only.
 
 ## Next permitted action
 
-Review `artifacts/checkpoints/M02-S06.md`, including the first authorized GitHub Actions run and Dependency Review prerequisite.
+Review `artifacts/checkpoints/M02-S06.md`, including the first authorized pull-request CI run and manual Docker workflow dispatch.
 
 ## Next prohibited action
 
@@ -66,3 +66,4 @@ Review `artifacts/checkpoints/M02-S06.md`, including the first authorized GitHub
 | 2026-07-27 | M02-S04 complete. 61 backend + 482 frontend tests pass. Both Docker images build. Status → COMPLETE. | M02-S04 session |
 | 2026-07-28 | M02-S05 complete. 63 backend + 494 frontend tests pass. Contract adapters wired. Status → COMPLETE. | M02-S05 session |
 | 2026-08-01 | M02-S06 implementation complete. CI baseline and isolated clean-copy proof recorded. Status → REVIEW. | Codex |
+| 2026-08-01 | M02-S06 amended: pnpm 11.13.0, PR-only quality/security CI, manual-only Docker workflow, and unsupported jobs disabled. Status remains REVIEW. | Codex |
