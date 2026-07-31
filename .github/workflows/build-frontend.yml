@@ -1,0 +1,16 @@
+name: Build frontend image
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-frontend-image:
+    name: Build frontend Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build frontend Docker image
+        run: docker build --file apps/web/Dockerfile .

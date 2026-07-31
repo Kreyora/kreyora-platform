@@ -2,11 +2,11 @@
 
 ## Scope
 
-M02-S06 provides automatic pull-request validation and separately dispatched Docker validation. It does not publish images, deploy an environment, create releases, or contact a commerce provider.
+M02-S06 provides automatic pull-request validation and separately dispatched backend and frontend Docker validation. It does not publish images, deploy an environment, create releases, or contact a commerce provider.
 
 ## Branch convention
 
-The `Pull request CI` workflow validates every pull request. The `Manual Docker validation` workflow runs only when a maintainer starts it from the GitHub Actions page. Feature work should use short-lived descriptive branches and merge through review into the repository owner's selected protected integration branch. Branch naming and protection configuration remain repository-administration decisions; the workflows do not hard-code a deployment branch.
+The `Pull Request Checks` workflow validates every pull request. The `Build backend image` and `Build frontend image` workflows each run only when a maintainer starts the applicable workflow from the GitHub Actions page. Feature work should use short-lived descriptive branches and merge through review into the repository owner's selected protected integration branch. Branch naming and protection configuration remain repository-administration decisions; the workflows do not hard-code a deployment branch.
 
 ## Required checks
 
@@ -16,7 +16,7 @@ The `Pull request CI` workflow validates every pull request. The `Manual Docker 
 
 The following M02-S06 validations are intentionally disabled from automatic CI for now: controlled PostgreSQL migration validation, OpenAPI generated-file drift validation, and Dependency Review. The existing `.github/dependency-review-config.yml` is retained for a future re-enable; no unsupported security job is silently treated as passing.
 
-Manual Docker validation has two independently visible jobs: one API image build and one web image build. Neither image is published.
+Manual Docker validation is split into two independently dispatchable workflows: `Build backend image` contains only the API image build, and `Build frontend image` contains only the web image build. Neither image is published.
 
 ## Caching and reproducibility
 
