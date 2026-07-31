@@ -67,3 +67,4 @@ Review `artifacts/checkpoints/M02-S06.md`, including the first authorized pull-r
 | 2026-07-28 | M02-S05 complete. 63 backend + 494 frontend tests pass. Contract adapters wired. Status → COMPLETE. | M02-S05 session |
 | 2026-08-01 | M02-S06 implementation complete. CI baseline and isolated clean-copy proof recorded. Status → REVIEW. | Codex |
 | 2026-08-01 | M02-S06 amended: pnpm 11.13.0, PR-only quality/security CI, manual-only Docker workflow, and unsupported jobs disabled. Status remains REVIEW. | Codex |
+| 2026-08-01 | M02-S06 amended: secret-scan now has read-only pull-request metadata access and disabled PR comments. Status remains REVIEW. | Codex |

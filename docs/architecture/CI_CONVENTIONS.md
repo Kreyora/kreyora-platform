@@ -12,7 +12,7 @@ The `Pull request CI` workflow validates every pull request. The `Manual Docker 
 
 - Backend restore, formatting, Release build, and unit, architecture, contract, and integration tests.
 - Frontend frozen install, lint, TypeScript type check, Vitest suite, and production build.
-- Gitleaks secret scanning on pull requests, using the repository-managed `GITLEAKS_LICENSE` and GitHub-provided token. Findings block the pull request.
+- Gitleaks secret scanning on pull requests, using the repository-managed `GITLEAKS_LICENSE` and GitHub-provided token. The job receives only `contents: read` and `pull-requests: read`; PR comments are disabled, while findings still block the pull request.
 
 The following M02-S06 validations are intentionally disabled from automatic CI for now: controlled PostgreSQL migration validation, OpenAPI generated-file drift validation, and Dependency Review. The existing `.github/dependency-review-config.yml` is retained for a future re-enable; no unsupported security job is silently treated as passing.
 
