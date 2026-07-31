@@ -1,14 +1,15 @@
 FROM node:22-alpine AS builder
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.13.0 --activate
 WORKDIR /app
 
-COPY apps/web/package.json ./package.json
-COPY pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --shamefully-hoist --ignore-scripts --no-frozen-lockfile
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json apps/web/package.json
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
-COPY apps/web/ ./
+COPY apps/web/ apps/web/
+WORKDIR /app/apps/web
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN node ./node_modules/next/dist/bin/next build
+RUN pnpm build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -17,9 +18,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system nodejs && adduser --system --ingroup nodejs nextjs
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
 
 USER nextjs
 EXPOSE 3000

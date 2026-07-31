@@ -43,6 +43,7 @@ export default function IntegrationDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [replayedIds, setReplayedIds] = useState<Set<string>>(new Set());
   const [reconnecting, setReconnecting] = useState(false);
+  const [currentTime] = useState(() => Date.now());
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +86,7 @@ export default function IntegrationDetailPage() {
   const pm = PROVIDER_MAP[connection.provider] ?? { label: connection.provider, color: "bg-gray-400" };
   const h = connection.health;
   const tokenExpiry = h.tokenExpiresAt ? new Date(h.tokenExpiresAt) : null;
-  const daysUntilExpiry = tokenExpiry ? Math.ceil((tokenExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+  const daysUntilExpiry = tokenExpiry ? Math.ceil((tokenExpiry.getTime() - currentTime) / (1000 * 60 * 60 * 24)) : null;
 
   const capabilityRows = [
     { label: "Receive messages", value: connection.capabilities.canReceiveMessages },

@@ -1,0 +1,16 @@
+name: Build backend image
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-backend-image:
+    name: Build backend Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build backend Docker image
+        run: docker build --file services/api/Dockerfile services/api
