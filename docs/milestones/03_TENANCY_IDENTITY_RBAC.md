@@ -19,7 +19,7 @@ Every tenant-owned row contains `TenantId`; EF query filters are defense in dept
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | Tenant, user, membership, and role domain | `NOT STARTED` |
+| 01 | Tenant, user, membership, and role domain | `REVIEW` |
 | 02 | Identity and secure browser session flow | `NOT STARTED` |
 | 03 | Trusted tenant context across API and jobs | `NOT STARTED` |
 | 04 | Policy RBAC and audit event pipeline | `NOT STARTED` |
