@@ -47,4 +47,26 @@ public sealed class TenantContextResolutionService(AppDbContext dbContext) : ITe
 
         return tenant is null ? null : new TenantContext(tenant.Id, null, null, null);
     }
+
+    public async Task<TenantContext?> ResolveSupportContextAsync(
+        string userId,
+        string tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return await (
+                from grant in dbContext.SupportAccessGrants.IgnoreQueryFilters().AsNoTracking()
+                join tenant in dbContext.Tenants.AsNoTracking() on grant.TenantId equals tenant.Id
+                join userRole in dbContext.UserRoles on grant.SupportUserId equals userRole.UserId
+                join role in dbContext.Roles on userRole.RoleId equals role.Id
+                where grant.TenantId == tenantId
+                    && grant.SupportUserId == userId
+                    && grant.RevokedAt == null
+                    && grant.ExpiresAt > now
+                    && tenant.Status == TenantStatus.Active
+                    && role.Name == RoleDefinitions.PlatformSupport
+                    && !dbContext.Memberships.Any(membership => membership.TenantId == tenantId && membership.UserId == userId)
+                select new TenantContext(tenant.Id, userId, null, null, grant.Id))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
 }

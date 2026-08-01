@@ -26,6 +26,7 @@ public class IdentityTenancyTests : IClassFixture<PostgresFixture>
 
         Assert.Contains(migrations, migration => migration.EndsWith("AddIdentityTenancyAndMemberships", StringComparison.Ordinal));
         Assert.Contains(migrations, migration => migration.EndsWith("AddTenantContextToOutbox", StringComparison.Ordinal));
+        Assert.Contains(migrations, migration => migration.EndsWith("AddPolicyRbacAndAuditEvents", StringComparison.Ordinal));
     }
 
     [Fact]

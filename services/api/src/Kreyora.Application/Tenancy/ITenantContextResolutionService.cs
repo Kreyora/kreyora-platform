@@ -11,6 +11,11 @@ public interface ITenantContextResolutionService
         string tenantId,
         CancellationToken cancellationToken = default);
 
+    Task<TenantContext?> ResolveSupportContextAsync(
+        string userId,
+        string tenantId,
+        CancellationToken cancellationToken = default);
+
     Task<TenantContext?> ResolveBackgroundContextAsync(string tenantId, CancellationToken cancellationToken = default);
 }
 

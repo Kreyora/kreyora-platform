@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-const defaultSpecUrl = "http://127.0.0.1:5001/openapi/v1.json";
+const defaultSpecUrl = "http://localhost:5030/openapi/v1.json";
 const defaultServerUrl = "http://localhost:5030/";
 const specUrl = process.env.KREYORA_OPENAPI_URL ?? defaultSpecUrl;
 const snapshotServerUrl = process.env.KREYORA_OPENAPI_SNAPSHOT_SERVER_URL ?? defaultServerUrl;

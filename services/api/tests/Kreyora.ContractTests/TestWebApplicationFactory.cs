@@ -47,5 +47,8 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Kreyora.We
 
         public Task<TenantContext?> ResolveBackgroundContextAsync(string tenantId, CancellationToken cancellationToken = default)
             => Task.FromResult<TenantContext?>(null);
+
+        public Task<TenantContext?> ResolveSupportContextAsync(string userId, string tenantId, CancellationToken cancellationToken = default)
+            => Task.FromResult<TenantContext?>(null);
     }
 }

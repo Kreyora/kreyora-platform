@@ -1,4 +1,6 @@
 using System.Data;
+using Kreyora.Application.Audit;
+using Kreyora.Application.Authorization;
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Persistence;
@@ -6,7 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Kreyora.Infrastructure.Tenancy;
 
-public sealed class TenantMembershipService(AppDbContext dbContext) : ITenantMembershipService
+public sealed class TenantMembershipService(
+    AppDbContext dbContext,
+    ITenantContextAccessor? tenantContext = null,
+    ITenantPermissionAuthorizer? permissionAuthorizer = null,
+    IAuditEventService? auditEvents = null) : ITenantMembershipService
 {
     public async Task<Tenant> CreateTenantForOwnerAsync(
         CreateTenantForOwnerRequest request,
@@ -33,6 +39,7 @@ public sealed class TenantMembershipService(AppDbContext dbContext) : ITenantMem
         CancellationToken cancellationToken = default)
     {
         EnsureTenantRole(role);
+        DemandMembershipManagement(role);
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         await EnsureTenantExistsAsync(tenantId, cancellationToken);
         await EnsureUserExistsAsync(userId, cancellationToken);
@@ -47,6 +54,7 @@ public sealed class TenantMembershipService(AppDbContext dbContext) : ITenantMem
         var membership = Membership.Grant(tenantId, userId, role);
         dbContext.Memberships.Add(membership);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await AppendAuditAsync("membership.granted", membership, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return membership;
     }
@@ -59,9 +67,12 @@ public sealed class TenantMembershipService(AppDbContext dbContext) : ITenantMem
         EnsureTenantRole(role);
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         var membership = await GetMembershipAsync(membershipId, cancellationToken);
+        DemandMembershipManagement(membership.Role);
+        DemandMembershipManagement(role);
         await EnsureOwnerCanChangeAsync(membership, membership.IsActive && role != TenantRole.Owner, cancellationToken);
         membership.ChangeRole(role);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await AppendAuditAsync("membership.role-changed", membership, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -69,9 +80,11 @@ public sealed class TenantMembershipService(AppDbContext dbContext) : ITenantMem
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         var membership = await GetMembershipAsync(membershipId, cancellationToken);
+        DemandMembershipManagement(membership.Role);
         await EnsureOwnerCanChangeAsync(membership, membership.IsActive, cancellationToken);
         membership.Suspend(DateTimeOffset.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await AppendAuditAsync("membership.suspended", membership, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -79,8 +92,10 @@ public sealed class TenantMembershipService(AppDbContext dbContext) : ITenantMem
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         var membership = await GetMembershipAsync(membershipId, cancellationToken);
+        DemandMembershipManagement(membership.Role);
         membership.Reactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
+        await AppendAuditAsync("membership.reactivated", membership, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -88,9 +103,11 @@ public sealed class TenantMembershipService(AppDbContext dbContext) : ITenantMem
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         var membership = await GetMembershipAsync(membershipId, cancellationToken);
+        DemandMembershipManagement(membership.Role);
         await EnsureOwnerCanChangeAsync(membership, membership.IsActive, cancellationToken);
         membership.Revoke(DateTimeOffset.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await AppendAuditAsync("membership.revoked", membership, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -142,4 +159,25 @@ public sealed class TenantMembershipService(AppDbContext dbContext) : ITenantMem
             throw new InvalidOperationException("A tenant must retain at least one active Owner membership.");
         }
     }
+
+    private void DemandMembershipManagement(TenantRole targetRole)
+    {
+        var context = tenantContext?.Current;
+        if (context is null)
+        {
+            return; // bootstrap/seeding calls run before a seller context exists.
+        }
+
+        permissionAuthorizer?.Demand(TenantPermissions.MembershipManage);
+        if (!TenantPermissions.CanManageMembership(context, targetRole))
+        {
+            throw new UnauthorizedAccessException("The current role cannot manage an Owner membership.");
+        }
+    }
+
+    private Task AppendAuditAsync(string action, Membership membership, CancellationToken cancellationToken) =>
+        tenantContext?.Current?.UserId is not null && auditEvents is not null
+            ? auditEvents.AppendAsync(new AuditEventWrite(action, "membership", membership.Id,
+                Metadata: $"{{\"userId\":\"{membership.UserId}\",\"role\":\"{membership.Role}\",\"status\":\"{membership.Status}\"}}"), cancellationToken)
+            : Task.CompletedTask;
 }
