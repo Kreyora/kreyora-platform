@@ -75,6 +75,17 @@ describe("SidebarNav — role-aware visibility", () => {
     const dashboardLink = screen.getByRole("link", { name: "Dashboard" });
     expect(dashboardLink).toHaveAttribute("aria-current", "page");
   });
+
+  it("uses live permissions instead of static role navigation in real mode", () => {
+    render(<SidebarNav role="viewer" permissions={["catalog.read", "integrations.read", "settings.read"]} />);
+    const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
+    expect(hrefs).toContain("/catalog");
+    expect(hrefs).toContain("/integrations");
+    expect(hrefs).toContain("/settings");
+    expect(hrefs).not.toContain("/audit");
+    expect(hrefs).not.toContain("/team");
+    expect(hrefs).not.toContain("/billing");
+  });
 });
 
 describe("SidebarNav — isItemVisible", () => {
