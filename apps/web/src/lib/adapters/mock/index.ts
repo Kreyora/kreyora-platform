@@ -1,4 +1,5 @@
 export { mockIdentityClient } from "./mock-identity-client";
+export { mockAuthClient } from "./mock-auth-client";
 export { mockCatalogClient } from "./mock-catalog-client";
 export { mockInventoryClient } from "./mock-inventory-client";
 export { mockStorefrontClient } from "./mock-storefront-client";

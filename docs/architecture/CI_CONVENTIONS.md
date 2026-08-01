@@ -6,7 +6,7 @@ M02-S06 provides automatic pull-request validation and separately dispatched bac
 
 ## Branch convention
 
-The `Pull Request Checks` workflow validates every pull request. The `Build backend image` and `Build frontend image` workflows each run only when a maintainer starts the applicable workflow from the GitHub Actions page. Feature work should use short-lived descriptive branches and merge through review into the repository owner's selected protected integration branch. Branch naming and protection configuration remain repository-administration decisions; the workflows do not hard-code a deployment branch.
+The `Pull Request Checks` workflow validates only pull requests targeting `master`; this makes the quality and secret gates part of the final merge path. The `Build backend image` and `Build frontend image` workflows each run only when a maintainer starts the applicable workflow from the GitHub Actions page. Feature work should use short-lived descriptive branches and merge through review into `master`. Branch protection on `master` should require the three Pull Request Checks jobs before merge.
 
 ## Required checks
 

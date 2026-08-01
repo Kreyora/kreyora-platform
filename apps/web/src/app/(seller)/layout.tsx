@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { SessionProvider, useSessionLoader } from "@/hooks/use-session";
 import { SidebarNav } from "@/components/seller/sidebar-nav";
 import { ProfileMenu } from "@/components/seller/profile-menu";
 import { MobileNav } from "@/components/seller/mobile-nav";
 import { RoleSwitcher } from "@/components/seller/role-switcher";
+import { useAuthClient, USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
 
 function NotificationBell() {
   return (
@@ -34,10 +37,18 @@ function NotificationBell() {
 }
 
 function SellerShellInner({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const auth = useAuthClient();
+  const [isAuthenticated, setIsAuthenticated] = useState(USING_FIXTURE_ADAPTERS);
   const sessionState = useSessionLoader();
   const { session, isLoading, effectiveRole } = sessionState;
 
-  if (isLoading) {
+  useEffect(() => {
+    if (USING_FIXTURE_ADAPTERS) return;
+    auth.getCurrentUser().then(() => setIsAuthenticated(true)).catch(() => router.replace("/signin"));
+  }, [auth, router]);
+
+  if (isLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-full items-center justify-center">
         <div className="text-sm text-[var(--color-ink-secondary)]">
