@@ -18,6 +18,7 @@ using Kreyora.WebApi.Tenancy;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Scalar.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -134,6 +135,11 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference("/scalar", options =>
+    {
+        options.WithTitle("Kreyora API");
+        options.WithOpenApiRoutePattern("/openapi/{documentName}.json");
+    });
 
     if (app.Services.GetService<JobStorage>() is not null)
     {

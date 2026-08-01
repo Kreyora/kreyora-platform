@@ -20,8 +20,8 @@ Every tenant-owned row contains `TenantId`; EF query filters are defense in dept
 | Step | Description | Status |
 |---:|---|---|
 | 01 | Tenant, user, membership, and role domain | `APPROVED` |
-| 02 | Identity and secure browser session flow (SMTP password-reset amendment) | `REVIEW` |
-| 03 | Trusted tenant context across API and jobs | `REVIEW` |
+| 02 | Identity and secure browser session flow (SMTP password-reset amendment) | `APPROVED` |
+| 03 | Trusted tenant context across API and jobs | `APPROVED` |
 | 04 | Policy RBAC and audit event pipeline | `NOT STARTED` |
 | 05 | Frontend authentication/workspace integration | `NOT STARTED` |
 | 06 | Isolation and authorization test campaign | `NOT STARTED` |

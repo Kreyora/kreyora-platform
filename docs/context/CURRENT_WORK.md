@@ -3,18 +3,18 @@
 ## Active position
 
 - **Milestone:** 03 — Tenancy, Identity, RBAC, and Audit
-- **Step:** 02 amendment — SMTP Password Reset Delivery
+- **Step:** M02-S05 corrective addendum — Development-only Scalar API Reference
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/03_TENANCY_IDENTITY_RBAC.md`
 
 ## Branch and commit state
 
 - **Branch:** feat/master/m03-s03 (local implementation; no commit, push, or PR created by this step)
-- **Last state:** M03-S01 approved; M03-S02 SMTP corrective amendment and M03-S03 tenant-context implementation both await review
+- **Last state:** M03-S01, M03-S02 (including SMTP), and M03-S03 are approved and merged. The M02-S05 Scalar addendum awaits review.
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M03-S02.md` (SMTP amendment)
+- **Current checkpoint:** `artifacts/checkpoints/M02-S05.md` (Scalar corrective addendum)
 - **Previous checkpoint:** `artifacts/checkpoints/M03-S03.md`
 
 ## Blockers
@@ -23,24 +23,24 @@ None.
 
 ## Current objective
 
-The project-owner-directed M03-S02 corrective amendment is complete and awaiting review. It replaces the initial Development-only reset-token/link exposure with SMTP delivery using MailKit and Identity's official reset tokens:
+The project-owner-directed M02-S05 corrective addendum is complete and awaiting review. It adds Scalar as a Development-only interactive API reference backed by the existing `/openapi/v1.json` document:
 
-1. The API always returns the same `202 Accepted` reset-request message and never returns a token or reset URL.
-2. The browser recovery screen directs the user to email only; it has no development continuation link.
-3. `IEmailSender` / `SmtpEmailSender`, typed SMTP configuration, token expiry, safe failure handling, and Mailpit-controlled SMTP proof are implemented.
-4. ADR-004, development/hosted setup instructions, and the M03 plan/checkpoint records document the new required flow.
+1. `/scalar` is mapped only in Development and uses the existing OpenAPI document route.
+2. The pinned `Scalar.AspNetCore` package requires no provider, credential, Docker Compose, or frontend product change.
+3. Isolated Development-host tests prove the viewer/document are available only in Development without loading local database, Hangfire, Gmail, or User Secrets configuration.
+4. `API_CONTRACT_STRATEGY.md` documents the local launch command and viewer URL; `pnpm generate:api` remains the contract-generation path.
 
-M03-S03 tenant-context implementation remains complete and awaiting its own review; it was not altered beyond updated regression evidence.
+M03-S04 remains not started.
 
-**Evidence:** Formatting, Release build, and all backend tests pass (95 total: 51 unit, 33 integration, 6 architecture, 5 contract); frontend regression suite passes (482 tests); the SMTP integration test delivered a MailKit message to a controlled Mailpit Testcontainers inbox and read it back. See `artifacts/checkpoints/M03-S02.md`.
+**Evidence:** Scalar-specific Development/non-Development endpoint tests pass. The final formatting, build, full backend suite, OpenAPI generation zero-diff, and diff-hygiene evidence is recorded in `artifacts/checkpoints/M02-S05.md`.
 
 ## Next permitted action
 
-Review `artifacts/checkpoints/M03-S02.md`, `docs/decisions/ADR-004-smtp-password-reset-delivery.md`, the SMTP/Identity tests, and `docs/architecture/LOCAL_EMAIL_DELIVERY.md`. Also review the existing M03-S03 checkpoint before approving later M03 work.
+Review the Scalar addendum in `artifacts/checkpoints/M02-S05.md`, `docs/architecture/API_CONTRACT_STRATEGY.md`, and `ScalarEndpointTests`. After approval, plan M03-S04 only.
 
 ## Next prohibited action
 
-- Starting M03-S04 or any subsequent implementation prompt before this SMTP amendment and M03-S03 are reviewed and approved
+- Starting M03-S04 or any subsequent implementation prompt before this Scalar corrective addendum is reviewed and approved
 - Policy RBAC, audit events, frontend workspace integration, or broader product business logic
 - Committing, pushing, or deploying
 
@@ -75,3 +75,5 @@ Review `artifacts/checkpoints/M03-S02.md`, `docs/decisions/ADR-004-smtp-password
 | 2026-08-02 | M03-S02 amended: registered Identity default token providers and added PostgreSQL coverage for Development password reset. | Codex |
 | 2026-08-02 | M03-S02 corrected: superseded browser-visible Development reset tokens/links with SMTP delivery, typed secure configuration, MailKit/Mailpit transport proof, ADR-004, and 95-test regression evidence. Status → REVIEW. | Codex |
 | 2026-08-02 | M03-S02 CI correction: dedicated test-host SMTP, CORS, authentication, tenant-resolution, and antiforgery configuration removes hidden User Secrets dependencies; all 95 backend tests pass. Status remains REVIEW. | Codex |
+| 2026-08-02 | Project owner approved and merged M03-S02 (including SMTP amendment) and M03-S03. | Project owner |
+| 2026-08-02 | M02-S05 corrective addendum added Development-only Scalar API reference, isolated route tests, and contract documentation. Status → REVIEW. | Codex |
