@@ -34,7 +34,7 @@ With the API running locally:
 pnpm generate:api
 ```
 
-This downloads `http://127.0.0.1:5001/openapi/v1.json` into the committed `apps/web/src/lib/api/generated/openapi-v1.json` snapshot, then generates `v1.ts` from that snapshot. Set `KREYORA_OPENAPI_URL` to use a different OpenAPI document URL. The snapshot normalizes its non-contract `servers` URL to `http://localhost:5030/`; override that value only with `KREYORA_OPENAPI_SNAPSHOT_SERVER_URL`. Both generated files are committed so CI can diff-check for drift.
+This downloads `http://localhost:5030/openapi/v1.json` into the committed `apps/web/src/lib/api/generated/openapi-v1.json` snapshot, then generates `v1.ts` from that snapshot. Set `KREYORA_OPENAPI_URL` to use a different OpenAPI document URL. The snapshot normalizes its non-contract `servers` URL to `http://localhost:5030/`; override that value only with `KREYORA_OPENAPI_SNAPSHOT_SERVER_URL`. Both generated files are committed so CI can diff-check for drift.
 
 ## Interactive API documentation
 

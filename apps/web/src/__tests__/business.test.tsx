@@ -170,8 +170,8 @@ describe("Team — route and content", () => {
     expect(content).toContain("joinedAt");
   });
 
-  it("has invite member placeholder button", () => {
-    expect(content).toContain("Invite Member");
+  it("has registered-account member addition controls", () => {
+    expect(content).toContain("Add member");
   });
 
   it("has role legend/descriptions", () => {
@@ -272,7 +272,7 @@ describe("Audit — route and content", () => {
     expect(content).toContain("ViewerBadge");
   });
 
-  it("has disclaimer about simulated data", () => {
-    expect(content).toContain("simulated");
+  it("supports loading additional real audit history", () => {
+    expect(content).toContain("Load more");
   });
 });

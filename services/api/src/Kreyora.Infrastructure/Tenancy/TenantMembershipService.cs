@@ -59,6 +59,27 @@ public sealed class TenantMembershipService(
         return membership;
     }
 
+    public async Task<Membership> GrantMembershipByEmailAsync(string email, TenantRole role, CancellationToken cancellationToken = default)
+    {
+        var context = tenantContext?.RequireCurrent() ?? throw new InvalidOperationException("A verified tenant context is required.");
+        var normalizedEmail = email.Trim().ToUpperInvariant();
+        var user = await dbContext.Users.SingleOrDefaultAsync(candidate => candidate.NormalizedEmail == normalizedEmail, cancellationToken)
+            ?? throw new InvalidOperationException("No registered Kreyora account exists for that email address.");
+        return await GrantMembershipAsync(context.TenantId, user.Id, role, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<MembershipSummary>> GetMembersAsync(CancellationToken cancellationToken = default)
+    {
+        permissionAuthorizer?.Demand(TenantPermissions.MembershipManage);
+        var context = tenantContext?.RequireCurrent() ?? throw new InvalidOperationException("A verified tenant context is required.");
+        return await (from membership in dbContext.Memberships.AsNoTracking()
+                      join user in dbContext.Users.AsNoTracking() on membership.UserId equals user.Id
+                      where membership.TenantId == context.TenantId
+                      orderby membership.CreatedAt
+                      select new MembershipSummary(membership.Id, user.Id, user.DisplayName, user.Email!, membership.Role, membership.Status, membership.CreatedAt))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task ChangeMembershipRoleAsync(
         string membershipId,
         TenantRole role,
@@ -137,8 +158,16 @@ public sealed class TenantMembershipService(
 
     private async Task<Membership> GetMembershipAsync(string membershipId, CancellationToken cancellationToken)
     {
-        return await dbContext.Memberships.SingleOrDefaultAsync(membership => membership.Id == membershipId, cancellationToken)
+        var membership = await dbContext.Memberships.SingleOrDefaultAsync(candidate => candidate.Id == membershipId, cancellationToken)
             ?? throw new InvalidOperationException("The membership does not exist.");
+
+        var context = tenantContext?.Current;
+        if (context is not null && membership.TenantId != context.TenantId)
+        {
+            throw new UnauthorizedAccessException("The membership is not available in the selected workspace.");
+        }
+
+        return membership;
     }
 
     private async Task EnsureOwnerCanChangeAsync(Membership membership, bool removesActiveOwner, CancellationToken cancellationToken)

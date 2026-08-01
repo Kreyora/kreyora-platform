@@ -6,7 +6,7 @@ describe("apiFetch", () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
-    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:5001");
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:5030");
   });
 
   afterEach(() => {
@@ -27,7 +27,7 @@ describe("apiFetch", () => {
     expect(result).toEqual({ name: "Kreyora" });
 
     const call = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(call[0]).toBe("http://localhost:5001/v1/system/info");
+    expect(call[0]).toBe("http://localhost:5030/v1/system/info");
 
     const headers = call[1].headers;
     expect(headers["Accept"]).toBe("application/json");

@@ -32,4 +32,6 @@ export const mockIdentityClient: IdentityClient = {
     await delay();
     return toPaginated<TeamMember>(teamMembers);
   },
+  async grantMember() {}, async changeMemberRole() {}, async suspendMember() {}, async reactivateMember() {}, async revokeMember() {},
+  async getPermissions() { return ["memberships.manage", "audit.read", "billing.manage", "settings.write"]; },
 };
