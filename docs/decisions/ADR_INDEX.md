@@ -20,12 +20,14 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-002 | Cookie browser authentication | `Accepted` | 2026-08-01 | — |
 | ADR-001 | Service-layer pattern with traditional controllers (no MediatR/CQRS) | `Accepted` | 2026-07-27 | — |
 
 ## Index
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-002 | Cookie browser authentication | `Accepted` | 2026-08-01 | — |
 | ADR-001 | Service-layer pattern with traditional controllers (no MediatR/CQRS) | `Accepted` | 2026-07-27 | — |
 
 ## Baseline architecture (pre-ADR)

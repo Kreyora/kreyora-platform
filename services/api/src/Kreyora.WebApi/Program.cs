@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Hangfire;
 using Kreyora.Application;
@@ -13,6 +14,9 @@ using Kreyora.Infrastructure.Persistence;
 using Kreyora.ServiceDefaults;
 using Kreyora.WebApi.Configuration;
 using Kreyora.WebApi.Seeding;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -45,6 +49,29 @@ builder.Services
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHangfireServices(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-Token";
+    options.Cookie.Name = builder.Environment.IsDevelopment() ? "Kreyora.Dev.Antiforgery" : "__Host-Kreyora.Antiforgery";
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+});
+builder.Services.Configure<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme, options =>
+{
+    options.Cookie.Name = builder.Environment.IsDevelopment() ? "Kreyora.Dev.Auth" : "__Host-Kreyora.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = false;
+});
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("auth-registration", limiter => { limiter.PermitLimit = 3; limiter.Window = TimeSpan.FromHours(1); });
+    options.AddFixedWindowLimiter("auth-sign-in", limiter => { limiter.PermitLimit = 5; limiter.Window = TimeSpan.FromMinutes(15); });
+    options.AddFixedWindowLimiter("auth-password-reset", limiter => { limiter.PermitLimit = 3; limiter.Window = TimeSpan.FromHours(1); });
+});
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -79,6 +106,7 @@ if (corsSettings?.AllowedOrigins is { Length: > 0 })
             policy.WithOrigins(corsSettings.AllowedOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
+                .AllowCredentials()
                 .WithExposedHeaders("X-Correlation-ID", "api-supported-versions");
         });
     });
@@ -114,6 +142,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseHttpsRedirection();
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapServiceDefaults();
 app.MapControllers();
 

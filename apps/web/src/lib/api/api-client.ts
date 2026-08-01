@@ -37,6 +37,7 @@ export async function apiFetch<T>(
 
   const response = await fetch(`${getBaseUrl()}${path}`, {
     ...rest,
+    credentials: "include",
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
