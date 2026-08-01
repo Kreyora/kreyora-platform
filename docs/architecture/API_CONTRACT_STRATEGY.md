@@ -38,7 +38,13 @@ This downloads `http://127.0.0.1:5001/openapi/v1.json` into the committed `apps/
 
 ## Interactive API documentation
 
-The API exposes its Development-only OpenAPI document at `/openapi/v1.json`. Kreyora must add [Scalar](https://github.com/scalar/scalar) as the Development-only interactive viewer at `/scalar`, backed by that same document. Scalar is a local developer/reviewer convenience only: it must not be mapped in Production, require no credential or provider configuration, and must not replace the committed OpenAPI snapshot or generated TypeScript contract workflow.
+The API exposes its Development-only OpenAPI document at `/openapi/v1.json` and its interactive [Scalar](https://github.com/scalar/scalar) reference at `/scalar`. To use the local launch profile:
+
+```bash
+dotnet run --project services/api/src/Kreyora.WebApi/Kreyora.WebApi.csproj --launch-profile http
+```
+
+Open [http://localhost:5030/scalar](http://localhost:5030/scalar). Scalar reads the same `/openapi/v1.json` document used for contract generation. It is a local developer/reviewer convenience only: it is not mapped outside Development, requires no credential or provider configuration, and does not replace the committed OpenAPI snapshot or `pnpm generate:api` workflow.
 
 ## Adapter switching
 
