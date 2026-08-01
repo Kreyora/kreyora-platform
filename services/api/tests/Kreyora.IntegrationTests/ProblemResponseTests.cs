@@ -1,14 +1,14 @@
 using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Kreyora.IntegrationTests.Fixtures;
 
 namespace Kreyora.IntegrationTests;
 
-public class ProblemResponseTests : IClassFixture<WebApplicationFactory<Kreyora.WebApi.Program>>
+public class ProblemResponseTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public ProblemResponseTests(WebApplicationFactory<WebApi.Program> factory)
+    public ProblemResponseTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

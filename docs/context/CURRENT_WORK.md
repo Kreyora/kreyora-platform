@@ -74,3 +74,4 @@ Review `artifacts/checkpoints/M03-S02.md`, `docs/decisions/ADR-004-smtp-password
 | 2026-08-02 | M03-S02 amended: registered MVC antiforgery filter services and added a real CSRF registration endpoint regression test. | Codex |
 | 2026-08-02 | M03-S02 amended: registered Identity default token providers and added PostgreSQL coverage for Development password reset. | Codex |
 | 2026-08-02 | M03-S02 corrected: superseded browser-visible Development reset tokens/links with SMTP delivery, typed secure configuration, MailKit/Mailpit transport proof, ADR-004, and 95-test regression evidence. Status → REVIEW. | Codex |
+| 2026-08-02 | M03-S02 CI correction: dedicated test-host SMTP, CORS, authentication, tenant-resolution, and antiforgery configuration removes hidden User Secrets dependencies; all 95 backend tests pass. Status remains REVIEW. | Codex |

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Kreyora.Application.Authentication;
+using Kreyora.IntegrationTests.Fixtures;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,7 +12,7 @@ public class AuthenticationEndpointTests
     [Fact]
     public async Task Register_WithCsrfToken_InvokesTheAuthenticationService()
     {
-        await using var factory = new WebApplicationFactory<Kreyora.WebApi.Program>()
+        await using var factory = new TestWebApplicationFactory()
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureServices(services =>
@@ -43,7 +44,7 @@ public class AuthenticationEndpointTests
     [Fact]
     public async Task PasswordResetRequest_AlwaysReturnsTheSameGenericResponseWithoutTokenData()
     {
-        await using var factory = new WebApplicationFactory<Kreyora.WebApi.Program>()
+        await using var factory = new TestWebApplicationFactory()
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureServices(services => services.AddScoped<IAuthenticationService, SuccessfulAuthenticationService>());

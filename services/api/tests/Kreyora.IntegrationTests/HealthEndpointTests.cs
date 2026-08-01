@@ -1,12 +1,12 @@
-using Microsoft.AspNetCore.Mvc.Testing;
+using Kreyora.IntegrationTests.Fixtures;
 
 namespace Kreyora.IntegrationTests;
 
-public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Kreyora.WebApi.Program>>
+public class HealthEndpointTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public HealthEndpointTests(WebApplicationFactory<WebApi.Program> factory)
+    public HealthEndpointTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }
