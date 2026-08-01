@@ -1,14 +1,21 @@
 using Kreyora.Application.Abstractions;
+using Kreyora.Application.Audit;
 using Kreyora.Application.Authentication;
+using Kreyora.Application.Authorization;
 using Kreyora.Application.Messaging;
+using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
+using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authentication;
+using Kreyora.Infrastructure.Authorization;
 using Kreyora.Infrastructure.Correlation;
 using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Persistence;
+using Kreyora.Infrastructure.Support;
 using Kreyora.Infrastructure.Tenancy;
 using Kreyora.Infrastructure.Time;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -70,10 +77,21 @@ public static class DependencyInjection
 
             services.AddAuthentication(IdentityConstants.ApplicationScheme)
                 .AddIdentityCookies();
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                foreach (var permission in TenantPermissions.All)
+                {
+                    options.AddPolicy(permission, policy => policy.RequireAuthenticatedUser()
+                        .AddRequirements(new TenantPermissionRequirement(permission)));
+                }
+            });
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ITenantMembershipService, TenantMembershipService>();
+            services.AddScoped<ITenantPermissionAuthorizer, TenantPermissionAuthorizer>();
+            services.AddScoped<IAuthorizationHandler, TenantPermissionHandler>();
+            services.AddScoped<IAuditEventService, AuditEventService>();
+            services.AddScoped<ISupportAccessGrantService, SupportAccessGrantService>();
             services.AddScoped<ITenantContextResolutionService, TenantContextResolutionService>();
             services.AddScoped<ITenantQueryService, TenantQueryService>();
             services.AddScoped<ITenantKeyBuilder, TenantKeyBuilder>();

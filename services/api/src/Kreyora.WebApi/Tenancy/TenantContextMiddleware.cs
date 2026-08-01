@@ -40,7 +40,8 @@ public sealed class TenantContextMiddleware(RequestDelegate next)
             return;
         }
 
-        var context = await resolver.ResolveMembershipContextAsync(userId, requestedTenant[0]!, httpContext.RequestAborted);
+        var context = await resolver.ResolveMembershipContextAsync(userId, requestedTenant[0]!, httpContext.RequestAborted)
+            ?? await resolver.ResolveSupportContextAsync(userId, requestedTenant[0]!, httpContext.RequestAborted);
         if (context is null)
         {
             await WriteProblemAsync(httpContext, StatusCodes.Status403Forbidden, "The selected workspace is unavailable.", correlation.CorrelationId);

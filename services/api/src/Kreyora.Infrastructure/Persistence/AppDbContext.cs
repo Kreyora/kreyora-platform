@@ -1,4 +1,5 @@
 using Kreyora.Application.Tenancy;
+using Kreyora.Domain.Audit;
 using Kreyora.Domain.Common;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Identity;
@@ -23,6 +24,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Membership> Memberships => Set<Membership>();
+    public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+    public DbSet<SupportAccessGrant> SupportAccessGrants => Set<SupportAccessGrant>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -44,6 +47,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         builder.Entity<OutboxMessage>().HasQueryFilter(message => message.TenantId == CurrentTenantId);
+        builder.Entity<AuditEvent>().HasQueryFilter(auditEvent => auditEvent.TenantId == CurrentTenantId);
+        builder.Entity<SupportAccessGrant>().HasQueryFilter(grant => grant.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -72,6 +77,14 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
 
     private void EnforceTenantOwnership()
     {
+        foreach (var auditEntry in ChangeTracker.Entries<AuditEvent>())
+        {
+            if (auditEntry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                throw new InvalidOperationException("Audit events are append-only and cannot be changed or deleted.");
+            }
+        }
+
         foreach (var entry in ChangeTracker.Entries<ITenantOwned>())
         {
             if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted))
@@ -85,6 +98,11 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             if (!string.Equals(entry.Entity.TenantId, context.TenantId, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException("Tenant-owned data cannot be changed outside the verified tenant context.");
+            }
+
+            if (context.IsReadOnlySupport && entry.Entity is not AuditEvent)
+            {
+                throw new InvalidOperationException("Read-only PlatformSupport context cannot change tenant-owned data.");
             }
         }
     }

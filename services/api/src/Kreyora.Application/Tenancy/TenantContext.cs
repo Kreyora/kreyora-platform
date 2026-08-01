@@ -11,9 +11,11 @@ public sealed record TenantContext(
     string TenantId,
     string? UserId,
     string? MembershipId,
-    TenantRole? Role)
+    TenantRole? Role,
+    string? SupportAccessGrantId = null)
 {
     public bool IsMembershipContext => UserId is not null && MembershipId is not null && Role is not null;
+    public bool IsReadOnlySupport => UserId is not null && SupportAccessGrantId is not null && Role is null;
 }
 
 public interface ITenantContextAccessor
