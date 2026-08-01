@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
 
 export function DemoIndicator() {
   const [expanded, setExpanded] = useState(true);
+
+  if (!USING_FIXTURE_ADAPTERS) return null;
 
   if (!expanded) {
     return (

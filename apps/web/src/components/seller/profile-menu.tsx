@@ -5,8 +5,13 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { useSession } from "@/hooks/use-session";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { clearCsrfToken } from "@/lib/adapters/api/auth-client";
+import { clearSelectedWorkspace } from "@/lib/session/workspace-selection";
+import { useAuthClient } from "@/lib/providers/client-provider";
 
 export function ProfileMenu() {
+  const router = useRouter(); const auth = useAuthClient();
   const { session, effectiveRole, demoRoleOverride } = useSession();
   const user = session?.user;
 
@@ -61,13 +66,13 @@ export function ProfileMenu() {
             </Link>
           </DropdownMenuPrimitive.Item>
 
-          <DropdownMenuPrimitive.Item asChild>
-            <Link
-              href="/signin"
+          <DropdownMenuPrimitive.Item onSelect={() => { void auth.signOut().finally(() => { clearCsrfToken(); clearSelectedWorkspace(); router.push("/signin"); }); }}>
+            <button
+              type="button"
               className="flex min-h-9 cursor-pointer items-center rounded-[var(--radius-md)] px-3 text-sm text-[var(--color-ink-secondary)] outline-none transition-colors data-[highlighted]:bg-[var(--color-canvas-subtle)] data-[highlighted]:text-[var(--color-ink-primary)]"
             >
-              Sign out (simulated)
-            </Link>
+              Sign out
+            </button>
           </DropdownMenuPrimitive.Item>
         </DropdownMenuPrimitive.Content>
       </DropdownMenuPrimitive.Portal>

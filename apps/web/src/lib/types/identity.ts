@@ -15,6 +15,7 @@ export interface Tenant {
   name: string;
   slug: string;
   createdAt: Timestamp;
+  role?: Role;
 }
 
 export interface Membership {
@@ -23,6 +24,7 @@ export interface Membership {
   tenantId: TenantId;
   role: Role;
   joinedAt: Timestamp;
+  status?: "active" | "suspended" | "revoked";
 }
 
 export interface Session {

@@ -32,20 +32,45 @@ public sealed partial class GlobalExceptionMiddleware
         {
             await _next(context);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            LogExpectedRejection(context, ex.Message);
+            await WriteProblemAsync(context, ProblemDetailsFactory.Forbidden("You are not authorized to perform this action.", correlation.CorrelationId));
+        }
+        catch (InvalidOperationException ex)
+        {
+            LogExpectedRejection(context, ex.Message);
+            await WriteProblemAsync(context, ProblemDetailsFactory.Validation(ex.Message, correlationId: correlation.CorrelationId));
+        }
         catch (Exception ex)
         {
             LogUnhandledException(_logger, context.Request.Method, context.Request.Path, ex);
 
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/problem+json";
-
             var detail = _env.IsDevelopment() ? ex.ToString() : "An unexpected error occurred.";
-            var problem = ProblemDetailsFactory.ServerError(detail, correlation.CorrelationId);
+            await WriteProblemAsync(context, ProblemDetailsFactory.ServerError(detail, correlation.CorrelationId));
+        }
+    }
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
+    private static async Task WriteProblemAsync(HttpContext context, Microsoft.AspNetCore.Mvc.ProblemDetails problem)
+    {
+        context.Response.StatusCode = problem.Status ?? (int)HttpStatusCode.InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
+    }
+
+    private void LogExpectedRejection(HttpContext context, string reason)
+    {
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            var method = context.Request.Method;
+            var path = context.Request.Path.Value ?? string.Empty;
+            LogExpectedException(_logger, method, path, reason);
         }
     }
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Unhandled exception for {Method} {Path}")]
     private static partial void LogUnhandledException(ILogger logger, string method, string path, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Expected request rejection for {Method} {Path}: {Reason}")]
+    private static partial void LogExpectedException(ILogger logger, string method, string path, string reason);
 }

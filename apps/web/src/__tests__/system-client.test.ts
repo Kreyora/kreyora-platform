@@ -5,7 +5,7 @@ describe("apiSystemClient", () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
-    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:5001");
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:5030");
   });
 
   afterEach(() => {

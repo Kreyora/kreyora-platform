@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 import { ViewerBadge } from "@/components/viewer-badge";
 import type { AuditEvent } from "@/lib/types";
 
@@ -24,20 +25,22 @@ export default function AuditPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [resourceFilter, setResourceFilter] = useState("");
   const [actionFilter, setActionFilter] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback((cursor?: string) => {
     setIsLoading(true);
-    const params: { resourceType?: string; action?: string } = {};
+    const params: { resourceType?: string; action?: string; cursor?: string } = { cursor };
     if (resourceFilter.trim()) params.resourceType = resourceFilter.trim();
     if (actionFilter.trim()) params.action = actionFilter.trim();
     audit.listAuditEvents(params).then((res) => {
-      setEvents(res.items);
-      setIsLoading(false);
-    });
+      setEvents((current) => cursor ? [...current, ...res.items] : res.items);
+      setNextCursor(res.cursor);
+    }).catch(() => setError("We could not load audit history.")).finally(() => setIsLoading(false));
   }, [audit, resourceFilter, actionFilter]);
 
   useEffect(() => {
-    void Promise.resolve().then(load);
+    void Promise.resolve().then(() => load());
   }, [load]);
 
   return (
@@ -121,10 +124,8 @@ export default function AuditPage() {
           </table>
         </div>
       )}
-
-      <p className="mt-8 text-[10px] text-[var(--color-ink-secondary)]">
-        Audit events are simulated. Data is derived from mock fixtures.
-      </p>
+      {nextCursor && !isLoading && <Button variant="outline" className="mt-4" onClick={() => load(nextCursor)}>Load more</Button>}
+      {error && <p className="mt-4 text-sm text-[var(--color-danger)]">{error}</p>}
     </div>
   );
 }

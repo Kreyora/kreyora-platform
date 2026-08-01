@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { SessionProvider, useSessionLoader } from "@/hooks/use-session";
 import { SidebarNav } from "@/components/seller/sidebar-nav";
 import { ProfileMenu } from "@/components/seller/profile-menu";
 import { MobileNav } from "@/components/seller/mobile-nav";
 import { RoleSwitcher } from "@/components/seller/role-switcher";
 import { useAuthClient, USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
+import { clearCsrfToken } from "@/lib/adapters/api/auth-client";
+import { clearSelectedWorkspace } from "@/lib/session/workspace-selection";
 
 function NotificationBell() {
   return (
@@ -39,16 +41,47 @@ function NotificationBell() {
 function SellerShellInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const auth = useAuthClient();
-  const [isAuthenticated, setIsAuthenticated] = useState(USING_FIXTURE_ADAPTERS);
   const sessionState = useSessionLoader();
-  const { session, isLoading, effectiveRole } = sessionState;
+  const { session, isLoading, effectiveRole, permissions } = sessionState;
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (USING_FIXTURE_ADAPTERS || isLoading) return;
+    auth.getCurrentUser().catch(() => router.replace("/signin"));
+    if (!session && pathname !== "/workspaces") {
+      router.replace("/workspaces");
+      return;
+    }
+    const routePermissions: Record<string, string> = {
+      "/audit": "audit.read",
+      "/team": "memberships.manage",
+      "/billing": "billing.manage",
+    };
+    if (session && routePermissions[pathname] && !permissions.includes(routePermissions[pathname])) {
+      router.replace("/access-denied");
+    }
+  }, [auth, isLoading, pathname, permissions, router, session]);
 
   useEffect(() => {
     if (USING_FIXTURE_ADAPTERS) return;
-    auth.getCurrentUser().then(() => setIsAuthenticated(true)).catch(() => router.replace("/signin"));
-  }, [auth, router]);
+    const handleApiError = (event: Event) => {
+      const { status, detail } = (event as CustomEvent<{ status: number; detail: string }>).detail;
+      if (status === 401) {
+        clearCsrfToken();
+        clearSelectedWorkspace();
+        router.replace("/signin");
+      } else if (status === 403 && detail === "The selected workspace is unavailable.") {
+        clearSelectedWorkspace();
+        router.replace("/workspaces");
+      } else if (status === 403) {
+        router.replace("/access-denied");
+      }
+    };
+    window.addEventListener("kreyora:api-error", handleApiError);
+    return () => window.removeEventListener("kreyora:api-error", handleApiError);
+  }, [router]);
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading) {
     return (
       <div className="flex min-h-full items-center justify-center">
         <div className="text-sm text-[var(--color-ink-secondary)]">
@@ -76,7 +109,7 @@ function SellerShellInner({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 py-4">
-            <SidebarNav role={effectiveRole} />
+            <SidebarNav role={effectiveRole} permissions={permissions} />
           </div>
 
           <div className="border-t border-[var(--color-border)] px-3 py-3">

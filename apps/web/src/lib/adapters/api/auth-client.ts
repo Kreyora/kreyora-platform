@@ -2,8 +2,9 @@ import { apiFetch } from "@/lib/api";
 import type { AuthClient, AuthenticatedUser, RegisterOwnerInput } from "@/lib/ports/auth-client";
 
 let csrfToken: string | null = null;
+export function clearCsrfToken(): void { csrfToken = null; }
 
-async function getCsrfToken(): Promise<string> {
+export async function getCsrfToken(): Promise<string> {
   if (csrfToken) return csrfToken;
   const response = await apiFetch<{ token: string }>("/v1/auth/csrf");
   csrfToken = response.token;
