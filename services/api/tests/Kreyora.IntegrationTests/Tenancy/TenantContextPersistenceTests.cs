@@ -132,6 +132,65 @@ public class TenantContextPersistenceTests : IClassFixture<PostgresFixture>
         Assert.Null(accessor.Current);
     }
 
+    [Fact]
+    public async Task MembershipOperations_CannotReadOrMutateAnIdFromAnotherTenant()
+    {
+        var accessor = new TenantContextAccessor();
+        await using var context = fixture.CreateDbContext(accessor);
+        await context.Database.MigrateAsync();
+        var suffix = Guid.NewGuid().ToString("N");
+        var firstTenant = Tenant.Create("First membership tenant", $"membership-first-{suffix}");
+        var secondTenant = Tenant.Create("Second membership tenant", $"membership-second-{suffix}");
+        var firstOwner = CreateUser($"membership-owner-one-{suffix}@kreyora.test");
+        var secondOwner = CreateUser($"membership-owner-two-{suffix}@kreyora.test");
+        var firstViewer = CreateUser($"membership-viewer-one-{suffix}@kreyora.test");
+        var secondViewer = CreateUser($"membership-viewer-two-{suffix}@kreyora.test");
+        context.Tenants.AddRange(firstTenant, secondTenant);
+        context.Users.AddRange(firstOwner, secondOwner, firstViewer, secondViewer);
+        context.Memberships.AddRange(
+            Membership.Grant(firstTenant.Id, firstOwner.Id, TenantRole.Owner),
+            Membership.Grant(firstTenant.Id, firstViewer.Id, TenantRole.Viewer),
+            Membership.Grant(secondTenant.Id, secondOwner.Id, TenantRole.Owner),
+            Membership.Grant(secondTenant.Id, secondViewer.Id, TenantRole.Viewer));
+        await context.SaveChangesAsync();
+
+        var foreignMembership = await context.Memberships.SingleAsync(membership => membership.TenantId == secondTenant.Id && membership.UserId == secondViewer.Id);
+        var service = new TenantMembershipService(context, accessor);
+
+        using (accessor.BeginScope(new TenantContext(firstTenant.Id, firstOwner.Id, "first-owner", TenantRole.Owner)))
+        {
+            var visibleMembers = await service.GetMembersAsync();
+            Assert.Equal(2, visibleMembers.Count);
+            Assert.All(visibleMembers, member => Assert.NotEqual(secondViewer.Id, member.UserId));
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.SuspendMembershipAsync(foreignMembership.Id));
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.ChangeMembershipRoleAsync(foreignMembership.Id, TenantRole.Operator));
+        }
+
+        var reloadedForeignMembership = await context.Memberships.SingleAsync(membership => membership.Id == foreignMembership.Id);
+        Assert.True(reloadedForeignMembership.IsActive);
+        Assert.Equal(TenantRole.Viewer, reloadedForeignMembership.Role);
+    }
+
+    [Fact]
+    public async Task DurableTenantWork_RejectsInactiveTenantAndLeavesNoContext()
+    {
+        var accessor = new TenantContextAccessor();
+        await using var context = fixture.CreateDbContext(accessor);
+        await context.Database.MigrateAsync();
+        var tenant = Tenant.Create("Inactive job workspace", $"inactive-job-{Guid.NewGuid():N}");
+        tenant.SetStatus(TenantStatus.Suspended);
+        context.Tenants.Add(tenant);
+        await context.SaveChangesAsync();
+
+        var resolver = new TenantContextResolutionService(context);
+        var runner = new TenantJobRunner(accessor, resolver);
+        var processor = new TenantOutboxProcessor(accessor, resolver);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => runner.RunAsync(new TenantJobEnvelope(tenant.Id, "test", "{}"), _ => Task.CompletedTask));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => processor.ProcessAsync(tenant.Id, _ => Task.CompletedTask));
+        Assert.Null(accessor.Current);
+    }
+
     private static ApplicationUser CreateUser(string email) => new()
     {
         DisplayName = "Tenant Context Tester",

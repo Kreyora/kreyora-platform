@@ -121,6 +121,27 @@ describe("apiFetch", () => {
     }
   });
 
+  it("publishes an API error event for seller session recovery", async () => {
+    const listener = vi.fn();
+    window.addEventListener("kreyora:api-error", listener);
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+      json: () => Promise.resolve({ type: "about:blank", title: "Forbidden", status: 403, detail: "The selected workspace is unavailable." }),
+      headers: new Headers(),
+    });
+
+    await expect(apiFetch("/v1/permissions")).rejects.toBeInstanceOf(ApiClientError);
+    expect(listener).toHaveBeenCalledOnce();
+    expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({
+      status: 403,
+      detail: "The selected workspace is unavailable.",
+      path: "/v1/permissions",
+    });
+    window.removeEventListener("kreyora:api-error", listener);
+  });
+
   it("creates a fallback problem when JSON parsing fails", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,

@@ -53,6 +53,18 @@ public class PolicyEndpointTests
         grantRequest.Headers.Add("X-Test-Auth", "yes");
         grantRequest.Headers.Add(TenantContextMiddleware.TenantHeaderName, PolicyFactory.TenantId);
         Assert.Equal(HttpStatusCode.Forbidden, (await viewer.SendAsync(grantRequest)).StatusCode);
+
+        var membershipRequest = new HttpRequestMessage(HttpMethod.Get, "/v1/memberships");
+        membershipRequest.Headers.Add("X-Test-Auth", "yes");
+        membershipRequest.Headers.Add(TenantContextMiddleware.TenantHeaderName, PolicyFactory.TenantId);
+        Assert.Equal(HttpStatusCode.Forbidden, (await viewer.SendAsync(membershipRequest)).StatusCode);
+
+        await using var operatorFactory = new PolicyFactory(TenantRole.Operator);
+        using var operatorClient = operatorFactory.CreateClient();
+        var operatorMembershipRequest = new HttpRequestMessage(HttpMethod.Get, "/v1/memberships");
+        operatorMembershipRequest.Headers.Add("X-Test-Auth", "yes");
+        operatorMembershipRequest.Headers.Add(TenantContextMiddleware.TenantHeaderName, PolicyFactory.TenantId);
+        Assert.Equal(HttpStatusCode.Forbidden, (await operatorClient.SendAsync(operatorMembershipRequest)).StatusCode);
     }
 
     [Fact]
