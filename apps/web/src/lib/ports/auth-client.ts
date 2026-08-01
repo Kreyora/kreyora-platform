@@ -17,6 +17,6 @@ export interface AuthClient {
   signIn(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
   getCurrentUser(): Promise<AuthenticatedUser>;
-  requestPasswordReset(email: string): Promise<string | null>;
+  requestPasswordReset(email: string): Promise<void>;
   resetPassword(email: string, token: string, newPassword: string): Promise<void>;
 }

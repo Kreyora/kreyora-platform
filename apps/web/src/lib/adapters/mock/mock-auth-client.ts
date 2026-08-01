@@ -7,6 +7,6 @@ export const mockAuthClient: AuthClient = {
   async signIn(_email: string, _password: string) {},
   async signOut() {},
   async getCurrentUser() { return fixtureUser; },
-  async requestPasswordReset(_email: string) { return null; },
+  async requestPasswordReset(_email: string) {},
   async resetPassword(_email: string, _token: string, _newPassword: string) {},
 };

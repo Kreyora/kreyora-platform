@@ -3,19 +3,19 @@
 ## Active position
 
 - **Milestone:** 03 — Tenancy, Identity, RBAC, and Audit
-- **Step:** 01 — Tenant, User, Membership, and Role Domain
+- **Step:** 02 amendment — SMTP Password Reset Delivery
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/03_TENANCY_IDENTITY_RBAC.md`
 
 ## Branch and commit state
 
-- **Branch:** feat/master/m02-s06 (local, uncommitted; no commits or pushes)
-- **Last state:** M02 approved by the user; M03-S01 implementation awaiting review
+- **Branch:** feat/master/m03-s03 (local implementation; no commit, push, or PR created by this step)
+- **Last state:** M03-S01 approved; M03-S02 SMTP corrective amendment and M03-S03 tenant-context implementation both await review
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M03-S01.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M02-S06.md`
+- **Current checkpoint:** `artifacts/checkpoints/M03-S02.md` (SMTP amendment)
+- **Previous checkpoint:** `artifacts/checkpoints/M03-S03.md`
 
 ## Blockers
 
@@ -23,23 +23,25 @@ None.
 
 ## Current objective
 
-M03-S01 implementation is complete and awaiting review:
+The project-owner-directed M03-S02 corrective amendment is complete and awaiting review. It replaces the initial Development-only reset-token/link exposure with SMTP delivery using MailKit and Identity's official reset tokens:
 
-1. ASP.NET Core Identity persistence with ULID-style application-user IDs and required display names
-2. Tenant and membership lifecycle, normalized uniqueness constraints, and a transactional last-active-Owner invariant
-3. Development-only, idempotent role seeding plus optional demo owner data guarded by `Development__Seed__DemoPassword`
-4. `AddIdentityTenancyAndMemberships` migration, model snapshot, unit coverage, and PostgreSQL integration coverage
+1. The API always returns the same `202 Accepted` reset-request message and never returns a token or reset URL.
+2. The browser recovery screen directs the user to email only; it has no development continuation link.
+3. `IEmailSender` / `SmtpEmailSender`, typed SMTP configuration, token expiry, safe failure handling, and Mailpit-controlled SMTP proof are implemented.
+4. ADR-004, development/hosted setup instructions, and the M03 plan/checkpoint records document the new required flow.
 
-**Evidence:** Release build and all backend tests pass; the local Docker PostgreSQL migration command applied the new migration successfully. See `artifacts/checkpoints/M03-S01.md` for commands and results.
+M03-S03 tenant-context implementation remains complete and awaiting its own review; it was not altered beyond updated regression evidence.
+
+**Evidence:** Formatting, Release build, and all backend tests pass (95 total: 51 unit, 33 integration, 6 architecture, 5 contract); frontend regression suite passes (482 tests); the SMTP integration test delivered a MailKit message to a controlled Mailpit Testcontainers inbox and read it back. See `artifacts/checkpoints/M03-S02.md`.
 
 ## Next permitted action
 
-Review `artifacts/checkpoints/M03-S01.md`, with particular attention to the ownership invariant, Identity constraints, development seed boundary, and migration.
+Review `artifacts/checkpoints/M03-S02.md`, `docs/decisions/ADR-004-smtp-password-reset-delivery.md`, the SMTP/Identity tests, and `docs/architecture/LOCAL_EMAIL_DELIVERY.md`. Also review the existing M03-S03 checkpoint before approving later M03 work.
 
 ## Next prohibited action
 
-- Starting M03-S02 or any subsequent implementation prompt before M03-S01 review and approval
-- Browser authentication, API controllers, tenant context, policy enforcement, audit events, or frontend changes
+- Starting M03-S04 or any subsequent implementation prompt before this SMTP amendment and M03-S03 are reviewed and approved
+- Policy RBAC, audit events, frontend workspace integration, or broader product business logic
 - Committing, pushing, or deploying
 
 ## Update history
@@ -67,3 +69,8 @@ Review `artifacts/checkpoints/M03-S01.md`, with particular attention to the owne
 | 2026-08-01 | M02-S06 amended: renamed PR workflow and split manual Docker validation into separate backend and frontend workflows. Status remains REVIEW. | Codex |
 | 2026-08-01 | User approved M02 completion; M03-S01 implemented and moved to REVIEW. | Codex |
 | 2026-08-01 | Added the non-secret .NET User Secrets project identifier and documented persistent local PostgreSQL setup; connection value remains outside Git. | Codex |
+| 2026-08-01 | Reconciled the merged M03-S02 implementation as approved and added reconstructed evidence because its original checkpoint was absent. | Codex |
+| 2026-08-01 | M03-S03 complete: verified tenant context, durable propagation, outbox migration, and isolation coverage. Status → REVIEW. | Codex |
+| 2026-08-02 | M03-S02 amended: registered MVC antiforgery filter services and added a real CSRF registration endpoint regression test. | Codex |
+| 2026-08-02 | M03-S02 amended: registered Identity default token providers and added PostgreSQL coverage for Development password reset. | Codex |
+| 2026-08-02 | M03-S02 corrected: superseded browser-visible Development reset tokens/links with SMTP delivery, typed secure configuration, MailKit/Mailpit transport proof, ADR-004, and 95-test regression evidence. Status → REVIEW. | Codex |

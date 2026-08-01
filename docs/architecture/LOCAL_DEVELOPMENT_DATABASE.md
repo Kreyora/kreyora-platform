@@ -6,6 +6,8 @@ Never commit a database password, connection string containing a password, `.env
 
 The Web API uses .NET User Secrets during the Development environment. The project records only a non-secret User Secrets identifier. Each developer stores their own connection string in their OS user profile, outside the repository.
 
+Password-reset SMTP configuration follows the same boundary; see [Local Email Delivery and Password Reset](LOCAL_EMAIL_DELIVERY.md).
+
 ## Standard local database
 
 Use one persistent Docker container per development machine:

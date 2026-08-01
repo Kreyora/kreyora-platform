@@ -1,3 +1,4 @@
+using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Common;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Identity;
@@ -10,8 +11,11 @@ namespace Kreyora.Infrastructure.Persistence;
 
 public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    private readonly ITenantContextAccessor? tenantContext;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, ITenantContextAccessor? tenantContext = null) : base(options)
     {
+        this.tenantContext = tenantContext;
     }
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
@@ -39,10 +43,12 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<IdentityUserToken<string>>().ToTable("user_tokens");
 
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        builder.Entity<OutboxMessage>().HasQueryFilter(message => message.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        EnforceTenantOwnership();
         var now = DateTimeOffset.UtcNow;
 
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
@@ -60,5 +66,26 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         }
 
         return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private string? CurrentTenantId => tenantContext?.Current?.TenantId;
+
+    private void EnforceTenantOwnership()
+    {
+        foreach (var entry in ChangeTracker.Entries<ITenantOwned>())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted))
+            {
+                continue;
+            }
+
+            var context = tenantContext?.Current
+                ?? throw new InvalidOperationException("A verified tenant context is required to change tenant-owned data.");
+
+            if (!string.Equals(entry.Entity.TenantId, context.TenantId, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Tenant-owned data cannot be changed outside the verified tenant context.");
+            }
+        }
     }
 }

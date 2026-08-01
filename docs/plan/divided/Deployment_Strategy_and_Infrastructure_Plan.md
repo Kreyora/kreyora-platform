@@ -159,7 +159,7 @@ Create GitHub environments named `development` and `production`.
 - `development` accepts `develop` deployments automatically.
 - `production` accepts only `main`/release tags and requires manual approval.
 - Environment secrets contain only deployment connectivity (SSH host/user/key, registry pull credential). Keep application secrets in each server’s protected environment file or later secret manager.
-- Never place DB passwords, social tokens, AI keys, payment secrets, or private keys in Git, container images, or workflow logs.
+- Never place DB passwords, SMTP credentials, social tokens, AI keys, payment secrets, or private keys in Git, container images, or workflow logs. Inject SMTP settings through the target's protected environment file or an approved secret manager; production reset URLs use HTTPS and TLS SMTP.
 
 GitHub environments can restrict deployment branches, protect environment secrets, require reviews, and provide deployment history. Sources: [GitHub environments](https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments), [deployment protection rules](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments). GitHub Actions can build and publish Docker images to GitHub Container Registry: [guide](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images).
 

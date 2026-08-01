@@ -77,6 +77,21 @@ describe("apiFetch", () => {
     expect(result).toBeUndefined();
   });
 
+  it("returns undefined for a successful empty 201 response", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      headers: new Headers({ "Content-Length": "0" }),
+    });
+
+    const result = await apiFetch("/v1/auth/register", {
+      method: "POST",
+      body: { email: "seller@example.test" },
+    });
+
+    expect(result).toBeUndefined();
+  });
+
   it("throws ApiClientError for RFC 7807 error responses", async () => {
     const problemResponse = {
       type: "https://tools.ietf.org/html/rfc9110#section-15.5.5",
