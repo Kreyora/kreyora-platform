@@ -1,7 +1,11 @@
 using Kreyora.Application.Abstractions;
+using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Correlation;
+using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Persistence;
+using Kreyora.Infrastructure.Tenancy;
 using Kreyora.Infrastructure.Time;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +33,13 @@ public static class DependencyInjection
                     npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
                 }));
 
+            services
+                .AddIdentityCore<ApplicationUser>(options => options.User.RequireUniqueEmail = true)
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>();
+
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<ITenantMembershipService, TenantMembershipService>();
         }
 
         return services;

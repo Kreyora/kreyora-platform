@@ -24,7 +24,7 @@ Hangfire uses PostgreSQL storage initially. Keep a cache abstraction only where 
 | 03 | PostgreSQL, EF Core, migrations, and durable primitives | `APPROVED` |
 | 04 | Aspire, Docker, local dependencies, and developer workflow | `APPROVED` |
 | 05 | Frontend contract adapters and generated types | `APPROVED` |
-| 06 | CI, quality gates, and clean-checkout proof | `REVIEW` |
+| 06 | CI, quality gates, and clean-checkout proof | `APPROVED` |
 
 ## Prompt 01 — Monorepo and solution topology
 
