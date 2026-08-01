@@ -2,6 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import type { IdentityClient } from "@/lib/ports/identity-client";
+import type { AuthClient } from "@/lib/ports/auth-client";
 import type { CatalogClient } from "@/lib/ports/catalog-client";
 import type { InventoryClient } from "@/lib/ports/inventory-client";
 import type { StorefrontClient } from "@/lib/ports/storefront-client";
@@ -16,6 +17,7 @@ import type { ReportingClient } from "@/lib/ports/reporting-client";
 import type { AuditClient } from "@/lib/ports/audit-client";
 import {
   mockIdentityClient,
+  mockAuthClient,
   mockCatalogClient,
   mockInventoryClient,
   mockStorefrontClient,
@@ -29,6 +31,7 @@ import {
   mockReportingClient,
   mockAuditClient,
 } from "@/lib/adapters/mock";
+import { apiAuthClient } from "@/lib/adapters/api";
 
 /**
  * Determined at build time from the NEXT_PUBLIC_API_URL env var.
@@ -50,6 +53,7 @@ if (
 }
 
 export interface ClientSet {
+  auth: AuthClient;
   identity: IdentityClient;
   catalog: CatalogClient;
   inventory: InventoryClient;
@@ -66,6 +70,7 @@ export interface ClientSet {
 }
 
 const defaultClients: ClientSet = {
+  auth: USING_FIXTURE_ADAPTERS ? mockAuthClient : apiAuthClient,
   identity: mockIdentityClient,
   catalog: mockCatalogClient,
   inventory: mockInventoryClient,
@@ -100,6 +105,10 @@ export function useClients(): ClientSet {
 
 export function useIdentityClient(): IdentityClient {
   return useContext(ClientContext).identity;
+}
+
+export function useAuthClient(): AuthClient {
+  return useContext(ClientContext).auth;
 }
 
 export function useCatalogClient(): CatalogClient {
