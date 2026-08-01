@@ -19,9 +19,9 @@ Every tenant-owned row contains `TenantId`; EF query filters are defense in dept
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | Tenant, user, membership, and role domain | `REVIEW` |
-| 02 | Identity and secure browser session flow | `NOT STARTED` |
-| 03 | Trusted tenant context across API and jobs | `NOT STARTED` |
+| 01 | Tenant, user, membership, and role domain | `APPROVED` |
+| 02 | Identity and secure browser session flow (SMTP password-reset amendment) | `REVIEW` |
+| 03 | Trusted tenant context across API and jobs | `REVIEW` |
 | 04 | Policy RBAC and audit event pipeline | `NOT STARTED` |
 | 05 | Frontend authentication/workspace integration | `NOT STARTED` |
 | 06 | Isolation and authorization test campaign | `NOT STARTED` |
@@ -34,7 +34,7 @@ Every tenant-owned row contains `TenantId`; EF query filters are defense in dept
 
 ## Prompt 02 — Identity and secure browser session flow
 
-> Implement registration or invite-based onboarding according to an ADR, sign-in, sign-out, current-user, password reset development flow, session expiration, and secure browser authentication for the Next.js seller workspace. Document the cookie/token choice, CSRF posture, CORS policy, account enumeration protections, rate limits, and secret requirements. Do not add social login unless separately approved. Add API and browser tests for success, failure, lockout/rate behavior, expiration, CSRF, and sign-out.
+> Implement registration or invite-based onboarding according to an ADR, sign-in, sign-out, current-user, SMTP-delivered password reset, session expiration, and secure browser authentication for the Next.js seller workspace. Password-reset tokens and links must never be returned to browser/API callers or logs. Document the cookie/token choice, CSRF posture, CORS policy, account enumeration protections, rate limits, email-provider setup, and secret requirements. Do not add social login unless separately approved. Add API and browser tests for success, failure, lockout/rate behavior, expiration, CSRF, token expiry/reuse, safe SMTP failure, and sign-out.
 
 **Review checkpoint:** approve the auth ADR, browser security controls, and end-to-end session evidence.
 

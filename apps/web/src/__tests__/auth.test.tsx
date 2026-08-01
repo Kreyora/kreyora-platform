@@ -14,9 +14,11 @@ describe("authentication routes", () => {
     expect(content).not.toContain("Facebook");
   });
 
-  it("provides owner registration and development reset completion routes", () => {
+  it("provides owner registration and email-based reset completion routes", () => {
     expect(read("signup/page.tsx")).toContain("auth.register");
     expect(read("recover/page.tsx")).toContain("auth.requestPasswordReset");
     expect(read("recover/reset/page.tsx")).toContain("auth.resetPassword");
+    expect(read("recover/page.tsx")).not.toContain("developmentToken");
+    expect(read("recover/page.tsx")).not.toContain("Continue development reset");
   });
 });

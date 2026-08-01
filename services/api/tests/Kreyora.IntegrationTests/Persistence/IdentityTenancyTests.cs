@@ -25,6 +25,7 @@ public class IdentityTenancyTests : IClassFixture<PostgresFixture>
         var migrations = await context.Database.GetAppliedMigrationsAsync();
 
         Assert.Contains(migrations, migration => migration.EndsWith("AddIdentityTenancyAndMemberships", StringComparison.Ordinal));
+        Assert.Contains(migrations, migration => migration.EndsWith("AddTenantContextToOutbox", StringComparison.Ordinal));
     }
 
     [Fact]

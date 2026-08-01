@@ -1,12 +1,12 @@
-using Microsoft.AspNetCore.Mvc.Testing;
+using Kreyora.IntegrationTests.Fixtures;
 
 namespace Kreyora.IntegrationTests;
 
-public class WebApiSmokeTests : IClassFixture<WebApplicationFactory<Kreyora.WebApi.Program>>
+public class WebApiSmokeTests : IClassFixture<TestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<WebApi.Program> _factory;
+    private readonly TestWebApplicationFactory _factory;
 
-    public WebApiSmokeTests(WebApplicationFactory<WebApi.Program> factory)
+    public WebApiSmokeTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
     }

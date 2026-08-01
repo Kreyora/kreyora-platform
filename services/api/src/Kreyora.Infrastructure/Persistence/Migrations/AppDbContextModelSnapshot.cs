@@ -309,6 +309,12 @@ namespace Kreyora.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("processed_at");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("tenant_id");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(512)
@@ -318,7 +324,7 @@ namespace Kreyora.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_outbox_messages");
 
-                    b.HasIndex("ProcessedAt")
+                    b.HasIndex("TenantId", "ProcessedAt")
                         .HasDatabaseName("ix_outbox_messages_unprocessed")
                         .HasFilter("processed_at IS NULL");
 

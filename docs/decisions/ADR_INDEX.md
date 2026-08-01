@@ -20,6 +20,8 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-004 | SMTP password reset delivery | `Accepted` | 2026-08-02 | — |
+| ADR-003 | Verified tenant selection context | `Accepted` | 2026-08-01 | — |
 | ADR-002 | Cookie browser authentication | `Accepted` | 2026-08-01 | — |
 | ADR-001 | Service-layer pattern with traditional controllers (no MediatR/CQRS) | `Accepted` | 2026-07-27 | — |
 
@@ -27,6 +29,8 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-004 | SMTP password reset delivery | `Accepted` | 2026-08-02 | — |
+| ADR-003 | Verified tenant selection context | `Accepted` | 2026-08-01 | — |
 | ADR-002 | Cookie browser authentication | `Accepted` | 2026-08-01 | — |
 | ADR-001 | Service-layer pattern with traditional controllers (no MediatR/CQRS) | `Accepted` | 2026-07-27 | — |
 

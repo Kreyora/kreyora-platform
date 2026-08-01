@@ -59,8 +59,8 @@ public sealed class AuthController(IAuthenticationService authenticationService,
     [EnableRateLimiting("auth-password-reset")]
     public async Task<IActionResult> RequestPasswordReset(PasswordResetRequestBody request, CancellationToken cancellationToken)
     {
-        var result = await authenticationService.RequestPasswordResetAsync(request.Email, cancellationToken);
-        return Accepted(new { accepted = true, developmentToken = result.DevelopmentToken });
+        await authenticationService.RequestPasswordResetAsync(request.Email, cancellationToken);
+        return Accepted(new { message = "If an account exists for that email address, password reset instructions will be sent." });
     }
 
     [HttpPost("password-reset/confirm")]
