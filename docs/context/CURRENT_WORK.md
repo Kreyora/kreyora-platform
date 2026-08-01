@@ -3,36 +3,36 @@
 ## Active position
 
 - **Milestone:** 03 - Tenancy, Identity, RBAC, and Audit
-- **Step:** M03-S05 - Real Seller Authentication, Workspace, Team, and Audit UI
+- **Step:** M03-S06 - Tenant Isolation and Authorization Verification Campaign
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/03_TENANCY_IDENTITY_RBAC.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `feat/master/m03-s04` with uncommitted M03-S05 implementation changes.
-- **Current checkpoint:** `artifacts/checkpoints/M03-S05.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M03-S04.md`
-- **Last approved state:** M03-S01 through M03-S04, including the Scalar and RBAC corrective addenda, are approved and merged.
+- **Branch:** `feat/master/m03-s04` with uncommitted M03-S06 verification changes.
+- **Current checkpoint:** `artifacts/checkpoints/M03-S06.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M03-S05.md`
+- **Last approved state:** M03-S01 through M03-S05 are approved and merged.
 
 ## Current objective
 
-M03-S05 connects completed identity, workspace, membership, permission, and audit APIs to the seller browser. Workspace selection is per browser tab in `sessionStorage`; the server verifies the tenant header and all permissions on every tenant-scoped request. Other product screens remain fixture-backed.
+M03-S06 proves tenant isolation and authorization for every completed M03 boundary: authenticated API requests, tenant context, membership lifecycle, audit/support access, EF queries, raw SQL/projections, durable work, key builders, generated contracts, and real-mode browser adapters.
 
 ## Next permitted action
 
-Review M03-S05 real-mode behavior and its checkpoint. After approval, plan M03-S06 only.
+Review the M03-S06 isolation matrix and checkpoint. Approve the Milestone 03 exit gate before planning Milestone 04.
 
 ## Next prohibited action
 
-- Starting M03-S06 or a later prompt before M03-S05 is reviewed and approved.
-- Invitations, external providers, or product-business logic outside M03-S05.
+- Starting Milestone 04 before M03-S06 and the Milestone 03 exit gate are approved.
+- Adding new product features, providers, migrations, or browser E2E tooling in this verification step.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
-| 2026-08-02 | Project owner approved and merged M03-S04. M03-S05 completed with real seller identity, workspace, membership, permission, and audit UI. Status -> REVIEW. | Codex |
+| 2026-08-02 | Project owner approved and merged M03-S05. M03-S06 isolation and authorization campaign completed. Status -> REVIEW. | Codex |
+| 2026-08-02 | M03-S05 connected real seller identity, workspace, membership, permission, and audit UI. | Codex |
 | 2026-08-02 | M03-S04 completed live policy RBAC, append-only audit events, and Owner-issued read-only PlatformSupport access. | Codex |
 | 2026-08-02 | Project owner approved and merged M03-S02 (including SMTP amendment) and M03-S03. | Project owner |
-| 2026-08-01 | User approved M02 completion; M03-S01 implemented and moved to review. | Codex |

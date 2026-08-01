@@ -137,6 +137,48 @@ public class AuditAndSupportAccessTests : IClassFixture<PostgresFixture>
         }
     }
 
+    [Fact]
+    public async Task SupportResolution_RejectsExpiredGrantAndGrantQueriesStayTenantScoped()
+    {
+        var accessor = new TenantContextAccessor();
+        await using var context = fixture.CreateDbContext(accessor);
+        await context.Database.MigrateAsync();
+        var suffix = Guid.NewGuid().ToString("N");
+        var firstTenant = Tenant.Create("First support tenant", $"support-first-{suffix}");
+        var secondTenant = Tenant.Create("Second support tenant", $"support-second-{suffix}");
+        var supportUser = CreateUser($"expired-support-{suffix}@kreyora.test");
+        var role = await GetOrCreatePlatformSupportRoleAsync(context);
+        context.Tenants.AddRange(firstTenant, secondTenant);
+        context.Users.Add(supportUser);
+        await context.SaveChangesAsync();
+        context.UserRoles.Add(new IdentityUserRole<string> { UserId = supportUser.Id, RoleId = role.Id });
+        await context.SaveChangesAsync();
+
+        SupportAccessGrant firstGrant;
+        using (accessor.BeginScope(new TenantContext(firstTenant.Id, "owner-one", "membership-one", TenantRole.Owner)))
+        {
+            firstGrant = SupportAccessGrant.Create(firstTenant.Id, supportUser.Id, "owner-one", "Investigate first workspace", DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow);
+            context.SupportAccessGrants.Add(firstGrant);
+            await context.SaveChangesAsync();
+        }
+        using (accessor.BeginScope(new TenantContext(secondTenant.Id, "owner-two", "membership-two", TenantRole.Owner)))
+        {
+            context.SupportAccessGrants.Add(SupportAccessGrant.Create(secondTenant.Id, supportUser.Id, "owner-two", "Investigate second workspace", DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow));
+            await context.SaveChangesAsync();
+        }
+
+        using (accessor.BeginScope(new TenantContext(firstTenant.Id, "owner-one", "membership-one", TenantRole.Owner)))
+        {
+            Assert.Single(await context.SupportAccessGrants.ToListAsync());
+            context.Entry(firstGrant).Property(nameof(SupportAccessGrant.ExpiresAt)).CurrentValue = DateTimeOffset.UtcNow.AddMinutes(-1);
+            await context.SaveChangesAsync();
+        }
+
+        var resolver = new TenantContextResolutionService(context);
+        Assert.Null(await resolver.ResolveSupportContextAsync(supportUser.Id, firstTenant.Id));
+        Assert.NotNull(await resolver.ResolveSupportContextAsync(supportUser.Id, secondTenant.Id));
+    }
+
     private static ApplicationUser CreateUser(string email) => new()
     {
         DisplayName = "Support Test User",
