@@ -10,6 +10,8 @@ interface NavItem {
   icon: React.ReactNode;
   /** Roles that can access. If undefined, all roles can access. */
   roles?: Role[];
+  /** Live backend permission used in real API mode. */
+  permission?: string;
 }
 
 interface NavGroup {
@@ -47,16 +49,19 @@ const NAV_GROUPS: NavGroup[] = [
       {
         href: "/catalog",
         label: "Catalog",
+        permission: "catalog.read",
         icon: icon("M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"),
       },
       {
         href: "/orders",
         label: "Orders",
+        permission: "orders.read",
         icon: icon("M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"),
       },
       {
         href: "/inbox",
         label: "Inbox",
+        permission: "conversations.read",
         icon: icon("M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"),
       },
     ],
@@ -69,18 +74,21 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Storefront",
         icon: icon("M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"),
         roles: ["owner", "admin"],
+        permission: "settings.read",
       },
       {
         href: "/integrations",
         label: "Integrations",
         icon: icon("M13 2L3 14h9l-1 8 10-12h-9l1-8z"),
         roles: ["owner", "admin"],
+        permission: "integrations.read",
       },
       {
         href: "/assistant",
         label: "Assistant",
         icon: icon("M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1-5h-2V7h2z"),
         roles: ["owner", "admin"],
+        permission: "ai.configuration.read",
       },
     ],
   },
@@ -92,53 +100,60 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Analytics",
         icon: icon("M18 20V10M12 20V4M6 20v-6"),
         roles: ["owner", "admin", "viewer"],
+        permission: "reporting.read",
       },
       {
         href: "/billing",
         label: "Billing",
         icon: icon("M2 5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zm0 4h20"),
         roles: ["owner"],
+        permission: "billing.manage",
       },
       {
         href: "/team",
         label: "Team",
         icon: icon("M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm14 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"),
         roles: ["owner", "admin"],
+        permission: "memberships.manage",
       },
       {
         href: "/settings",
         label: "Settings",
         icon: icon("M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"),
         roles: ["owner"],
+        permission: "settings.read",
       },
       {
         href: "/audit",
         label: "Audit",
         icon: icon("M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"),
         roles: ["owner", "admin", "viewer"],
+        permission: "audit.read",
       },
     ],
   },
 ];
 
-function isItemVisible(item: NavItem, role: Role): boolean {
+function isItemVisible(item: NavItem, role: Role, permissions?: string[]): boolean {
+  if (permissions && item.permission) return permissions.includes(item.permission);
   if (!item.roles) return true;
   return item.roles.includes(role);
 }
 
 interface SidebarNavProps {
   role: Role;
+  permissions?: string[];
   onLinkClick?: () => void;
 }
 
-export function SidebarNav({ role, onLinkClick }: SidebarNavProps) {
+export function SidebarNav({ role, permissions, onLinkClick }: SidebarNavProps) {
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-col gap-6" aria-label="Seller navigation">
       {NAV_GROUPS.map((group) => {
         const visibleItems = group.items.filter((item) =>
-          isItemVisible(item, role),
+          isItemVisible(item, role, permissions),
         );
         if (visibleItems.length === 0) return null;
 

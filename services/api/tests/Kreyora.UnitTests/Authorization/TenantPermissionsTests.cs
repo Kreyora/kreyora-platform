@@ -14,6 +14,10 @@ public class TenantPermissionsTests
     [InlineData(TenantRole.Operator, TenantPermissions.PaymentsRead, true)]
     [InlineData(TenantRole.Viewer, TenantPermissions.OrdersWrite, false)]
     [InlineData(TenantRole.Viewer, TenantPermissions.ReportingRead, true)]
+    [InlineData(TenantRole.Viewer, TenantPermissions.CatalogRead, true)]
+    [InlineData(TenantRole.Viewer, TenantPermissions.IntegrationsRead, true)]
+    [InlineData(TenantRole.Viewer, TenantPermissions.AiConfigurationRead, true)]
+    [InlineData(TenantRole.Viewer, TenantPermissions.CatalogWrite, false)]
     public void Matrix_EnforcesTheApprovedRoleDecision(TenantRole role, string permission, bool expected)
     {
         var context = new TenantContext("01H00000000000000000000000", "user", "membership", role);

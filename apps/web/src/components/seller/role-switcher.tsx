@@ -2,11 +2,14 @@
 
 import { useSession } from "@/hooks/use-session";
 import type { Role } from "@/lib/types";
+import { USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
 
 const DEMO_ROLES: Role[] = ["owner", "admin", "operator", "viewer"];
 
 export function RoleSwitcher() {
   const { effectiveRole, demoRoleOverride, setDemoRole } = useSession();
+
+  if (!USING_FIXTURE_ADAPTERS) return null;
 
   return (
     <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-warning)] bg-[var(--color-warning-subtle)] p-3">

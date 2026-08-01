@@ -14,7 +14,7 @@ describe("Adapter switching logic", () => {
   });
 
   it("uses real adapters when NEXT_PUBLIC_API_URL is set", async () => {
-    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:5001");
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:5030");
 
     const mod = await import("@/lib/providers/client-provider");
     expect(mod.USING_FIXTURE_ADAPTERS).toBe(false);

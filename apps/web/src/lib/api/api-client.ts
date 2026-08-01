@@ -58,7 +58,13 @@ export async function apiFetch<T>(
       };
     }
 
-    throw new ApiClientError(problem, responseCorrelationId);
+    const error = new ApiClientError(problem, responseCorrelationId);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("kreyora:api-error", {
+        detail: { status: error.status, detail: error.detail, path },
+      }));
+    }
+    throw error;
   }
 
   if (response.status === 201 || response.status === 204) {

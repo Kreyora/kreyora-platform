@@ -7,7 +7,7 @@ import { useSession } from "@/hooks/use-session";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
-  const { effectiveRole } = useSession();
+  const { effectiveRole, permissions } = useSession();
   const close = useCallback(() => setOpen(false), []);
 
   return (
@@ -67,7 +67,7 @@ export function MobileNav() {
             </DialogPrimitive.Close>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            <SidebarNav role={effectiveRole} onLinkClick={close} />
+            <SidebarNav role={effectiveRole} permissions={permissions} onLinkClick={close} />
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
