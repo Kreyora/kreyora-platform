@@ -95,6 +95,7 @@ if (args.Contains("--migrate"))
 if (args.Contains("--seed"))
 {
     await DevSeedHook.SeedDevelopmentDataAsync(app.Services);
+    return;
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();

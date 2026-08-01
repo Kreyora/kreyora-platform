@@ -2,20 +2,20 @@
 
 ## Active position
 
-- **Milestone:** 02 — Engineering and Backend Foundation
-- **Step:** 06 — CI, Quality Gates, and Clean-Checkout Proof
+- **Milestone:** 03 — Tenancy, Identity, RBAC, and Audit
+- **Step:** 01 — Tenant, User, Membership, and Role Domain
 - **Status:** `REVIEW`
-- **Active milestone file:** `docs/milestones/02_ENGINEERING_FOUNDATION.md`
+- **Active milestone file:** `docs/milestones/03_TENANCY_IDENTITY_RBAC.md`
 
 ## Branch and commit state
 
-- **Branch:** master (local, uncommitted; no commits or pushes)
-- **Last state:** M01 complete; M02-S01 through M02-S05 approved; M02-S06 awaiting review
+- **Branch:** feat/master/m02-s06 (local, uncommitted; no commits or pushes)
+- **Last state:** M02 approved by the user; M03-S01 implementation awaiting review
 
 ## Checkpoint
 
-- **Current checkpoint:** `artifacts/checkpoints/M02-S06.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M02-S05.md`
+- **Current checkpoint:** `artifacts/checkpoints/M03-S01.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M02-S06.md`
 
 ## Blockers
 
@@ -23,27 +23,23 @@ None.
 
 ## Current objective
 
-M02-S06 implementation is complete and awaiting review:
+M03-S01 implementation is complete and awaiting review:
 
-1. Pull-request GitHub Actions workflow with least-privilege read permission and superseded-run cancellation
-2. Backend formatting, Release build, and all test-project gates
-3. Frontend frozen install, lint, explicit type check, Vitest, and production-build gates
-4. Migration and OpenAPI checks retained for local/future CI use but disabled from automatic PR execution
-5. Gitleaks PR scan with repository-managed license; Dependency Review configuration retained but its unsupported job disabled
-6. Deterministic pnpm/OpenAPI scripts and a reproducible web Docker workspace install
-7. CI conventions documentation and corrected versioned Codex handoff configuration guidance
-8. Clean-copy evidence in `artifacts/checkpoints/M02-S06.md`
+1. ASP.NET Core Identity persistence with ULID-style application-user IDs and required display names
+2. Tenant and membership lifecycle, normalized uniqueness constraints, and a transactional last-active-Owner invariant
+3. Development-only, idempotent role seeding plus optional demo owner data guarded by `Development__Seed__DemoPassword`
+4. `AddIdentityTenancyAndMemberships` migration, model snapshot, unit coverage, and PostgreSQL integration coverage
 
-**Evidence:** isolated-copy proof passed: 63 backend tests, 494 frontend tests, migration validation, zero-diff OpenAPI generation, both Docker builds, Gitleaks, and workflow actionlint. The M02-S06 amendment upgrades pnpm to 11.13.0, keeps automatic PR quality/security checks, and makes Docker validation manual-only.
+**Evidence:** Release build and all backend tests pass; the local Docker PostgreSQL migration command applied the new migration successfully. See `artifacts/checkpoints/M03-S01.md` for commands and results.
 
 ## Next permitted action
 
-Review `artifacts/checkpoints/M02-S06.md`, including the first authorized pull-request CI run and manual Docker workflow dispatch.
+Review `artifacts/checkpoints/M03-S01.md`, with particular attention to the ownership invariant, Identity constraints, development seed boundary, and migration.
 
 ## Next prohibited action
 
-- Starting M03 or any subsequent implementation prompt before M02-S06 review and M02 exit approval
-- Any real provider integration, deployment, or external service contact
+- Starting M03-S02 or any subsequent implementation prompt before M03-S01 review and approval
+- Browser authentication, API controllers, tenant context, policy enforcement, audit events, or frontend changes
 - Committing, pushing, or deploying
 
 ## Update history
@@ -69,3 +65,5 @@ Review `artifacts/checkpoints/M02-S06.md`, including the first authorized pull-r
 | 2026-08-01 | M02-S06 amended: pnpm 11.13.0, PR-only quality/security CI, manual-only Docker workflow, and unsupported jobs disabled. Status remains REVIEW. | Codex |
 | 2026-08-01 | M02-S06 amended: secret-scan now has read-only pull-request metadata access and disabled PR comments. Status remains REVIEW. | Codex |
 | 2026-08-01 | M02-S06 amended: renamed PR workflow and split manual Docker validation into separate backend and frontend workflows. Status remains REVIEW. | Codex |
+| 2026-08-01 | User approved M02 completion; M03-S01 implemented and moved to REVIEW. | Codex |
+| 2026-08-01 | Added the non-secret .NET User Secrets project identifier and documented persistent local PostgreSQL setup; connection value remains outside Git. | Codex |
