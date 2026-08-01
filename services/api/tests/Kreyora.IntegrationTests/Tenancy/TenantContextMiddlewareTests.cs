@@ -60,6 +60,30 @@ public class TenantContextMiddlewareTests
         Assert.Null(accessor.Current);
     }
 
+    [Fact]
+    public async Task ActiveSupportGrant_EstablishesAReadOnlyContext()
+    {
+        var accessor = new TenantContextAccessor();
+        var tenantId = IdGenerator.NewId();
+        TenantContext? observed = null;
+        var middleware = new TenantContextMiddleware(_ =>
+        {
+            observed = accessor.Current;
+            return Task.CompletedTask;
+        });
+        var request = CreateProtectedRequest();
+        request.Request.Headers[TenantContextMiddleware.TenantHeaderName] = tenantId;
+
+        await middleware.InvokeAsync(
+            request,
+            accessor,
+            new StubResolver(null, new TenantContext(tenantId, "user-1", null, null, "grant-1")),
+            new StubCorrelationContext());
+
+        Assert.True(observed!.IsReadOnlySupport);
+        Assert.Null(accessor.Current);
+    }
+
     private static DefaultHttpContext CreateProtectedRequest()
     {
         var context = new DefaultHttpContext();
@@ -73,7 +97,7 @@ public class TenantContextMiddlewareTests
         return context;
     }
 
-    private sealed class StubResolver(TenantContext? resolution) : ITenantContextResolutionService
+    private sealed class StubResolver(TenantContext? resolution, TenantContext? supportResolution = null) : ITenantContextResolutionService
     {
         public Task<IReadOnlyList<WorkspaceSummary>> GetActiveWorkspacesAsync(string userId, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<WorkspaceSummary>>([]);
@@ -83,6 +107,9 @@ public class TenantContextMiddlewareTests
 
         public Task<TenantContext?> ResolveBackgroundContextAsync(string tenantId, CancellationToken cancellationToken = default)
             => Task.FromResult<TenantContext?>(null);
+
+        public Task<TenantContext?> ResolveSupportContextAsync(string userId, string tenantId, CancellationToken cancellationToken = default)
+            => Task.FromResult(supportResolution);
     }
 
     private sealed class StubCorrelationContext : ICorrelationContext

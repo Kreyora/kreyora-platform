@@ -59,6 +59,9 @@ public sealed class DevelopmentWebApplicationFactory : WebApplicationFactory<Kre
 
         public Task<TenantContext?> ResolveBackgroundContextAsync(string tenantId, CancellationToken cancellationToken = default)
             => Task.FromResult<TenantContext?>(null);
+
+        public Task<TenantContext?> ResolveSupportContextAsync(string userId, string tenantId, CancellationToken cancellationToken = default)
+            => Task.FromResult<TenantContext?>(null);
     }
 
     protected override void Dispose(bool disposing)
