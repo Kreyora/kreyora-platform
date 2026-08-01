@@ -1,13 +1,12 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Kreyora.ContractTests;
 
-public class SystemEndpointContractTests : IClassFixture<WebApplicationFactory<Kreyora.WebApi.Program>>
+public class SystemEndpointContractTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public SystemEndpointContractTests(WebApplicationFactory<WebApi.Program> factory)
+    public SystemEndpointContractTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

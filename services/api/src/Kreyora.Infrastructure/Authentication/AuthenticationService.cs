@@ -1,13 +1,19 @@
 using System.Data;
 using System.Security.Claims;
+using System.Text.Encodings.Web;
 using Kreyora.Application.Authentication;
+using Kreyora.Application.Messaging;
 using Kreyora.Domain.Tenancy;
+using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Kreyora.Infrastructure.Authentication;
 
@@ -16,8 +22,14 @@ public sealed class AuthenticationService(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
     IHttpContextAccessor httpContextAccessor,
-    IHostEnvironment environment) : IAuthenticationService
+    IEmailSender emailSender,
+    IOptions<SmtpEmailOptions> emailOptions,
+    ILogger<AuthenticationService> logger) : IAuthenticationService
 {
+    private static readonly Action<ILogger, string, Exception?> PasswordResetEmailDeliveryFailed =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(1001, "PasswordResetEmailDeliveryFailed"),
+            "Password reset email delivery failed ({FailureType}).");
+
     public async Task<RegistrationResult> RegisterOwnerAsync(RegisterOwnerRequest request, CancellationToken cancellationToken = default)
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
@@ -81,15 +93,27 @@ public sealed class AuthenticationService(
             : new AuthenticatedUser(user.Id, user.DisplayName, user.Email!);
     }
 
-    public async Task<PasswordResetRequestResult> RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default)
+    public async Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email.Trim());
-        if (user is null || !environment.IsDevelopment())
+        if (user is null || string.IsNullOrWhiteSpace(user.Email))
         {
-            return new PasswordResetRequestResult(null);
+            return;
         }
 
-        return new PasswordResetRequestResult(await userManager.GeneratePasswordResetTokenAsync(user));
+        try
+        {
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            await emailSender.SendAsync(CreatePasswordResetEmail(user.Email, token), cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            PasswordResetEmailDeliveryFailed(logger, exception.GetType().Name, null);
+        }
     }
 
     public async Task<PasswordResetResult> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
@@ -104,5 +128,30 @@ public sealed class AuthenticationService(
         return new PasswordResetResult(
             result.Succeeded,
             result.Errors.Select(error => error.Description).ToArray());
+    }
+
+    private EmailMessage CreatePasswordResetEmail(string recipientEmail, string token)
+    {
+        var settings = emailOptions.Value;
+        var resetUrl = QueryHelpers.AddQueryString(
+            new Uri(new Uri(settings.ApplicationPublicUrl.TrimEnd('/') + "/"), "recover/reset").ToString(),
+            new Dictionary<string, string?>
+            {
+                ["email"] = recipientEmail,
+                ["token"] = token
+            });
+        var encodedUrl = HtmlEncoder.Default.Encode(resetUrl);
+        var subject = $"Reset your {settings.ApplicationName} password";
+        var lifetime = settings.PasswordResetTokenLifetimeMinutes;
+        var textBody = $"We received a request to reset your {settings.ApplicationName} password. " +
+            $"Use this link within {lifetime} minutes:\n\n{resetUrl}\n\n" +
+            "If you did not request this, you can safely ignore this email.";
+        var htmlBody = $"<p>We received a request to reset your {HtmlEncoder.Default.Encode(settings.ApplicationName)} password.</p>" +
+            $"<p><a href=\"{encodedUrl}\">Reset your password</a></p>" +
+            $"<p>This link expires in {lifetime} minutes.</p>" +
+            "<p>If you did not request this, you can safely ignore this email.</p>" +
+            $"<p>If the button does not work, copy and paste this URL into your browser:<br>{encodedUrl}</p>";
+
+        return new EmailMessage(recipientEmail, subject, htmlBody, textBody);
     }
 }

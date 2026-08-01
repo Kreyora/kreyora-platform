@@ -14,6 +14,7 @@ using Kreyora.Infrastructure.Persistence;
 using Kreyora.ServiceDefaults;
 using Kreyora.WebApi.Configuration;
 using Kreyora.WebApi.Seeding;
+using Kreyora.WebApi.Tenancy;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -47,7 +48,7 @@ builder.Services
     .BindConfiguration(CorsSettings.SectionName);
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddHangfireServices(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAntiforgery(options =>
@@ -73,7 +74,7 @@ builder.Services.AddRateLimiter(options =>
     options.AddFixedWindowLimiter("auth-password-reset", limiter => { limiter.PermitLimit = 3; limiter.Window = TimeSpan.FromHours(1); });
 });
 
-builder.Services.AddControllers()
+builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -144,6 +145,7 @@ app.UseCors();
 app.UseHttpsRedirection();
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseAuthorization();
 app.MapServiceDefaults();
 app.MapControllers();

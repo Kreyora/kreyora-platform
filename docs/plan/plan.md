@@ -887,6 +887,7 @@ Key tables/indexes: every tenant table has `TenantId` and composite indexes alig
 ### 10.11 Security, compliance and data governance
 
 - HTTPS everywhere; encrypted provider tokens/secrets using a managed key system; secret rotation and access audit.
+- Password-reset URLs are delivered only through the configured SMTP sender; reset tokens, SMTP credentials, and recipient details are not returned to clients or written to logs. Production reset URLs require HTTPS and TLS SMTP.
 - Policy-based RBAC, secure session/token handling, CSRF posture for browser endpoints, rate limits and abuse limits for public checkout/AI.
 - Webhook signature verification, replay-window protection, payload-size/type limits and allowlisted provider endpoints where practical.
 - PII minimization: classify customer contacts/addresses, restrict support access, define retention/deletion/export workflows and redact sensitive values in logs/AI traces.

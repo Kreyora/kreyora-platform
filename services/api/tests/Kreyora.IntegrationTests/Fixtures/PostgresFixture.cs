@@ -1,3 +1,4 @@
+using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
@@ -24,7 +25,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         await _container.DisposeAsync();
     }
 
-    public AppDbContext CreateDbContext()
+    public AppDbContext CreateDbContext(ITenantContextAccessor? tenantContext = null)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(ConnectionString, npgsql =>
@@ -33,6 +34,6 @@ public sealed class PostgresFixture : IAsyncLifetime
             })
             .Options;
 
-        return new AppDbContext(options);
+        return new AppDbContext(options, tenantContext);
     }
 }

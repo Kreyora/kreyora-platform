@@ -1,12 +1,12 @@
-using Microsoft.AspNetCore.Mvc.Testing;
+using Kreyora.IntegrationTests.Fixtures;
 
 namespace Kreyora.IntegrationTests;
 
-public class CorrelationIdTests : IClassFixture<WebApplicationFactory<Kreyora.WebApi.Program>>
+public class CorrelationIdTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public CorrelationIdTests(WebApplicationFactory<WebApi.Program> factory)
+    public CorrelationIdTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

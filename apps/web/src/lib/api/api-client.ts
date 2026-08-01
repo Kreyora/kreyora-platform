@@ -61,7 +61,7 @@ export async function apiFetch<T>(
     throw new ApiClientError(problem, responseCorrelationId);
   }
 
-  if (response.status === 204) {
+  if (response.status === 201 || response.status === 204) {
     return undefined as T;
   }
 

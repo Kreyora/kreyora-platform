@@ -1,5 +1,7 @@
+using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Persistence.Entities;
+using Kreyora.Infrastructure.Tenancy;
 using Kreyora.IntegrationTests.Fixtures;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +9,7 @@ namespace Kreyora.IntegrationTests.Persistence;
 
 public class TransactionTests : IClassFixture<PostgresFixture>
 {
+    private const string TenantId = "01J00000000000000000000002";
     private readonly PostgresFixture _fixture;
 
     public TransactionTests(PostgresFixture fixture)
@@ -17,7 +20,9 @@ public class TransactionTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task Commit_Persists_Changes()
     {
-        using var context = _fixture.CreateDbContext();
+        var tenantContext = new TenantContextAccessor();
+        using var scope = tenantContext.BeginScope(new TenantContext(TenantId, null, null, null));
+        using var context = _fixture.CreateDbContext(tenantContext);
         await context.Database.MigrateAsync();
 
         var uow = new UnitOfWork(context);
@@ -25,13 +30,14 @@ public class TransactionTests : IClassFixture<PostgresFixture>
 
         context.OutboxMessages.Add(new OutboxMessage
         {
+            TenantId = TenantId,
             Type = "TestEvent",
             Content = "{\"test\":true}"
         });
         await uow.SaveChangesAsync();
         await uow.CommitTransactionAsync();
 
-        using var verifyContext = _fixture.CreateDbContext();
+        using var verifyContext = _fixture.CreateDbContext(tenantContext);
         var count = await verifyContext.OutboxMessages.CountAsync();
         Assert.True(count > 0);
     }
@@ -39,7 +45,9 @@ public class TransactionTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task Rollback_Discards_Changes()
     {
-        using var context = _fixture.CreateDbContext();
+        var tenantContext = new TenantContextAccessor();
+        using var scope = tenantContext.BeginScope(new TenantContext(TenantId, null, null, null));
+        using var context = _fixture.CreateDbContext(tenantContext);
         await context.Database.MigrateAsync();
 
         var countBefore = await context.OutboxMessages.CountAsync();
@@ -49,13 +57,14 @@ public class TransactionTests : IClassFixture<PostgresFixture>
 
         context.OutboxMessages.Add(new OutboxMessage
         {
+            TenantId = TenantId,
             Type = "RollbackEvent",
             Content = "{\"rollback\":true}"
         });
         await uow.SaveChangesAsync();
         await uow.RollbackTransactionAsync();
 
-        using var verifyContext = _fixture.CreateDbContext();
+        using var verifyContext = _fixture.CreateDbContext(tenantContext);
         var countAfter = await verifyContext.OutboxMessages.CountAsync();
         Assert.Equal(countBefore, countAfter);
     }

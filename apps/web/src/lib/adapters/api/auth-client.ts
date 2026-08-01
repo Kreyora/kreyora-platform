@@ -32,8 +32,7 @@ export const apiAuthClient: AuthClient = {
     return apiFetch<AuthenticatedUser>("/v1/auth/me");
   },
   async requestPasswordReset(email) {
-    const response = await post<{ developmentToken?: string | null }>("/v1/auth/password-reset/request", { email });
-    return response.developmentToken ?? null;
+    await post<void>("/v1/auth/password-reset/request", { email });
   },
   async resetPassword(email, token, newPassword) {
     await post<void>("/v1/auth/password-reset/confirm", { email, token, newPassword });

@@ -36,6 +36,10 @@ pnpm generate:api
 
 This downloads `http://127.0.0.1:5001/openapi/v1.json` into the committed `apps/web/src/lib/api/generated/openapi-v1.json` snapshot, then generates `v1.ts` from that snapshot. Set `KREYORA_OPENAPI_URL` to use a different OpenAPI document URL. The snapshot normalizes its non-contract `servers` URL to `http://localhost:5030/`; override that value only with `KREYORA_OPENAPI_SNAPSHOT_SERVER_URL`. Both generated files are committed so CI can diff-check for drift.
 
+## Interactive API documentation
+
+The API exposes its Development-only OpenAPI document at `/openapi/v1.json`. Kreyora must add [Scalar](https://github.com/scalar/scalar) as the Development-only interactive viewer at `/scalar`, backed by that same document. Scalar is a local developer/reviewer convenience only: it must not be mapped in Production, require no credential or provider configuration, and must not replace the committed OpenAPI snapshot or generated TypeScript contract workflow.
+
 ## Adapter switching
 
 The `ClientProvider` inspects the `NEXT_PUBLIC_API_URL` environment variable at runtime:
@@ -44,6 +48,12 @@ The `ClientProvider` inspects the `NEXT_PUBLIC_API_URL` environment variable at 
 - **Unset** → mock adapters are used, the app runs in demo mode with fixture data
 
 This behaviour is controlled in `apps/web/src/lib/providers/client-provider.tsx`.
+
+## Real-mode adapter rule
+
+When `NEXT_PUBLIC_API_URL` is set, every completed backend capability must use its real API adapter. A failed real API call must show an error state; it must never silently fall back to fixture data. Fixture adapters remain only for modules whose backend capability has not been implemented in its scheduled milestone, and their UI must remain visibly identified as demo data.
+
+Current state: browser authentication, including SMTP-backed password-reset request and confirmation, uses the real API in real mode. The reset request never returns a token or reset URL to the frontend; the user continues only from the email link. Workspace selection will move to the real tenant endpoints in M03-S05. Catalog, inventory, orders, inbox, storefront operations, payments, integrations, AI, billing, reporting, and audit views remain fixtures until their corresponding backend milestones provide the authoritative APIs.
 
 ## Mapping convention
 

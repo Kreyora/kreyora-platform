@@ -14,14 +14,13 @@ export default function RecoverPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    const token = await auth.requestPasswordReset(email).catch(() => null);
-    setResult(token);
+    await auth.requestPasswordReset(email).catch(() => undefined);
+    setResult("requested");
     setLoading(false);
   }
   if (result !== null) return <>
     <h1 className="text-heading-page text-[var(--color-ink-primary)]">Check your email</h1>
-    <p className="mt-2 text-sm text-[var(--color-ink-secondary)]">If an account exists, recovery instructions are available.</p>
-    {result && <Link className="mt-5 inline-block underline" href={`/recover/reset?email=${encodeURIComponent(email)}&token=${encodeURIComponent(result)}`}>Continue development reset</Link>}
+    <p className="mt-2 text-sm text-[var(--color-ink-secondary)]">If an account exists for that email address, password reset instructions will be sent.</p>
     <Link className="mt-5 block underline" href="/signin">Back to sign in</Link>
   </>;
   return <>
