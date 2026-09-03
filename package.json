@@ -1,7 +1,7 @@
 {
   "name": "kreyora",
   "private": true,
-  "packageManager": "pnpm@11.13.0",
+  "packageManager": "pnpm@11.13.1",
   "scripts": {
     "dev": "pnpm --filter @kreyora/web dev",
     "build": "pnpm --filter @kreyora/web build",

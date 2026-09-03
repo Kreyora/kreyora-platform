@@ -24,7 +24,7 @@ Every tenant-owned row contains `TenantId`; EF query filters are defense in dept
 | 03 | Trusted tenant context across API and jobs | `APPROVED` |
 | 04 | Policy RBAC and audit event pipeline | `APPROVED` |
 | 05 | Frontend authentication/workspace integration | `APPROVED` |
-| 06 | Isolation and authorization test campaign | `REVIEW` |
+| 06 | Isolation and authorization test campaign | `APPROVED` |
 
 ## Prompt 01 — Tenant, user, membership, and role domain
 
@@ -64,10 +64,11 @@ Every tenant-owned row contains `TenantId`; EF query filters are defense in dept
 
 ## Milestone exit gate
 
+**Status:** `APPROVED` — 2026-09-04
+
 - A user can create or join a tenant and enter only authorized workspaces.
 - Server-side policies enforce the approved role matrix.
 - Tenant context is safe across API, EF, raw query, job, outbox, and storage-key paths.
 - Cross-tenant and IDOR tests pass.
 - Audit events identify actor, tenant, action, target, time, reason, and correlation ID.
 - Frontend identity fixtures remain only in explicit demo mode.
-

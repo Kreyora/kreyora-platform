@@ -19,7 +19,7 @@ Purchasability requires an active store later, a published product/variant, a va
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | Catalog and variant domain | `NOT STARTED` |
+| 01 | Catalog and variant domain | `REVIEW` |
 | 02 | Stock ledger, balances, and adjustments | `NOT STARTED` |
 | 03 | Reservation concurrency, expiry, and reconciliation | `NOT STARTED` |
 | 04 | Media authorization and object-storage abstraction | `NOT STARTED` |
@@ -71,4 +71,3 @@ Purchasability requires an active store later, a published product/variant, a va
 - Concurrent reservations cannot oversell.
 - Reservation expiry safely releases availability.
 - Media is private, validated, tenant-scoped, and safely delivered.
-
