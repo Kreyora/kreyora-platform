@@ -15,20 +15,45 @@ services:
       timeout: 5s
       retries: 5
 
+  # AUTOMATED MIGRATION RUNNER
+  # This uses your existing API image, runs the EF migrations & seeds, then stops safely.
+  migrator:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    entrypoint: ["dotnet", "Kreyora.WebApi.dll"] # Forces execution of the main assembly
+    command: ["--migrate", "--seed"] # Triggers BOTH blocks in your Program.cs
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Database__ConnectionString: "Host=postgres;Port=5432;Database=kreyora;Username=kreyora;Password=${POSTGRES_PASSWORD:-kreyora_dev}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
     build:
       context: ./services/api
       dockerfile: Dockerfile
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Development
       Database__ConnectionString: "Host=postgres;Port=5432;Database=kreyora;Username=kreyora;Password=${POSTGRES_PASSWORD:-kreyora_dev}"
       App__Name: "Kreyora API"
       App__Version: "0.1.0"
+      Cors__AllowedOrigins__0: http://localhost:3000
+      Email__Smtp__ApplicationName: Kreyora
+      Email__Smtp__Host: mailpit
+      Email__Smtp__Port: 1025
+      Email__Smtp__Security: None
+      Email__Smtp__SenderEmail: no-reply@kreyora.test
+      Email__Smtp__SenderDisplayName: Kreyora Development
+      Email__Smtp__ApplicationPublicUrl: http://localhost:3000
     ports:
       - "5001:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     # Resource guidance (uncomment for constrained environments):
     # deploy:
     #   resources:
@@ -40,13 +65,17 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    environment:
-      NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://api:8080
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5001
     ports:
       - "3000:3000"
     depends_on:
       - api
+
+  mailpit:
+    image: axllent/mailpit:v1.30.6
+    ports:
+      - "127.0.0.1:8025:8025"
 
   # Reverse-proxy placeholder (uncomment when needed):
   # proxy:

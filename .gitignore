@@ -80,6 +80,9 @@ temp/
 *.log
 screenshots/
 *.generated.*
+graphify/
+graphify-out/
+.graphify/
 
 # Docker
 docker-compose.override.yml

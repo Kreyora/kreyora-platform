@@ -1,5 +1,6 @@
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Audit;
+using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Common;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Identity;
@@ -26,6 +27,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<Membership> Memberships => Set<Membership>();
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
     public DbSet<SupportAccessGrant> SupportAccessGrants => Set<SupportAccessGrant>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+    public DbSet<CatalogCommandIdempotency> CatalogCommandIdempotencyRecords => Set<CatalogCommandIdempotency>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -49,6 +53,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<OutboxMessage>().HasQueryFilter(message => message.TenantId == CurrentTenantId);
         builder.Entity<AuditEvent>().HasQueryFilter(auditEvent => auditEvent.TenantId == CurrentTenantId);
         builder.Entity<SupportAccessGrant>().HasQueryFilter(grant => grant.TenantId == CurrentTenantId);
+        builder.Entity<Product>().HasQueryFilter(product => product.TenantId == CurrentTenantId);
+        builder.Entity<ProductVariant>().HasQueryFilter(variant => variant.TenantId == CurrentTenantId);
+        builder.Entity<CatalogCommandIdempotency>().HasQueryFilter(record => record.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
