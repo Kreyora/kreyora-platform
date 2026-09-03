@@ -29,9 +29,6 @@ jobs:
       - name: Restore
         run: dotnet restore Kreyora.slnx
         working-directory: services/api
-      - name: Verify formatting
-        run: dotnet format Kreyora.slnx --verify-no-changes --no-restore
-        working-directory: services/api
       - name: Build
         run: dotnet build Kreyora.slnx --configuration Release --no-restore
         working-directory: services/api
@@ -54,7 +51,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
         with:
-          version: 11.13.0
+          version: 11.13.1
           run_install: false
       - uses: actions/setup-node@v6
         with:

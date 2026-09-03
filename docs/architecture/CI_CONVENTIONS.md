@@ -10,7 +10,7 @@ The `Pull Request Checks` workflow validates only pull requests targeting `maste
 
 ## Required checks
 
-- Backend restore, formatting, Release build, and unit, architecture, contract, and integration tests.
+- Backend restore, Release build, and unit, architecture, contract, and integration tests.
 - Frontend frozen install, lint, TypeScript type check, Vitest suite, and production build.
 - Gitleaks secret scanning on pull requests, using the repository-managed `GITLEAKS_LICENSE` and GitHub-provided token. The job receives only `contents: read` and `pull-requests: read`; PR comments are disabled, while findings still block the pull request.
 
@@ -29,3 +29,7 @@ M02-S06 does not publish release artifacts, Docker images, packages, or generate
 ## Local parity
 
 Run the commands documented in the M02-S06 checkpoint before requesting review. Migration and OpenAPI drift commands remain documented for local or future CI use, but are not automatic PR checks at this time.
+
+### Formatting
+
+Backend formatting is not a CI or merge requirement. Contributors may use their preferred editor settings and may run `dotnet format` locally when useful, but formatting differences do not block a pull request. The frontend quality gate remains linting, TypeScript type checking, tests, and the production build.
