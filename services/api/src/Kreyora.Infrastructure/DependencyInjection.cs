@@ -1,7 +1,6 @@
 using Kreyora.Application.Abstractions;
 using Kreyora.Application.Audit;
 using Kreyora.Application.Authentication;
-using Kreyora.Application.Catalog;
 using Kreyora.Application.Authorization;
 using Kreyora.Application.Catalog;
 using Kreyora.Application.Messaging;
@@ -9,7 +8,6 @@ using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authentication;
-using Kreyora.Infrastructure.Catalog;
 using Kreyora.Infrastructure.Authorization;
 using Kreyora.Infrastructure.Catalog;
 using Kreyora.Infrastructure.Correlation;

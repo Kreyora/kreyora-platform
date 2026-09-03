@@ -20,13 +20,13 @@ public sealed class CatalogCommandIdempotency : BaseEntity, ITenantOwned
         string idempotencyKey,
         string requestFingerprint,
         string productId) => new()
-    {
-        TenantId = Require(tenantId, nameof(tenantId), 26),
-        Operation = Require(operation, nameof(operation), 100),
-        IdempotencyKey = Require(idempotencyKey, nameof(idempotencyKey), 256),
-        RequestFingerprint = Require(requestFingerprint, nameof(requestFingerprint), 64),
-        ProductId = Require(productId, nameof(productId), 26)
-    };
+        {
+            TenantId = Require(tenantId, nameof(tenantId), 26),
+            Operation = Require(operation, nameof(operation), 100),
+            IdempotencyKey = Require(idempotencyKey, nameof(idempotencyKey), 256),
+            RequestFingerprint = Require(requestFingerprint, nameof(requestFingerprint), 64),
+            ProductId = Require(productId, nameof(productId), 26)
+        };
 
     private static string Require(string value, string parameterName, int maxLength)
     {
