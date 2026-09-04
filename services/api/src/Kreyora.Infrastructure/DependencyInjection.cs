@@ -5,6 +5,7 @@ using Kreyora.Application.Authorization;
 using Kreyora.Application.Catalog;
 using Kreyora.Application.Inventory;
 using Kreyora.Application.Messaging;
+using Kreyora.Application.Storefront;
 using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Audit;
@@ -17,6 +18,7 @@ using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Media;
 using Kreyora.Infrastructure.Persistence;
+using Kreyora.Infrastructure.Storefront;
 using Kreyora.Infrastructure.Support;
 using Kreyora.Infrastructure.Tenancy;
 using Kreyora.Infrastructure.Time;
@@ -114,6 +116,8 @@ public static class DependencyInjection
             services.AddScoped<ITenantOutboxProcessor, TenantOutboxProcessor>();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<ICatalogService, CatalogService>();
+            services.AddScoped<IStorefrontCatalogReadService, StorefrontCatalogReadService>();
+            services.AddScoped<IStorefrontAdministrationService, StorefrontAdministrationService>();
             services.AddScoped<IInventoryService, InventoryService>();
             services.AddScoped<IMediaAssetService, MediaAssetService>();
             services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>

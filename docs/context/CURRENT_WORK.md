@@ -2,35 +2,38 @@
 
 ## Active position
 
-- **Milestone:** 04 - Catalog, Inventory, and Media
-- **Step:** M04-S06 - Contention, Isolation, and End-to-End Verification
+- **Milestone:** 05 - Storefront, Delivery, Checkout, and Canonical Orders
+- **Step:** M05-S01 - Store Entity, Readiness, Settings, and Publication
 - **Status:** `REVIEW`
-- **Active milestone file:** `docs/milestones/04_CATALOG_INVENTORY_MEDIA.md`
+- **Active milestone file:** `docs/milestones/05_STOREFRONT_CHECKOUT_ORDERS.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master` with uncommitted M04-S01 approval and M04-S02 planning documentation.
-- **Current checkpoint:** `artifacts/checkpoints/M04-S06.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M04-S05.md`
-- **Last approved state:** M03-S01 through M03-S06 and M04-S01 through M04-S05 are approved.
+- **Branch:** `master`.
+- **Current checkpoint:** `artifacts/checkpoints/M05-S01.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M04-S06.md`
+- **Last approved state:** M03-S01 through M03-S06 and M04-S01 through M04-S06 are approved. Milestone 04 exit gate is approved.
 
 ## Current objective
 
-Plan M04-S06: the catalog/inventory/media contention, tenant-isolation, and end-to-end verification campaign. Storefront, checkout/orders, and Milestone 05 remain out of scope.
+Review M05-S01: Store lifecycle, controlled seller settings, policy content, product publication scope, and computed readiness. Public storefront, delivery, payment, cart, checkout, and orders remain out of scope.
 
 ## Next permitted action
 
-Review the M04-S06 invariant matrix and approve the Milestone 04 exit gate before starting Milestone 05.
+Project-owner review and approval of M05-S01. Graphify updates remain deferred until approval.
 
 ## Next prohibited action
 
-- Starting Milestone 05 or any later milestone before the M04 exit gate is approved.
+- Starting M05-S02 or any later step.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-04 | M05-S01 implementation, live OpenAPI/TypeScript regeneration, Testcontainers cleanup, and review checkpoint completed. | Codex |
+| 2026-09-04 | Project owner approved the M05-S01 plan; implementation started. | Project owner / Codex |
+| 2026-09-04 | Project owner approved M04-S06 and the Milestone 04 exit gate; M05-S01 planning started. | Project owner / Codex |
 | 2026-09-04 | M04-S06 verification completed; contention retry defect fixed and review checkpoint created. | Codex |
 | 2026-09-04 | Project owner approved M04-S05; M04-S06 verification planning started. | Project owner / Codex |
 | 2026-09-04 | M04-S05 implementation completed; API contract regenerated and review checkpoint created. | Codex |

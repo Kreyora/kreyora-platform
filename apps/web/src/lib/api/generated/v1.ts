@@ -1580,6 +1580,262 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StorefrontStore"];
+                        "application/json": components["schemas"]["StorefrontStore"];
+                        "text/json": components["schemas"]["StorefrontStore"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateStoreBody"];
+                    "text/json": components["schemas"]["UpdateStoreBody"];
+                    "application/*+json": components["schemas"]["UpdateStoreBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StorefrontStore"];
+                        "application/json": components["schemas"]["StorefrontStore"];
+                        "text/json": components["schemas"]["StorefrontStore"];
+                    };
+                };
+            };
+        };
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StoreSettingsInput"];
+                    "text/json": components["schemas"]["StoreSettingsInput"];
+                    "application/*+json": components["schemas"]["StoreSettingsInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StorefrontStore"];
+                        "application/json": components["schemas"]["StorefrontStore"];
+                        "text/json": components["schemas"]["StorefrontStore"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StoreReadiness"];
+                        "application/json": components["schemas"]["StoreReadiness"];
+                        "text/json": components["schemas"]["StoreReadiness"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["VersionBody"];
+                    "text/json": components["schemas"]["VersionBody"];
+                    "application/*+json": components["schemas"]["VersionBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StorefrontStore"];
+                        "application/json": components["schemas"]["StorefrontStore"];
+                        "text/json": components["schemas"]["StorefrontStore"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store/publications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StorePublicationPage"];
+                        "application/json": components["schemas"]["StorePublicationPage"];
+                        "text/json": components["schemas"]["StorePublicationPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store/publications/{productId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    productId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StorePublicationBody"];
+                    "text/json": components["schemas"]["StorePublicationBody"];
+                    "application/*+json": components["schemas"]["StorePublicationBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StoreProductPublicationItem"];
+                        "application/json": components["schemas"]["StoreProductPublicationItem"];
+                        "text/json": components["schemas"]["StoreProductPublicationItem"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/support-access-grants": {
         parameters: {
             query?: never;
@@ -2037,6 +2293,87 @@ export interface components {
             wasReplayed: boolean;
         };
         StockMovementType: number;
+        StorefrontStore: {
+            id: string;
+            tenantId: string;
+            displayName: string;
+            platformSlug: string;
+            tagline: null | string;
+            status: components["schemas"]["StoreStatus"];
+            themePreset: components["schemas"]["StoreThemePreset"];
+            brandAccentHex: null | string;
+            contactName: null | string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            contactWhatsApp: null | string;
+            facebookUrl: null | string;
+            instagramUrl: null | string;
+            tikTokUrl: null | string;
+            termsPolicy: null | string;
+            privacyPolicy: null | string;
+            returnsPolicy: null | string;
+            paymentPolicy: null | string;
+            /** Format: date-time */
+            activatedAt: null | string;
+            /** Format: uint32 */
+            version: number | string;
+        };
+        StoreProductPublicationItem: {
+            id: string;
+            productId: string;
+            visibility: components["schemas"]["StoreProductVisibility"];
+            /** Format: uint32 */
+            version: number | string;
+        };
+        StoreProductVisibility: number;
+        StorePublicationBody: {
+            visibility: components["schemas"]["StoreProductVisibility"];
+            /** Format: uint32 */
+            expectedVersion: number | string;
+        };
+        StorePublicationPage: {
+            items: components["schemas"]["StoreProductPublicationItem"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        StoreReadiness: {
+            canActivate: boolean;
+            canAcceptOrders: boolean;
+            sections: components["schemas"]["StoreReadinessSection"][];
+            blockers: components["schemas"]["StoreReadinessBlocker"][];
+        };
+        StoreReadinessBlocker: {
+            code: string;
+            section: string;
+        };
+        StoreReadinessSection: {
+            name: string;
+            isReady: boolean;
+        };
+        StoreSettingsInput: {
+            displayName: string;
+            platformSlug: string;
+            tagline: null | string;
+            themePreset: components["schemas"]["StoreThemePreset"];
+            brandAccentHex: null | string;
+            contactName: null | string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            contactWhatsApp: null | string;
+            facebookUrl: null | string;
+            instagramUrl: null | string;
+            tikTokUrl: null | string;
+            termsPolicy: null | string;
+            privacyPolicy: null | string;
+            returnsPolicy: null | string;
+            paymentPolicy: null | string;
+        };
+        StoreStatus: number;
+        StoreThemePreset: number;
         SupportAccessGrantSummary: {
             id: string;
             supportUserId: string;
@@ -2057,6 +2394,11 @@ export interface components {
             title: string;
             description: null | string;
             slug: string;
+            /** Format: uint32 */
+            expectedVersion: number | string;
+        };
+        UpdateStoreBody: {
+            settings: components["schemas"]["StoreSettingsInput"];
             /** Format: uint32 */
             expectedVersion: number | string;
         };

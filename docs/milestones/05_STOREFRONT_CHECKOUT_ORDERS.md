@@ -20,7 +20,7 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | Store entity, readiness, settings, and publication | `NOT STARTED` |
+| 01 | Store entity, readiness, settings, and publication | `REVIEW` |
 | 02 | Delivery rules and server-side quote engine | `NOT STARTED` |
 | 03 | Customer/contact, cart intent, and checkout reservation | `NOT STARTED` |
 | 04 | Canonical order aggregate and transactional creation | `NOT STARTED` |
@@ -78,4 +78,3 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 - Order financial, customer, delivery, and item snapshots are immutable.
 - Checkout reservation commit/release/expiry is safe under concurrency and retry.
 - Public routing cannot expose another tenant or unpublished data.
-

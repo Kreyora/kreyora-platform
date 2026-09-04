@@ -42,7 +42,7 @@ public sealed class ScalarEndpointTests : IClassFixture<DevelopmentWebApplicatio
     }
 
     [Fact]
-    public async Task OpenApi_ContainsTheCatalogInventoryAndProtectedMediaContracts()
+    public async Task OpenApi_ContainsTheCatalogInventoryProtectedMediaAndStoreAdministrationContracts()
     {
         var response = await _developmentClient.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
@@ -53,5 +53,8 @@ public sealed class ScalarEndpointTests : IClassFixture<DevelopmentWebApplicatio
         Assert.True(paths.TryGetProperty("/v1/catalog/products", out _));
         Assert.True(paths.TryGetProperty("/v1/inventory/variants/{variantId}", out _));
         Assert.True(paths.TryGetProperty("/v1/media/{id}/content", out _));
+        Assert.True(paths.TryGetProperty("/v1/store", out _));
+        Assert.True(paths.TryGetProperty("/v1/store/readiness", out _));
+        Assert.True(paths.TryGetProperty("/v1/store/publications/{productId}", out _));
     }
 }

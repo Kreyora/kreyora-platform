@@ -10,11 +10,14 @@ public class TenantPermissionsTests
     [InlineData(TenantRole.Owner, TenantPermissions.BillingManage, true)]
     [InlineData(TenantRole.Admin, TenantPermissions.BillingManage, false)]
     [InlineData(TenantRole.Admin, TenantPermissions.CatalogWrite, true)]
+    [InlineData(TenantRole.Operator, TenantPermissions.StorefrontWrite, true)]
     [InlineData(TenantRole.Operator, TenantPermissions.PaymentsManage, false)]
     [InlineData(TenantRole.Operator, TenantPermissions.PaymentsRead, true)]
     [InlineData(TenantRole.Viewer, TenantPermissions.OrdersWrite, false)]
     [InlineData(TenantRole.Viewer, TenantPermissions.ReportingRead, true)]
     [InlineData(TenantRole.Viewer, TenantPermissions.CatalogRead, true)]
+    [InlineData(TenantRole.Viewer, TenantPermissions.StorefrontRead, true)]
+    [InlineData(TenantRole.Viewer, TenantPermissions.StorefrontWrite, false)]
     [InlineData(TenantRole.Viewer, TenantPermissions.IntegrationsRead, true)]
     [InlineData(TenantRole.Viewer, TenantPermissions.AiConfigurationRead, true)]
     [InlineData(TenantRole.Viewer, TenantPermissions.CatalogWrite, false)]
@@ -38,5 +41,6 @@ public class TenantPermissionsTests
         var support = new TenantContext("01H00000000000000000000000", "support", null, null, "grant");
         Assert.True(TenantPermissions.IsAllowed(support, TenantPermissions.AuditRead));
         Assert.False(TenantPermissions.IsAllowed(support, TenantPermissions.CatalogWrite));
+        Assert.False(TenantPermissions.IsAllowed(support, TenantPermissions.StorefrontRead));
     }
 }
