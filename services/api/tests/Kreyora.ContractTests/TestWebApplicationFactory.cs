@@ -23,6 +23,8 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Kreyora.We
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Cors:AllowedOrigins:0"] = "https://test.kreyora.test",
+                ["PublicStorefront:PlatformBaseDomain"] = "kreyora.test",
+                ["PublicStorefront:EnableDevelopmentSlugRoutes"] = "true",
                 ["Email:Smtp:ApplicationName"] = "Kreyora Test",
                 ["Email:Smtp:Host"] = "smtp.kreyora.test",
                 ["Email:Smtp:Port"] = "587",

@@ -1715,6 +1715,588 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/v1/store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicStorefront"];
+                        "application/json": components["schemas"]["PublicStorefront"];
+                        "text/json": components["schemas"]["PublicStorefront"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/dev/stores/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicStorefront"];
+                        "application/json": components["schemas"]["PublicStorefront"];
+                        "text/json": components["schemas"]["PublicStorefront"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/store/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    q?: string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicCatalogPage"];
+                        "application/json": components["schemas"]["PublicCatalogPage"];
+                        "text/json": components["schemas"]["PublicCatalogPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/dev/stores/{slug}/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    q?: string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicCatalogPage"];
+                        "application/json": components["schemas"]["PublicCatalogPage"];
+                        "text/json": components["schemas"]["PublicCatalogPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/store/products/{productSlug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    productSlug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicCatalogProduct"];
+                        "application/json": components["schemas"]["PublicCatalogProduct"];
+                        "text/json": components["schemas"]["PublicCatalogProduct"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/dev/stores/{slug}/products/{productSlug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    productSlug: string;
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicCatalogProduct"];
+                        "application/json": components["schemas"]["PublicCatalogProduct"];
+                        "text/json": components["schemas"]["PublicCatalogProduct"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/store/media/{mediaAssetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    mediaAssetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/dev/stores/{slug}/media/{mediaAssetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    mediaAssetId: string;
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/store/checkout/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublicQuoteRequest"];
+                    "text/json": components["schemas"]["PublicQuoteRequest"];
+                    "application/*+json": components["schemas"]["PublicQuoteRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicDeliveryQuote"];
+                        "application/json": components["schemas"]["PublicDeliveryQuote"];
+                        "text/json": components["schemas"]["PublicDeliveryQuote"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/dev/stores/{slug}/checkout/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublicQuoteRequest"];
+                    "text/json": components["schemas"]["PublicQuoteRequest"];
+                    "application/*+json": components["schemas"]["PublicQuoteRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicDeliveryQuote"];
+                        "application/json": components["schemas"]["PublicDeliveryQuote"];
+                        "text/json": components["schemas"]["PublicDeliveryQuote"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/store/checkout/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublicCheckoutSessionRequest"];
+                    "text/json": components["schemas"]["PublicCheckoutSessionRequest"];
+                    "application/*+json": components["schemas"]["PublicCheckoutSessionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicCheckoutSession"];
+                        "application/json": components["schemas"]["PublicCheckoutSession"];
+                        "text/json": components["schemas"]["PublicCheckoutSession"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/dev/stores/{slug}/checkout/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path: {
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublicCheckoutSessionRequest"];
+                    "text/json": components["schemas"]["PublicCheckoutSessionRequest"];
+                    "application/*+json": components["schemas"]["PublicCheckoutSessionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicCheckoutSession"];
+                        "application/json": components["schemas"]["PublicCheckoutSession"];
+                        "text/json": components["schemas"]["PublicCheckoutSession"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/store/checkout/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublicCreateOrderRequest"];
+                    "text/json": components["schemas"]["PublicCreateOrderRequest"];
+                    "application/*+json": components["schemas"]["PublicCreateOrderRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicOrderConfirmation"];
+                        "application/json": components["schemas"]["PublicOrderConfirmation"];
+                        "text/json": components["schemas"]["PublicOrderConfirmation"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/dev/stores/{slug}/checkout/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path: {
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PublicCreateOrderRequest"];
+                    "text/json": components["schemas"]["PublicCreateOrderRequest"];
+                    "application/*+json": components["schemas"]["PublicCreateOrderRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicOrderConfirmation"];
+                        "application/json": components["schemas"]["PublicOrderConfirmation"];
+                        "text/json": components["schemas"]["PublicOrderConfirmation"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/store": {
         parameters: {
             query?: never;
@@ -2319,6 +2901,7 @@ export interface components {
             isReadOnlySupport: boolean;
             permissions: string[];
         };
+        FulfilmentStatus: number;
         GrantMembershipRequest: {
             email: string;
             role: components["schemas"]["TenantRole"];
@@ -2427,14 +3010,147 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        OrderPaymentMethod: number;
+        OrderStatus: number;
         PasswordResetRequestBody: {
             email: string;
         };
+        PaymentStatus: number;
         ProductPublishState: number;
         PublicationBody: {
             state: components["schemas"]["ProductPublishState"];
             /** Format: uint32 */
             expectedVersion: number | string;
+        };
+        PublicCatalogPage: {
+            items: components["schemas"]["PublicCatalogProduct"][];
+            nextCursor: null | string;
+        };
+        PublicCatalogProduct: {
+            id: string;
+            title: string;
+            description: null | string;
+            slug: string;
+            variants: components["schemas"]["PublicCatalogVariant"][];
+            media: components["schemas"]["PublicMediaAsset"][];
+        };
+        PublicCatalogVariant: {
+            id: string;
+            name: string;
+            options: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            priceNpr: number | string;
+            /** Format: double */
+            compareAtPriceNpr: null | number | string;
+        };
+        PublicCheckoutAddress: {
+            addressLine1: string;
+            addressLine2: null | string;
+            district: string;
+            municipality: null | string;
+            locality: null | string;
+            landmark: null | string;
+        };
+        PublicCheckoutCustomer: {
+            displayName: string;
+            phone: string;
+            email: null | string;
+            saveContact: boolean;
+            privacyAcknowledged: boolean;
+        };
+        PublicCheckoutSession: {
+            id: string;
+            /** Format: date-time */
+            expiresAt: string;
+            items: components["schemas"]["PublicCheckoutSessionLine"][];
+            delivery: components["schemas"]["PublicDeliveryOption"];
+            totals: components["schemas"]["StorefrontQuoteTotals"];
+            wasReplayed: boolean;
+        };
+        PublicCheckoutSessionLine: {
+            variantId: string;
+            /** Format: int32 */
+            quantity: number | string;
+            /** Format: double */
+            unitPriceNpr: number | string;
+            /** Format: double */
+            lineSubtotalNpr: number | string;
+        };
+        PublicCheckoutSessionRequest: {
+            quoteToken: string;
+            customer: components["schemas"]["PublicCheckoutCustomer"];
+            address: components["schemas"]["PublicCheckoutAddress"];
+        };
+        PublicCreateOrderRequest: {
+            checkoutSessionId: string;
+        };
+        PublicDeliveryOption: {
+            name: string;
+            /** Format: double */
+            feeNpr: number | string;
+            estimatedEtaText: null | string;
+            codAvailable: boolean;
+        };
+        PublicDeliveryQuote: {
+            quoteToken: string;
+            /** Format: date-time */
+            expiresAt: string;
+            lines: components["schemas"]["StorefrontQuoteLine"][];
+            delivery: components["schemas"]["PublicDeliveryOption"];
+            totals: components["schemas"]["StorefrontQuoteTotals"];
+        };
+        PublicDestination: {
+            countryCode: string;
+            district: string;
+            municipality: null | string;
+            locality: null | string;
+        };
+        PublicMediaAsset: {
+            id: string;
+            contentType: string;
+            altText: null | string;
+            /** Format: int32 */
+            sortOrder: number | string;
+        };
+        PublicOrderConfirmation: {
+            orderNumber: string;
+            status: components["schemas"]["OrderStatus"];
+            paymentStatus: components["schemas"]["PaymentStatus"];
+            fulfilmentStatus: components["schemas"]["FulfilmentStatus"];
+            paymentMethod: components["schemas"]["OrderPaymentMethod"];
+            /** Format: double */
+            totalNpr: number | string;
+            currency: string;
+            wasReplayed: boolean;
+        };
+        PublicQuoteLine: {
+            variantId: string;
+            /** Format: int32 */
+            quantity: number | string;
+        };
+        PublicQuoteRequest: {
+            lines: components["schemas"]["PublicQuoteLine"][];
+            destination: components["schemas"]["PublicDestination"];
+        };
+        PublicStorefront: {
+            displayName: string;
+            platformSlug: string;
+            tagline: null | string;
+            themePreset: components["schemas"]["StoreThemePreset"];
+            brandAccentHex: null | string;
+            contactName: null | string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            contactWhatsApp: null | string;
+            facebookUrl: null | string;
+            instagramUrl: null | string;
+            tikTokUrl: null | string;
+            termsPolicy: null | string;
+            privacyPolicy: null | string;
+            returnsPolicy: null | string;
+            paymentPolicy: null | string;
         };
         RegisterOwnerRequest: {
             displayName: string;
@@ -2482,6 +3198,35 @@ export interface components {
             wasReplayed: boolean;
         };
         StockMovementType: number;
+        StorefrontQuoteLine: {
+            productId: string;
+            productTitle: string;
+            variantId: string;
+            variantName: string;
+            /** Format: int32 */
+            quantity: number | string;
+            /** Format: double */
+            unitPriceNpr: number | string;
+            /** Format: double */
+            lineSubtotalNpr: number | string;
+        };
+        StorefrontQuoteTotals: {
+            /** Format: double */
+            merchandiseSubtotalNpr: number | string;
+            /** Format: double */
+            discountNpr: number | string;
+            /** Format: double */
+            deliveryFeeNpr: number | string;
+            /** Format: double */
+            taxNpr: number | string;
+            /** Format: double */
+            providerFeeNpr: number | string;
+            /** Format: double */
+            platformFeeNpr: number | string;
+            /** Format: double */
+            totalNpr: number | string;
+            currency: string;
+        };
         StorefrontStore: {
             id: string;
             tenantId: string;

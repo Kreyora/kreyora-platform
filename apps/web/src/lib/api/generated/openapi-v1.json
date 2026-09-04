@@ -1962,6 +1962,692 @@
         }
       }
     },
+    "/public/v1/store": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicStorefront"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicStorefront"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicStorefront"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/dev/stores/{slug}": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicStorefront"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicStorefront"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicStorefront"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/store/products": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 24
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogPage"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogPage"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/dev/stores/{slug}/products": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 24
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogPage"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogPage"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/store/products/{productSlug}": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "productSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogProduct"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogProduct"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogProduct"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/dev/stores/{slug}/products/{productSlug}": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "productSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogProduct"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogProduct"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCatalogProduct"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/store/media/{mediaAssetId}": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "mediaAssetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/public/v1/dev/stores/{slug}/media/{mediaAssetId}": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "mediaAssetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/public/v1/store/checkout/quotes": {
+      "post": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicQuoteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicQuoteRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicQuoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDeliveryQuote"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDeliveryQuote"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDeliveryQuote"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/dev/stores/{slug}/checkout/quotes": {
+      "post": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicQuoteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicQuoteRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicQuoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDeliveryQuote"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDeliveryQuote"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDeliveryQuote"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/store/checkout/sessions": {
+      "post": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCheckoutSessionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCheckoutSessionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCheckoutSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCheckoutSession"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCheckoutSession"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCheckoutSession"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/dev/stores/{slug}/checkout/sessions": {
+      "post": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCheckoutSessionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCheckoutSessionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCheckoutSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCheckoutSession"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCheckoutSession"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCheckoutSession"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/store/checkout/orders": {
+      "post": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCreateOrderRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCreateOrderRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCreateOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicOrderConfirmation"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicOrderConfirmation"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicOrderConfirmation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/dev/stores/{slug}/checkout/orders": {
+      "post": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCreateOrderRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCreateOrderRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCreateOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicOrderConfirmation"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicOrderConfirmation"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicOrderConfirmation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/store": {
       "get": {
         "tags": [
@@ -3130,6 +3816,9 @@
           }
         }
       },
+      "FulfilmentStatus": {
+        "type": "integer"
+      },
       "GrantMembershipRequest": {
         "required": [
           "email",
@@ -3572,6 +4261,12 @@
           }
         }
       },
+      "OrderPaymentMethod": {
+        "type": "integer"
+      },
+      "OrderStatus": {
+        "type": "integer"
+      },
       "PasswordResetRequestBody": {
         "required": [
           "email"
@@ -3582,6 +4277,9 @@
             "type": "string"
           }
         }
+      },
+      "PaymentStatus": {
+        "type": "integer"
       },
       "ProductPublishState": {
         "type": "integer"
@@ -3603,6 +4301,598 @@
               "string"
             ],
             "format": "uint32"
+          }
+        }
+      },
+      "PublicCatalogPage": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicCatalogProduct"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PublicCatalogProduct": {
+        "required": [
+          "id",
+          "title",
+          "description",
+          "slug",
+          "variants",
+          "media"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicCatalogVariant"
+            }
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicMediaAsset"
+            }
+          }
+        }
+      },
+      "PublicCatalogVariant": {
+        "required": [
+          "id",
+          "name",
+          "options",
+          "priceNpr",
+          "compareAtPriceNpr"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "priceNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "compareAtPriceNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "PublicCheckoutAddress": {
+        "required": [
+          "addressLine1",
+          "addressLine2",
+          "district",
+          "municipality",
+          "locality",
+          "landmark"
+        ],
+        "type": "object",
+        "properties": {
+          "addressLine1": {
+            "type": "string"
+          },
+          "addressLine2": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "district": {
+            "type": "string"
+          },
+          "municipality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "landmark": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PublicCheckoutCustomer": {
+        "required": [
+          "displayName",
+          "phone",
+          "email",
+          "saveContact",
+          "privacyAcknowledged"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "saveContact": {
+            "type": "boolean"
+          },
+          "privacyAcknowledged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PublicCheckoutSession": {
+        "required": [
+          "id",
+          "expiresAt",
+          "items",
+          "delivery",
+          "totals",
+          "wasReplayed"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicCheckoutSessionLine"
+            }
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/PublicDeliveryOption"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/StorefrontQuoteTotals"
+          },
+          "wasReplayed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PublicCheckoutSessionLine": {
+        "required": [
+          "variantId",
+          "quantity",
+          "unitPriceNpr",
+          "lineSubtotalNpr"
+        ],
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unitPriceNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lineSubtotalNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "PublicCheckoutSessionRequest": {
+        "required": [
+          "quoteToken",
+          "customer",
+          "address"
+        ],
+        "type": "object",
+        "properties": {
+          "quoteToken": {
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/PublicCheckoutCustomer"
+          },
+          "address": {
+            "$ref": "#/components/schemas/PublicCheckoutAddress"
+          }
+        }
+      },
+      "PublicCreateOrderRequest": {
+        "required": [
+          "checkoutSessionId"
+        ],
+        "type": "object",
+        "properties": {
+          "checkoutSessionId": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicDeliveryOption": {
+        "required": [
+          "name",
+          "feeNpr",
+          "estimatedEtaText",
+          "codAvailable"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "feeNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "estimatedEtaText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codAvailable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PublicDeliveryQuote": {
+        "required": [
+          "quoteToken",
+          "expiresAt",
+          "lines",
+          "delivery",
+          "totals"
+        ],
+        "type": "object",
+        "properties": {
+          "quoteToken": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorefrontQuoteLine"
+            }
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/PublicDeliveryOption"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/StorefrontQuoteTotals"
+          }
+        }
+      },
+      "PublicDestination": {
+        "required": [
+          "countryCode",
+          "district",
+          "municipality",
+          "locality"
+        ],
+        "type": "object",
+        "properties": {
+          "countryCode": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "municipality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PublicMediaAsset": {
+        "required": [
+          "id",
+          "contentType",
+          "altText",
+          "sortOrder"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "altText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PublicOrderConfirmation": {
+        "required": [
+          "orderNumber",
+          "status",
+          "paymentStatus",
+          "fulfilmentStatus",
+          "paymentMethod",
+          "totalNpr",
+          "currency",
+          "wasReplayed"
+        ],
+        "type": "object",
+        "properties": {
+          "orderNumber": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "fulfilmentStatus": {
+            "$ref": "#/components/schemas/FulfilmentStatus"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/OrderPaymentMethod"
+          },
+          "totalNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "wasReplayed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PublicQuoteLine": {
+        "required": [
+          "variantId",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PublicQuoteRequest": {
+        "required": [
+          "lines",
+          "destination"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicQuoteLine"
+            }
+          },
+          "destination": {
+            "$ref": "#/components/schemas/PublicDestination"
+          }
+        }
+      },
+      "PublicStorefront": {
+        "required": [
+          "displayName",
+          "platformSlug",
+          "tagline",
+          "themePreset",
+          "brandAccentHex",
+          "contactName",
+          "contactEmail",
+          "contactPhone",
+          "contactWhatsApp",
+          "facebookUrl",
+          "instagramUrl",
+          "tikTokUrl",
+          "termsPolicy",
+          "privacyPolicy",
+          "returnsPolicy",
+          "paymentPolicy"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "platformSlug": {
+            "type": "string"
+          },
+          "tagline": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "themePreset": {
+            "$ref": "#/components/schemas/StoreThemePreset"
+          },
+          "brandAccentHex": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactWhatsApp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "facebookUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instagramUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tikTokUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "termsPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "privacyPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "returnsPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -3786,6 +5076,130 @@
       },
       "StockMovementType": {
         "type": "integer"
+      },
+      "StorefrontQuoteLine": {
+        "required": [
+          "productId",
+          "productTitle",
+          "variantId",
+          "variantName",
+          "quantity",
+          "unitPriceNpr",
+          "lineSubtotalNpr"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          },
+          "productTitle": {
+            "type": "string"
+          },
+          "variantId": {
+            "type": "string"
+          },
+          "variantName": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unitPriceNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lineSubtotalNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "StorefrontQuoteTotals": {
+        "required": [
+          "merchandiseSubtotalNpr",
+          "discountNpr",
+          "deliveryFeeNpr",
+          "taxNpr",
+          "providerFeeNpr",
+          "platformFeeNpr",
+          "totalNpr",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "merchandiseSubtotalNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "deliveryFeeNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "providerFeeNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "platformFeeNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          }
+        }
       },
       "StorefrontStore": {
         "required": [
@@ -4389,6 +5803,9 @@
     },
     {
       "name": "Permissions"
+    },
+    {
+      "name": "PublicStorefront"
     },
     {
       "name": "StorefrontAdministration"

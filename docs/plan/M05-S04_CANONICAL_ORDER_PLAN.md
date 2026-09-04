@@ -1,8 +1,8 @@
 # M05-S04 — Canonical Order Aggregate and Transactional Creation Plan
 
-**Status:** `REVIEW`
+**Status:** `APPROVED`
 **Scope:** Convert one active M05-S03 checkout session into one immutable canonical order, commit its stock reservations atomically, initialize independent order/payment/fulfilment state, and write durable audit/outbox facts.
-**Implementation is complete and ready for project-owner review.**
+**Implementation was approved by the project owner on 2026-09-05.**
 
 ## 1. Outcome and boundary
 

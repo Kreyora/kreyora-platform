@@ -20,7 +20,9 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-009 | Public storefront resolution boundary | `Accepted` | 2026-09-05 | — |
 | ADR-008 | Commerce-system provenance | `Accepted` | 2026-09-05 | — |
+| ADR-009 | Public storefront resolution boundary | `Accepted` | 2026-09-05 | — |
 | ADR-007 | Checkout-session reservation orchestration | `Accepted` | 2026-09-05 | — |
 | ADR-006 | Inventory reservation consistency and Hangfire expiry | `Accepted` | 2026-09-04 | — |
 | ADR-005 | Owner-issued read-only PlatformSupport audit access | `Accepted` | 2026-08-02 | — |

@@ -28,6 +28,7 @@ public interface IStorefrontInventoryReadService
 public interface IDeliveryRuleReadService
 {
     Task<bool> HasActiveRulesAsync(string storeId, CancellationToken cancellationToken = default);
+    Task<bool> HasActiveCodRuleAsync(string storeId, CancellationToken cancellationToken = default);
 }
 
 public interface IDeliveryRuleService
@@ -49,6 +50,28 @@ public interface IStorefrontCheckoutSessionService
 {
     Task<Result<CheckoutSessionItemResult>> CreateAsync(CreateCheckoutSessionRequest request, CancellationToken cancellationToken = default);
     Task<int> ExpireDueSessionsAsync(CancellationToken cancellationToken = default);
+}
+
+public interface IPublicStorefrontService
+{
+    Task<Result<PublicStorefront>> GetStoreAsync(CancellationToken cancellationToken = default);
+    Task<Result<PublicCatalogPage>> ListProductsAsync(PublicCatalogQuery query, CancellationToken cancellationToken = default);
+    Task<Result<PublicCatalogProduct>> GetProductAsync(string productSlug, CancellationToken cancellationToken = default);
+    Task<Result<PublicMediaReadContent>> OpenMediaAsync(string mediaAssetId, CancellationToken cancellationToken = default);
+}
+
+public sealed record PublicStorefrontContext(string TenantId, string StoreId, string PlatformSlug);
+
+public interface IPublicStorefrontContextAccessor
+{
+    PublicStorefrontContext? Current { get; }
+    PublicStorefrontContext RequireCurrent();
+    IDisposable BeginScope(PublicStorefrontContext context);
+}
+
+public interface IPublicStorefrontResolver
+{
+    Task<PublicStorefrontContext?> ResolveAsync(string platformSlug, CancellationToken cancellationToken = default);
 }
 
 public sealed record CreateStoreRequest(StoreSettingsInput Settings, string IdempotencyKey);
@@ -144,3 +167,28 @@ public sealed record StorefrontDeliveryQuote(string QuoteToken, DateTimeOffset E
 public sealed record StorefrontCheckoutQuote(string StoreId, DateTimeOffset QuoteExpiresAt, StorefrontDestinationInput Destination, IReadOnlyList<StorefrontQuoteLine> Lines, StorefrontQuoteDelivery Delivery, StorefrontQuoteTotals Totals);
 public sealed record CheckoutSessionLineItem(string VariantId, int Quantity, string InventoryReservationId, decimal UnitPriceNpr, decimal LineSubtotalNpr);
 public sealed record CheckoutSessionItemResult(string Id, string StoreId, string? CustomerId, DateTimeOffset ExpiresAt, IReadOnlyList<CheckoutSessionLineItem> Items, StorefrontQuoteDelivery Delivery, StorefrontQuoteTotals Totals, bool WasReplayed);
+
+public sealed record PublicStorefront(
+    string DisplayName,
+    string PlatformSlug,
+    string? Tagline,
+    StoreThemePreset ThemePreset,
+    string? BrandAccentHex,
+    string? ContactName,
+    string? ContactEmail,
+    string? ContactPhone,
+    string? ContactWhatsApp,
+    string? FacebookUrl,
+    string? InstagramUrl,
+    string? TikTokUrl,
+    string? TermsPolicy,
+    string? PrivacyPolicy,
+    string? ReturnsPolicy,
+    string? PaymentPolicy);
+
+public sealed record PublicCatalogQuery(string? Search, string? Cursor, int PageSize);
+public sealed record PublicCatalogPage(IReadOnlyList<PublicCatalogProduct> Items, string? NextCursor);
+public sealed record PublicCatalogProduct(string Id, string Title, string? Description, string Slug, IReadOnlyList<PublicCatalogVariant> Variants, IReadOnlyList<PublicMediaAsset> Media);
+public sealed record PublicCatalogVariant(string Id, string Name, IReadOnlyDictionary<string, string> Options, decimal PriceNpr, decimal? CompareAtPriceNpr);
+public sealed record PublicMediaAsset(string Id, string ContentType, string? AltText, int SortOrder);
+public sealed record PublicMediaReadContent(Stream Content, string ContentType, long ByteSize);

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -17,10 +18,13 @@ using Kreyora.Infrastructure.Storefront;
 using Kreyora.ServiceDefaults;
 using Kreyora.WebApi.Configuration;
 using Kreyora.WebApi.Seeding;
+using Kreyora.WebApi.Storefront;
 using Kreyora.WebApi.Tenancy;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -51,6 +55,31 @@ builder.Services
     .AddOptions<CorsSettings>()
     .BindConfiguration(CorsSettings.SectionName);
 
+builder.Services
+    .AddOptions<PublicStorefrontOptions>()
+    .BindConfiguration(PublicStorefrontOptions.SectionName)
+    .ValidateDataAnnotations()
+    .Validate(options => options.IsValidForEnvironment(builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing")),
+        "Development storefront slug routes are allowed only in Development or Testing.")
+    .ValidateOnStart();
+
+var publicStorefrontOptions = builder.Configuration.GetSection(PublicStorefrontOptions.SectionName).Get<PublicStorefrontOptions>() ?? new PublicStorefrontOptions();
+var trustedProxyAddresses = publicStorefrontOptions.TrustedProxyAddresses
+    .Select(value => IPAddress.TryParse(value, out var address) ? address : null)
+    .Where(address => address is not null)
+    .Cast<IPAddress>()
+    .ToArray();
+if (trustedProxyAddresses.Length > 0)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto;
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        foreach (var address in trustedProxyAddresses) options.KnownProxies.Add(address);
+    });
+}
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddHangfireServices(builder.Configuration);
@@ -73,9 +102,37 @@ builder.Services.Configure<CookieAuthenticationOptions>(IdentityConstants.Applic
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.Headers.RetryAfter = "60";
+        context.HttpContext.Response.Headers.CacheControl = "no-store";
+        context.HttpContext.Response.ContentType = "application/problem+json";
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            ProblemDetailsFactory.Create(StatusCodes.Status429TooManyRequests, "Too Many Requests", "Please retry later."), cancellationToken);
+    };
     options.AddFixedWindowLimiter("auth-registration", limiter => { limiter.PermitLimit = 3; limiter.Window = TimeSpan.FromHours(1); });
     options.AddFixedWindowLimiter("auth-sign-in", limiter => { limiter.PermitLimit = 5; limiter.Window = TimeSpan.FromMinutes(15); });
     options.AddFixedWindowLimiter("auth-password-reset", limiter => { limiter.PermitLimit = 3; limiter.Window = TimeSpan.FromHours(1); });
+    options.AddPolicy("public-reads", httpContext =>
+    {
+        var publicOptions = httpContext.RequestServices.GetRequiredService<IOptions<PublicStorefrontOptions>>().Value;
+        return PublicPartition(httpContext, publicOptions, "read", publicOptions.ReadRequestsPerMinute, TimeSpan.FromMinutes(1));
+    });
+    options.AddPolicy("public-quotes", httpContext =>
+    {
+        var publicOptions = httpContext.RequestServices.GetRequiredService<IOptions<PublicStorefrontOptions>>().Value;
+        return PublicPartition(httpContext, publicOptions, "quote", publicOptions.QuoteRequestsPerTenMinutes, TimeSpan.FromMinutes(10));
+    });
+    options.AddPolicy("public-sessions", httpContext =>
+    {
+        var publicOptions = httpContext.RequestServices.GetRequiredService<IOptions<PublicStorefrontOptions>>().Value;
+        return PublicPartition(httpContext, publicOptions, "session", publicOptions.SessionRequestsPerTenMinutes, TimeSpan.FromMinutes(10));
+    });
+    options.AddPolicy("public-orders", httpContext =>
+    {
+        var publicOptions = httpContext.RequestServices.GetRequiredService<IOptions<PublicStorefrontOptions>>().Value;
+        return PublicPartition(httpContext, publicOptions, "order", publicOptions.OrderRequestsPerHour, TimeSpan.FromHours(1));
+    });
 });
 
 builder.Services.AddControllersWithViews()
@@ -112,12 +169,17 @@ if (corsSettings?.AllowedOrigins is { Length: > 0 })
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials()
-                .WithExposedHeaders("X-Correlation-ID", "api-supported-versions");
+                .WithExposedHeaders("X-Correlation-ID", "api-supported-versions", "ETag", "Retry-After");
         });
     });
 }
 
 var app = builder.Build();
+
+if (trustedProxyAddresses.Length > 0)
+{
+    app.UseForwardedHeaders();
+}
 
 if (args.Contains("--migrate"))
 {
@@ -167,14 +229,29 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseHttpsRedirection();
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<TenantContextMiddleware>();
+app.UseMiddleware<PublicStorefrontContextMiddleware>();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapServiceDefaults();
 app.MapControllers();
 
 app.Run();
+
+static RateLimitPartition<string> PublicPartition(HttpContext httpContext, PublicStorefrontOptions options, string family, int permitLimit, TimeSpan window)
+{
+    var publicContext = httpContext.RequestServices.GetService<Kreyora.Application.Storefront.IPublicStorefrontContextAccessor>()?.Current;
+    var slug = publicContext?.PlatformSlug ?? "unresolved";
+    var address = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    return RateLimitPartition.GetFixedWindowLimiter($"{family}:{slug}:{address}", _ => new FixedWindowRateLimiterOptions
+    {
+        PermitLimit = permitLimit,
+        Window = window,
+        QueueLimit = 0,
+        AutoReplenishment = true
+    });
+}
 
 namespace Kreyora.WebApi
 {
