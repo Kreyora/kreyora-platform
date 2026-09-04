@@ -92,6 +92,33 @@ public sealed class StorefrontQuoteService(
         }
     }
 
+    public async Task<Result<StorefrontCheckoutQuote>> RevalidateForCheckoutAsync(string quoteToken, CancellationToken cancellationToken = default)
+    {
+        tenantContext.RequireCurrent();
+        try
+        {
+            var payload = await ReadPayloadAsync(quoteToken, cancellationToken);
+            if (payload is null) return Result<StorefrontCheckoutQuote>.ValidationError("The quote is invalid or expired.");
+            var current = await CreateQuoteAsync(new StorefrontQuoteRequest(
+                payload.Lines.Select(line => new StorefrontQuoteLineRequest(line.VariantId, line.Quantity)).ToArray(),
+                new StorefrontDestinationInput(payload.Destination.CountryCode, payload.Destination.District, payload.Destination.Municipality, payload.Destination.Locality)), cancellationToken);
+            if (current.IsFailure) return Result<StorefrontCheckoutQuote>.Conflict("The quote is no longer available. Request a new quote.");
+            var currentQuote = current.Value!;
+            if (!Equivalent(payload, currentQuote)) return Result<StorefrontCheckoutQuote>.Conflict("The quote changed. Request a new quote before checkout.");
+            return Result<StorefrontCheckoutQuote>.Success(new StorefrontCheckoutQuote(payload.StoreId, payload.ExpiresAt,
+                new StorefrontDestinationInput(payload.Destination.CountryCode, payload.Destination.District, payload.Destination.Municipality, payload.Destination.Locality),
+                currentQuote.Lines, currentQuote.Delivery, currentQuote.Totals));
+        }
+        catch (CryptographicException)
+        {
+            return Result<StorefrontCheckoutQuote>.ValidationError("The quote is invalid or expired.");
+        }
+        catch (JsonException)
+        {
+            return Result<StorefrontCheckoutQuote>.ValidationError("The quote is invalid or expired.");
+        }
+    }
+
     private Task<bool> IsVisibleAsync(string storeId, string productId, CancellationToken cancellationToken) =>
         dbContext.StoreProductPublications.AnyAsync(publication => publication.StoreId == storeId && publication.ProductId == productId && publication.Visibility == StoreProductVisibility.Visible, cancellationToken);
 
@@ -105,6 +132,22 @@ public sealed class StorefrontQuoteService(
             .ThenBy(match => match.Rule.Id, StringComparer.Ordinal)
             .FirstOrDefault();
     }
+
+    private async Task<QuotePayload?> ReadPayloadAsync(string quoteToken, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(quoteToken)) return null;
+        var payload = JsonSerializer.Deserialize<QuotePayload>(protector.Unprotect(quoteToken, out var expiresAt));
+        return payload is null || payload.ExpiresAt != expiresAt || !await dbContext.Stores.AnyAsync(store => store.Id == payload.StoreId, cancellationToken)
+            ? null
+            : payload;
+    }
+
+    private static bool Equivalent(QuotePayload payload, StorefrontDeliveryQuote quote) =>
+        payload.Lines.Count == quote.Lines.Count && payload.Lines.Zip(quote.Lines).All(pair =>
+            pair.First.ProductId == pair.Second.ProductId && pair.First.VariantId == pair.Second.VariantId && pair.First.Quantity == pair.Second.Quantity &&
+            pair.First.UnitPriceNpr == pair.Second.UnitPriceNpr && pair.First.LineSubtotalNpr == pair.Second.LineSubtotalNpr) &&
+        payload.Delivery.RuleId == quote.Delivery.RuleId && payload.Delivery.FeeNpr == quote.Delivery.FeeNpr && payload.Delivery.CodAvailable == quote.Delivery.CodAvailable &&
+        payload.Totals == quote.Totals;
 
     private sealed record RuleMatch(DeliveryRule Rule, DeliveryRuleZone Zone);
     private sealed record QuotePayload(

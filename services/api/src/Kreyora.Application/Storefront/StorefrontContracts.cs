@@ -42,6 +42,13 @@ public interface IStorefrontQuoteService
 {
     Task<Result<StorefrontDeliveryQuote>> CreateQuoteAsync(StorefrontQuoteRequest request, CancellationToken cancellationToken = default);
     Task<Result<StorefrontDeliveryQuote>> ReadQuoteAsync(string quoteToken, CancellationToken cancellationToken = default);
+    Task<Result<StorefrontCheckoutQuote>> RevalidateForCheckoutAsync(string quoteToken, CancellationToken cancellationToken = default);
+}
+
+public interface IStorefrontCheckoutSessionService
+{
+    Task<Result<CheckoutSessionItemResult>> CreateAsync(CreateCheckoutSessionRequest request, CancellationToken cancellationToken = default);
+    Task<int> ExpireDueSessionsAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed record CreateStoreRequest(StoreSettingsInput Settings, string IdempotencyKey);
@@ -55,6 +62,9 @@ public sealed record UpdateDeliveryRuleRequest(string RuleId, DeliveryRuleInput 
 public sealed record StorefrontQuoteRequest(IReadOnlyList<StorefrontQuoteLineRequest> Lines, StorefrontDestinationInput Destination);
 public sealed record StorefrontQuoteLineRequest(string VariantId, int Quantity);
 public sealed record StorefrontDestinationInput(string CountryCode, string District, string? Municipality, string? Locality);
+public sealed record CheckoutCustomerInput(string DisplayName, string Phone, string? Email, bool SaveContact, bool PrivacyAcknowledged);
+public sealed record CheckoutAddressInput(string AddressLine1, string? AddressLine2, string District, string? Municipality, string? Locality, string? Landmark);
+public sealed record CreateCheckoutSessionRequest(string QuoteToken, CheckoutCustomerInput Customer, CheckoutAddressInput Address, string IdempotencyKey);
 
 public sealed record StoreSettingsInput(
     string DisplayName,
@@ -131,3 +141,6 @@ public sealed record StorefrontQuoteLine(string ProductId, string ProductTitle, 
 public sealed record StorefrontQuoteDelivery(string RuleId, string RuleName, decimal FeeNpr, string? EstimatedEtaText, bool CodAvailable);
 public sealed record StorefrontQuoteTotals(decimal MerchandiseSubtotalNpr, decimal DiscountNpr, decimal DeliveryFeeNpr, decimal TaxNpr, decimal ProviderFeeNpr, decimal PlatformFeeNpr, decimal TotalNpr, string Currency);
 public sealed record StorefrontDeliveryQuote(string QuoteToken, DateTimeOffset ExpiresAt, IReadOnlyList<StorefrontQuoteLine> Lines, StorefrontQuoteDelivery Delivery, StorefrontQuoteTotals Totals);
+public sealed record StorefrontCheckoutQuote(string StoreId, DateTimeOffset QuoteExpiresAt, StorefrontDestinationInput Destination, IReadOnlyList<StorefrontQuoteLine> Lines, StorefrontQuoteDelivery Delivery, StorefrontQuoteTotals Totals);
+public sealed record CheckoutSessionLineItem(string VariantId, int Quantity, string InventoryReservationId, decimal UnitPriceNpr, decimal LineSubtotalNpr);
+public sealed record CheckoutSessionItemResult(string Id, string StoreId, string? CustomerId, DateTimeOffset ExpiresAt, IReadOnlyList<CheckoutSessionLineItem> Items, StorefrontQuoteDelivery Delivery, StorefrontQuoteTotals Totals, bool WasReplayed);

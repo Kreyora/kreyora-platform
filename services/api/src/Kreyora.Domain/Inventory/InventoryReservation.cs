@@ -16,7 +16,7 @@ public sealed class InventoryReservation : BaseEntity, ITenantOwned
     public int Quantity { get; private set; }
     public InventoryReservationSource Source { get; private set; }
     public string ReferenceId { get; private set; } = string.Empty;
-    public string ActorUserId { get; private set; } = string.Empty;
+    public string? ActorUserId { get; private set; }
     public InventoryReservationState State { get; private set; }
     public DateTimeOffset ExpiresAt { get; private set; }
     public DateTimeOffset? CommittedAt { get; private set; }
@@ -30,7 +30,7 @@ public sealed class InventoryReservation : BaseEntity, ITenantOwned
         int quantity,
         InventoryReservationSource source,
         string referenceId,
-        string actorUserId,
+        string? actorUserId,
         DateTimeOffset expiresAt,
         DateTimeOffset now) => new()
         {
@@ -40,7 +40,7 @@ public sealed class InventoryReservation : BaseEntity, ITenantOwned
             Quantity = RequirePositive(quantity),
             Source = RequireDefined(source),
             ReferenceId = Require(referenceId, nameof(referenceId), ReferenceIdMaxLength),
-            ActorUserId = Require(actorUserId, nameof(actorUserId), 26),
+            ActorUserId = Optional(actorUserId, 26),
             ExpiresAt = expiresAt > now ? expiresAt : throw new ArgumentOutOfRangeException(nameof(expiresAt)),
             State = InventoryReservationState.Active
         };
@@ -90,4 +90,6 @@ public sealed class InventoryReservation : BaseEntity, ITenantOwned
             : value.Trim();
         return normalized.Length > maxLength ? throw new ArgumentOutOfRangeException(parameterName) : normalized;
     }
+
+    private static string? Optional(string? value, int maxLength) => string.IsNullOrWhiteSpace(value) ? null : Require(value, nameof(value), maxLength);
 }

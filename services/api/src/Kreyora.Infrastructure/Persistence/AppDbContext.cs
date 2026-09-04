@@ -2,6 +2,7 @@ using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Audit;
 using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Common;
+using Kreyora.Domain.Customers;
 using Kreyora.Domain.Inventory;
 using Kreyora.Domain.Storefront;
 using Kreyora.Domain.Tenancy;
@@ -42,6 +43,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<StoreCommandIdempotency> StoreCommandIdempotencyRecords => Set<StoreCommandIdempotency>();
     public DbSet<DeliveryRule> DeliveryRules => Set<DeliveryRule>();
     public DbSet<DeliveryRuleZone> DeliveryRuleZones => Set<DeliveryRuleZone>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CheckoutSession> CheckoutSessions => Set<CheckoutSession>();
+    public DbSet<CheckoutSessionItem> CheckoutSessionItems => Set<CheckoutSessionItem>();
+    public DbSet<CheckoutSessionCommand> CheckoutSessionCommands => Set<CheckoutSessionCommand>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -78,6 +83,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<StoreCommandIdempotency>().HasQueryFilter(record => record.TenantId == CurrentTenantId);
         builder.Entity<DeliveryRule>().HasQueryFilter(rule => rule.TenantId == CurrentTenantId);
         builder.Entity<DeliveryRuleZone>().HasQueryFilter(zone => zone.TenantId == CurrentTenantId);
+        builder.Entity<Customer>().HasQueryFilter(customer => customer.TenantId == CurrentTenantId);
+        builder.Entity<CheckoutSession>().HasQueryFilter(session => session.TenantId == CurrentTenantId);
+        builder.Entity<CheckoutSessionItem>().HasQueryFilter(item => item.TenantId == CurrentTenantId);
+        builder.Entity<CheckoutSessionCommand>().HasQueryFilter(command => command.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
