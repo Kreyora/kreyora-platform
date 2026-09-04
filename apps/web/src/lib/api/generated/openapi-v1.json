@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://127.0.0.1:5030/"
+      "url": "http://localhost:5030/"
     }
   ],
   "paths": {
@@ -2520,6 +2520,7 @@
         "required": [
           "id",
           "actorUserId",
+          "actorKind",
           "effectiveSupportActorUserId",
           "action",
           "targetType",
@@ -2535,7 +2536,13 @@
             "type": "string"
           },
           "actorUserId": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "actorKind": {
+            "$ref": "#/components/schemas/CommerceActorKind"
           },
           "effectiveSupportActorUserId": {
             "type": [
@@ -2731,6 +2738,9 @@
             "$ref": "#/components/schemas/TenantRole"
           }
         }
+      },
+      "CommerceActorKind": {
+        "type": "integer"
       },
       "CreateProductRequest": {
         "required": [
@@ -3420,6 +3430,7 @@
           "quantityDelta",
           "reason",
           "actorUserId",
+          "actorKind",
           "createdAt"
         ],
         "type": "object",
@@ -3448,7 +3459,13 @@
             "type": "string"
           },
           "actorUserId": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "actorKind": {
+            "$ref": "#/components/schemas/CommerceActorKind"
           },
           "createdAt": {
             "type": "string",

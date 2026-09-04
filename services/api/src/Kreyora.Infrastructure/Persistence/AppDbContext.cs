@@ -4,6 +4,7 @@ using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Common;
 using Kreyora.Domain.Customers;
 using Kreyora.Domain.Inventory;
+using Kreyora.Domain.Orders;
 using Kreyora.Domain.Storefront;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Identity;
@@ -47,6 +48,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<CheckoutSession> CheckoutSessions => Set<CheckoutSession>();
     public DbSet<CheckoutSessionItem> CheckoutSessionItems => Set<CheckoutSessionItem>();
     public DbSet<CheckoutSessionCommand> CheckoutSessionCommands => Set<CheckoutSessionCommand>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderCommand> OrderCommands => Set<OrderCommand>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -87,6 +91,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<CheckoutSession>().HasQueryFilter(session => session.TenantId == CurrentTenantId);
         builder.Entity<CheckoutSessionItem>().HasQueryFilter(item => item.TenantId == CurrentTenantId);
         builder.Entity<CheckoutSessionCommand>().HasQueryFilter(command => command.TenantId == CurrentTenantId);
+        builder.Entity<Order>().HasQueryFilter(order => order.TenantId == CurrentTenantId);
+        builder.Entity<OrderItem>().HasQueryFilter(item => item.TenantId == CurrentTenantId);
+        builder.Entity<OrderCommand>().HasQueryFilter(command => command.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -144,6 +151,14 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             if (commandEntry.State is EntityState.Modified or EntityState.Deleted)
             {
                 throw new InvalidOperationException("Store command records are append-only and cannot be changed or deleted.");
+            }
+        }
+
+        foreach (var commandEntry in ChangeTracker.Entries<OrderCommand>())
+        {
+            if (commandEntry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                throw new InvalidOperationException("Order command records are append-only and cannot be changed or deleted.");
             }
         }
 

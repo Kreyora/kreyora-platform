@@ -3,34 +3,37 @@
 ## Active position
 
 - **Milestone:** 05 - Storefront, Delivery, Checkout, and Canonical Orders
-- **Step:** M05-S03 - Customer Contact, Checkout Session, and Reservation
+- **Step:** M05-S04 - Canonical Order Aggregate and Transactional Creation
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/05_STOREFRONT_CHECKOUT_ORDERS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M05-S03.md`
+- **Current checkpoint:** `artifacts/checkpoints/M05-S04.md`
 - **Previous checkpoint:** `artifacts/checkpoints/M05-S01.md`
-- **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, M05-S01, and M05-S02 are approved. Milestone 04 exit gate is approved.
+- **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, and M05-S01 through M05-S03 are approved. Milestone 04 exit gate is approved.
 
 ## Current objective
 
-Review M05-S03: minimal customer contact, internal checkout sessions, quote revalidation, atomic stock reservations, expiry, and the PostgreSQL migration. Public routes, payment configuration, frontend wiring, and orders remain out of scope.
+Review M05-S04: one active M05-S03 checkout session converts into an immutable canonical order while its reserved stock commits in the same PostgreSQL transaction. Public routes, seller order UI, payment configuration/proof, and operational transitions remain out of scope.
 
 ## Next permitted action
 
-Review and approve M05-S03 before updating Graphify and planning M05-S04.
+Review and approve M05-S04. Only after approval may Graphify be refreshed and M05-S05 planning begin.
 
 ## Next prohibited action
 
-- Starting M05-S04, adding public checkout routes, or Graphify-refreshing M05-S03 before project-owner approval.
+- Adding a public order route, payment configuration/proof, seller UI, or M06 order operations before M05-S04 review and approval.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-05 | M05-S04 implementation completed: immutable canonical order creation, system provenance, migration, live contract refresh, PostgreSQL/Testcontainers regression, frontend compatibility checks, cleanup, and review checkpoint. | Codex |
+| 2026-09-05 | Project owner approved M05-S04; implementation started. | Project owner / Codex |
+| 2026-09-05 | Project owner approved M05-S03. Graphify refreshed; M05-S04 canonical-order plan drafted. | Project owner / Codex |
 | 2026-09-05 | M05-S03 implementation completed: internal checkout-session/customer/reservation lifecycle, migration, PostgreSQL/Testcontainers regression, cleanup verification, and review checkpoint. | Codex |
 | 2026-09-05 | Project owner approved the M05-S03 plan; implementation started. | Project owner / Codex |
 | 2026-09-05 | Project owner approved M05-S02. Graphify code graph refreshed; M05-S03 checkout-session/reservation plan drafted. | Project owner / Codex |

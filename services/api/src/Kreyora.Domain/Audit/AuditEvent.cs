@@ -16,7 +16,8 @@ public sealed class AuditEvent : BaseEntity, ITenantOwned
     }
 
     public string TenantId { get; private set; } = string.Empty;
-    public string ActorUserId { get; private set; } = string.Empty;
+    public string? ActorUserId { get; private set; }
+    public CommerceActorKind ActorKind { get; private set; }
     public string? EffectiveSupportActorUserId { get; private set; }
     public string? SupportAccessGrantId { get; private set; }
     public string Action { get; private set; } = string.Empty;
@@ -29,7 +30,7 @@ public sealed class AuditEvent : BaseEntity, ITenantOwned
 
     public static AuditEvent Create(
         string tenantId,
-        string actorUserId,
+        string? actorUserId,
         string action,
         string targetType,
         string targetId,
@@ -38,10 +39,12 @@ public sealed class AuditEvent : BaseEntity, ITenantOwned
         string? reason = null,
         string? metadata = null,
         string? effectiveSupportActorUserId = null,
-        string? supportAccessGrantId = null) => new()
+        string? supportAccessGrantId = null,
+        CommerceActorKind actorKind = CommerceActorKind.Member) => new()
         {
             TenantId = Require(tenantId, nameof(tenantId), TargetIdMaxLength),
-            ActorUserId = Require(actorUserId, nameof(actorUserId), TargetIdMaxLength),
+            ActorUserId = RequireActorUserId(actorUserId, actorKind),
+            ActorKind = RequireActorKind(actorKind),
             Action = Require(action, nameof(action), ActionMaxLength),
             TargetType = Require(targetType, nameof(targetType), TargetTypeMaxLength),
             TargetId = Require(targetId, nameof(targetId), TargetIdMaxLength),
@@ -65,4 +68,15 @@ public sealed class AuditEvent : BaseEntity, ITenantOwned
         var normalized = value.Trim();
         return normalized.Length > maxLength ? throw new ArgumentOutOfRangeException(nameof(value)) : normalized;
     }
+
+    private static CommerceActorKind RequireActorKind(CommerceActorKind value) =>
+        Enum.IsDefined(value) ? value : throw new ArgumentOutOfRangeException(nameof(value));
+
+    private static string? RequireActorUserId(string? value, CommerceActorKind actorKind) => actorKind switch
+    {
+        CommerceActorKind.Member => Require(value ?? string.Empty, nameof(value), 26),
+        CommerceActorKind.CommerceSystem when string.IsNullOrWhiteSpace(value) => null,
+        CommerceActorKind.CommerceSystem => throw new ArgumentException("Commerce-system actions cannot have a user actor.", nameof(value)),
+        _ => throw new ArgumentOutOfRangeException(nameof(actorKind))
+    };
 }

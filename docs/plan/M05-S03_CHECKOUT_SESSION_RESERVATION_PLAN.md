@@ -1,8 +1,8 @@
 # M05-S03 — Customer Contact, Checkout Session, and Reservation Plan
 
-**Status:** `REVIEW`  
-**Scope:** Internal checkout-session orchestration, minimal guest/customer contact handling, quote revalidation, and atomic inventory holds.  
-**Implementation completed; awaiting project-owner review.**
+**Status:** `APPROVED`
+**Scope:** Internal checkout-session orchestration, minimal guest/customer contact handling, quote revalidation, and atomic inventory holds.
+**Implementation completed and approved by the project owner.**
 
 ## 1. Outcome and boundary
 

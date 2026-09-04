@@ -1,5 +1,6 @@
 using Kreyora.Application.Audit;
 using Kreyora.Application.Authorization;
+using Kreyora.Domain.Common;
 using Kreyora.Application.Catalog;
 using Kreyora.Application.Models;
 using Kreyora.Application.Tenancy;
@@ -175,13 +176,13 @@ public sealed class MediaAssetService(
             {
                 asset.RequestDeletion(now);
                 await dbContext.SaveChangesAsync(cancellationToken);
-                await auditEvents.AppendAsync(new AuditEventWrite("media.deletion.requested", "media-asset", asset.Id, ActorUserId: null), cancellationToken);
+                await auditEvents.AppendAsync(new AuditEventWrite("media.deletion.requested", "media-asset", asset.Id, ActorKind: CommerceActorKind.CommerceSystem), cancellationToken);
             }
 
             await storage.DeleteIfExistsAsync(asset.ObjectKey, cancellationToken);
             asset.MarkDeleted(now);
             await dbContext.SaveChangesAsync(cancellationToken);
-            await auditEvents.AppendAsync(new AuditEventWrite("media.deleted", "media-asset", asset.Id, ActorUserId: null), cancellationToken);
+            await auditEvents.AppendAsync(new AuditEventWrite("media.deleted", "media-asset", asset.Id, ActorKind: CommerceActorKind.CommerceSystem), cancellationToken);
             count++;
         }
 

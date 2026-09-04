@@ -1,4 +1,5 @@
 using Kreyora.Domain.Audit;
+using Kreyora.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,11 +9,12 @@ public sealed class AuditEventConfiguration : IEntityTypeConfiguration<AuditEven
 {
     public void Configure(EntityTypeBuilder<AuditEvent> builder)
     {
-        builder.ToTable("audit_events");
+        builder.ToTable("audit_events", table => table.HasCheckConstraint("ck_audit_events_actor_provenance", "(actor_kind = 'Member' AND actor_user_id IS NOT NULL) OR (actor_kind = 'CommerceSystem' AND actor_user_id IS NULL)"));
         builder.HasKey(item => item.Id);
         builder.Property(item => item.Id).HasMaxLength(26);
         builder.Property(item => item.TenantId).IsRequired().HasMaxLength(26);
-        builder.Property(item => item.ActorUserId).IsRequired().HasMaxLength(26);
+        builder.Property(item => item.ActorUserId).HasMaxLength(26);
+        builder.Property(item => item.ActorKind).HasConversion<string>().HasMaxLength(32).HasDefaultValue(CommerceActorKind.Member).IsRequired();
         builder.Property(item => item.EffectiveSupportActorUserId).HasMaxLength(26);
         builder.Property(item => item.SupportAccessGrantId).HasMaxLength(26);
         builder.Property(item => item.Action).IsRequired().HasMaxLength(AuditEvent.ActionMaxLength);

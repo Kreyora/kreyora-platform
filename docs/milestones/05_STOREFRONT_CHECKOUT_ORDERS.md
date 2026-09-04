@@ -22,8 +22,8 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 |---:|---|---|
 | 01 | Store entity, readiness, settings, and publication | `APPROVED` |
 | 02 | Delivery rules and server-side quote engine | `APPROVED` |
-| 03 | Customer/contact, cart intent, and checkout reservation | `REVIEW` |
-| 04 | Canonical order aggregate and transactional creation | `NOT STARTED` |
+| 03 | Customer/contact, cart intent, and checkout reservation | `APPROVED` |
+| 04 | Canonical order aggregate and transactional creation | `REVIEW` |
 | 05 | Public APIs, host/slug resolution, and abuse controls | `NOT STARTED` |
 | 06 | Frontend integration and complete customer journey | `NOT STARTED` |
 | 07 | Tampering, concurrency, expiry, and isolation verification | `NOT STARTED` |
