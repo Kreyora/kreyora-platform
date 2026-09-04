@@ -3,6 +3,7 @@ using Kreyora.Application.Audit;
 using Kreyora.Application.Authentication;
 using Kreyora.Application.Authorization;
 using Kreyora.Application.Catalog;
+using Kreyora.Application.Customers;
 using Kreyora.Application.Inventory;
 using Kreyora.Application.Messaging;
 using Kreyora.Application.Storefront;
@@ -13,6 +14,7 @@ using Kreyora.Infrastructure.Authentication;
 using Kreyora.Infrastructure.Authorization;
 using Kreyora.Infrastructure.Catalog;
 using Kreyora.Infrastructure.Correlation;
+using Kreyora.Infrastructure.Customers;
 using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Inventory;
@@ -47,6 +49,10 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddOptions<StorefrontQuoteOptions>()
             .BindConfiguration(StorefrontQuoteOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddOptions<CheckoutSessionOptions>()
+            .BindConfiguration(CheckoutSessionOptions.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddDataProtection();
@@ -128,7 +134,10 @@ public static class DependencyInjection
             services.AddScoped<IDeliveryRuleReadService>(serviceProvider => serviceProvider.GetRequiredService<DeliveryRuleService>());
             services.AddScoped<IStorefrontAdministrationService, StorefrontAdministrationService>();
             services.AddScoped<IStorefrontQuoteService, StorefrontQuoteService>();
+            services.AddScoped<ICustomerCheckoutService, CustomerCheckoutService>();
+            services.AddScoped<IStorefrontCheckoutSessionService, CheckoutSessionService>();
             services.AddScoped<IInventoryService, InventoryService>();
+            services.AddScoped<ICheckoutInventoryReservationService>(serviceProvider => (InventoryService)serviceProvider.GetRequiredService<IInventoryService>());
             services.AddScoped<IMediaAssetService, MediaAssetService>();
             services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>
                 serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>().Value.Provider == "R2"
@@ -137,6 +146,7 @@ public static class DependencyInjection
                         serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>(),
                         environment));
             services.AddTransient<InventoryReservationExpiryJob>();
+            services.AddTransient<CheckoutSessionExpiryJob>();
             services.AddTransient<MediaCleanupJob>();
         }
 

@@ -3,34 +3,37 @@
 ## Active position
 
 - **Milestone:** 05 - Storefront, Delivery, Checkout, and Canonical Orders
-- **Step:** M05-S02 - Delivery Rules and Server-side Quote Engine
+- **Step:** M05-S03 - Customer Contact, Checkout Session, and Reservation
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/05_STOREFRONT_CHECKOUT_ORDERS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M05-S02.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M04-S06.md`
-- **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, and M05-S01 are approved. Milestone 04 exit gate is approved.
+- **Current checkpoint:** `artifacts/checkpoints/M05-S03.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M05-S01.md`
+- **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, M05-S01, and M05-S02 are approved. Milestone 04 exit gate is approved.
 
 ## Current objective
 
-Review M05-S02: seller delivery-rule configuration, real delivery readiness, and a server-owned quote calculation boundary. Public host resolution, public quote routes, payment configuration, reservations, cart/checkout, and orders remain out of scope.
+Review M05-S03: minimal customer contact, internal checkout sessions, quote revalidation, atomic stock reservations, expiry, and the PostgreSQL migration. Public routes, payment configuration, frontend wiring, and orders remain out of scope.
 
 ## Next permitted action
 
-Project-owner review and approval of `artifacts/checkpoints/M05-S02.md`; only then refresh Graphify and plan M05-S03.
+Review and approve M05-S03 before updating Graphify and planning M05-S04.
 
 ## Next prohibited action
 
-- Starting M05-S03 or refreshing Graphify before M05-S02 is approved.
+- Starting M05-S04, adding public checkout routes, or Graphify-refreshing M05-S03 before project-owner approval.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-05 | M05-S03 implementation completed: internal checkout-session/customer/reservation lifecycle, migration, PostgreSQL/Testcontainers regression, cleanup verification, and review checkpoint. | Codex |
+| 2026-09-05 | Project owner approved the M05-S03 plan; implementation started. | Project owner / Codex |
+| 2026-09-05 | Project owner approved M05-S02. Graphify code graph refreshed; M05-S03 checkout-session/reservation plan drafted. | Project owner / Codex |
 | 2026-09-04 | M05-S02 implementation completed: delivery rules, protected quote boundary, migration, live contract refresh, Testcontainers verification/cleanup, and review checkpoint. | Codex |
 | 2026-09-04 | Project owner approved the M05-S02 plan; implementation started. | Project owner / Codex |
 | 2026-09-04 | Project owner approved M05-S01; M05-S02 delivery/quote planning started. | Project owner / Codex |

@@ -18,6 +18,12 @@ public interface IInventoryService
     Task<int> ExpireDueReservationsAsync(CancellationToken cancellationToken = default);
 }
 
+public interface ICheckoutInventoryReservationService
+{
+    Task<Result<IReadOnlyList<CheckoutInventoryReservation>>> ReserveForCheckoutAsync(CheckoutInventoryReservationRequest request, CancellationToken cancellationToken = default);
+    Task ExpireForCheckoutAsync(string checkoutSessionId, CancellationToken cancellationToken = default);
+}
+
 public sealed record StockAdjustmentRequest(
     string VariantId,
     StockMovementType Type,
@@ -91,3 +97,6 @@ public sealed record InventoryReservationResult(
     bool WasReplayed);
 
 public sealed record InventoryReservationPage(IReadOnlyList<InventoryReservationItem> Items, string? NextCursor);
+public sealed record CheckoutInventoryReservationRequest(string CheckoutSessionId, IReadOnlyList<CheckoutInventoryLine> Lines, DateTimeOffset ExpiresAt);
+public sealed record CheckoutInventoryLine(string VariantId, int Quantity);
+public sealed record CheckoutInventoryReservation(string VariantId, string InventoryReservationId);

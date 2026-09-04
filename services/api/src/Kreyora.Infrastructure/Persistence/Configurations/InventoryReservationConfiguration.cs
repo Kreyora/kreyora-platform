@@ -22,7 +22,7 @@ public sealed class InventoryReservationConfiguration : IEntityTypeConfiguration
         builder.Property(item => item.Quantity).IsRequired();
         builder.Property(item => item.Source).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(item => item.ReferenceId).IsRequired().HasMaxLength(InventoryReservation.ReferenceIdMaxLength);
-        builder.Property(item => item.ActorUserId).IsRequired().HasMaxLength(26);
+        builder.Property(item => item.ActorUserId).HasMaxLength(26);
         builder.Property(item => item.State).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(item => item.ExpiresAt).IsRequired();
         builder.HasAlternateKey(item => new { item.TenantId, item.Id });
