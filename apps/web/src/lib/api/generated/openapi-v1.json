@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5030/"
+      "url": "http://127.0.0.1:5030/"
     }
   ],
   "paths": {
@@ -1762,6 +1762,323 @@
         }
       }
     },
+    "/v1/store": {
+      "get": {
+        "tags": [
+          "StorefrontAdministration"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "StorefrontAdministration"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreSettingsInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreSettingsInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreSettingsInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "StorefrontAdministration"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/readiness": {
+      "get": {
+        "tags": [
+          "StorefrontAdministration"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreReadiness"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreReadiness"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreReadiness"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/activate": {
+      "post": {
+        "tags": [
+          "StorefrontAdministration"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontStore"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/publications": {
+      "get": {
+        "tags": [
+          "StorefrontAdministration"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorePublicationPage"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorePublicationPage"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorePublicationPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/publications/{productId}": {
+      "put": {
+        "tags": [
+          "StorefrontAdministration"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorePublicationBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorePublicationBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorePublicationBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductPublicationItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductPublicationItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductPublicationItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/support-access-grants": {
       "post": {
         "tags": [
@@ -3016,6 +3333,412 @@
       "StockMovementType": {
         "type": "integer"
       },
+      "StorefrontStore": {
+        "required": [
+          "id",
+          "tenantId",
+          "displayName",
+          "platformSlug",
+          "tagline",
+          "status",
+          "themePreset",
+          "brandAccentHex",
+          "contactName",
+          "contactEmail",
+          "contactPhone",
+          "contactWhatsApp",
+          "facebookUrl",
+          "instagramUrl",
+          "tikTokUrl",
+          "termsPolicy",
+          "privacyPolicy",
+          "returnsPolicy",
+          "paymentPolicy",
+          "activatedAt",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "platformSlug": {
+            "type": "string"
+          },
+          "tagline": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/StoreStatus"
+          },
+          "themePreset": {
+            "$ref": "#/components/schemas/StoreThemePreset"
+          },
+          "brandAccentHex": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactWhatsApp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "facebookUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instagramUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tikTokUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "termsPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "privacyPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "returnsPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "activatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "uint32"
+          }
+        }
+      },
+      "StoreProductPublicationItem": {
+        "required": [
+          "id",
+          "productId",
+          "visibility",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/StoreProductVisibility"
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "uint32"
+          }
+        }
+      },
+      "StoreProductVisibility": {
+        "type": "integer"
+      },
+      "StorePublicationBody": {
+        "required": [
+          "visibility",
+          "expectedVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "visibility": {
+            "$ref": "#/components/schemas/StoreProductVisibility"
+          },
+          "expectedVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "uint32"
+          }
+        }
+      },
+      "StorePublicationPage": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreProductPublicationItem"
+            }
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "StoreReadiness": {
+        "required": [
+          "canActivate",
+          "canAcceptOrders",
+          "sections",
+          "blockers"
+        ],
+        "type": "object",
+        "properties": {
+          "canActivate": {
+            "type": "boolean"
+          },
+          "canAcceptOrders": {
+            "type": "boolean"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreReadinessSection"
+            }
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreReadinessBlocker"
+            }
+          }
+        }
+      },
+      "StoreReadinessBlocker": {
+        "required": [
+          "code",
+          "section"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          }
+        }
+      },
+      "StoreReadinessSection": {
+        "required": [
+          "name",
+          "isReady"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "isReady": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StoreSettingsInput": {
+        "required": [
+          "displayName",
+          "platformSlug",
+          "tagline",
+          "themePreset",
+          "brandAccentHex",
+          "contactName",
+          "contactEmail",
+          "contactPhone",
+          "contactWhatsApp",
+          "facebookUrl",
+          "instagramUrl",
+          "tikTokUrl",
+          "termsPolicy",
+          "privacyPolicy",
+          "returnsPolicy",
+          "paymentPolicy"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "platformSlug": {
+            "type": "string"
+          },
+          "tagline": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "themePreset": {
+            "$ref": "#/components/schemas/StoreThemePreset"
+          },
+          "brandAccentHex": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactWhatsApp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "facebookUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instagramUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tikTokUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "termsPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "privacyPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "returnsPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentPolicy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "StoreStatus": {
+        "type": "integer"
+      },
+      "StoreThemePreset": {
+        "type": "integer"
+      },
       "SupportAccessGrantSummary": {
         "required": [
           "id",
@@ -3107,6 +3830,26 @@
           }
         }
       },
+      "UpdateStoreBody": {
+        "required": [
+          "settings",
+          "expectedVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "settings": {
+            "$ref": "#/components/schemas/StoreSettingsInput"
+          },
+          "expectedVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "uint32"
+          }
+        }
+      },
       "VersionBody": {
         "required": [
           "expectedVersion"
@@ -3169,6 +3912,9 @@
     },
     {
       "name": "Permissions"
+    },
+    {
+      "name": "StorefrontAdministration"
     },
     {
       "name": "SupportAccessGrants"
