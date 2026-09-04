@@ -23,7 +23,7 @@ public sealed class InventoryService(
     ITenantPermissionAuthorizer permissionAuthorizer,
     IAuditEventService auditEvents,
     Domain.Abstractions.ITimeProvider timeProvider,
-    IOptions<InventoryReservationOptions> reservationOptions) : IInventoryService
+    IOptions<InventoryReservationOptions> reservationOptions) : IInventoryService, ICheckoutInventoryReservationService
 {
     // PostgreSQL can reject a burst of concurrent serializable transactions before
     // the row lock has a chance to serialize them. Keep this finite, but large
@@ -240,6 +240,58 @@ public sealed class InventoryService(
         {
             return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
         }
+    }
+
+    public async Task<Result<IReadOnlyList<CheckoutInventoryReservation>>> ReserveForCheckoutAsync(CheckoutInventoryReservationRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var context = tenantContext.RequireCurrent();
+        try
+        {
+            if (request.Lines is null || request.Lines.Count is 0 or > 50) return Result<IReadOnlyList<CheckoutInventoryReservation>>.ValidationError("A checkout session requires 1-50 inventory lines.");
+            if (request.ExpiresAt <= timeProvider.UtcNow) return Result<IReadOnlyList<CheckoutInventoryReservation>>.ValidationError("The checkout session expiry must be in the future.");
+            var lines = request.Lines.Select(line => new CheckoutInventoryLine(NormalizeRequired(line.VariantId, nameof(line.VariantId), 26), line.Quantity))
+                .OrderBy(line => line.VariantId, StringComparer.Ordinal).ToArray();
+            if (lines.Any(line => line.Quantity is < 1 or > 100) || lines.GroupBy(line => line.VariantId, StringComparer.Ordinal).Any(group => group.Count() > 1))
+                return Result<IReadOnlyList<CheckoutInventoryReservation>>.ValidationError("Checkout inventory lines must be unique quantities between 1 and 100.");
+
+            var results = new List<CheckoutInventoryReservation>();
+            foreach (var line in lines)
+            {
+                var item = await LockInventoryItemForVariantAsync(line.VariantId, cancellationToken);
+                if (item is null) return Result<IReadOnlyList<CheckoutInventoryReservation>>.ValidationError("A selected product is no longer available.");
+                await ExpireDueForItemAsync(item, cancellationToken);
+                item.Reserve(line.Quantity);
+                var reservation = InventoryReservation.Create(context.TenantId, item.Id, line.VariantId, line.Quantity, InventoryReservationSource.Checkout,
+                    request.CheckoutSessionId, null, request.ExpiresAt, timeProvider.UtcNow);
+                dbContext.InventoryReservations.Add(reservation);
+                results.Add(new CheckoutInventoryReservation(line.VariantId, reservation.Id));
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return Result<IReadOnlyList<CheckoutInventoryReservation>>.Success(results);
+        }
+        catch (Exception exception) when (IsValidationException(exception))
+        {
+            return Result<IReadOnlyList<CheckoutInventoryReservation>>.ValidationError(exception.Message);
+        }
+    }
+
+    public async Task ExpireForCheckoutAsync(string checkoutSessionId, CancellationToken cancellationToken = default)
+    {
+        var context = tenantContext.RequireCurrent();
+        var now = timeProvider.UtcNow;
+        var reservations = await dbContext.InventoryReservations.Where(reservation => reservation.Source == InventoryReservationSource.Checkout && reservation.ReferenceId == checkoutSessionId && reservation.State == InventoryReservationState.Active)
+            .OrderBy(reservation => reservation.VariantId).ToListAsync(cancellationToken);
+        foreach (var reservation in reservations)
+        {
+            var item = await LockInventoryItemAsync(reservation.InventoryItemId, cancellationToken);
+            if (reservation.ExpiresAt > now) continue;
+            item.ReleaseReservation(reservation.Quantity);
+            reservation.Expire(now);
+            AddExpiryCommand(context.TenantId, reservation.Id);
+        }
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<Result<InventoryReservationResult>> ReserveStockOnceAsync(
