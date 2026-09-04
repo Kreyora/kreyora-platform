@@ -99,6 +99,49 @@ public sealed class CatalogService(
         return Result<IReadOnlyList<CatalogProduct>>.Success(products.Select(Map).ToArray());
     }
 
+    public async Task<Result<CatalogProductPage>> ListProductsAsync(CatalogProductQuery query, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        permissionAuthorizer.Demand(TenantPermissions.CatalogRead);
+
+        try
+        {
+            var pageSize = Math.Clamp(query.PageSize, 1, 100);
+            var products = dbContext.Products.Include(product => product.Variants).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var search = query.Search.Trim();
+                products = products.Where(product => product.Title.Contains(search) ||
+                    (product.Description != null && product.Description.Contains(search)) || product.Slug.Contains(search));
+            }
+
+            if (query.PublishState is not null)
+            {
+                products = products.Where(product => product.PublishState == query.PublishState);
+            }
+
+            var marker = DecodeCursor(query.Cursor);
+            if (marker is not null)
+            {
+                products = products.Where(product => product.ModifiedAt < marker.Value.ModifiedAt ||
+                    (product.ModifiedAt == marker.Value.ModifiedAt && product.Id.CompareTo(marker.Value.Id) < 0));
+            }
+
+            var page = await products.OrderByDescending(product => product.ModifiedAt).ThenByDescending(product => product.Id)
+                .Take(pageSize + 1).ToListAsync(cancellationToken);
+            var hasMore = page.Count > pageSize;
+            var items = page.Take(pageSize).Select(Map).ToArray();
+            var last = items.LastOrDefault();
+            return Result<CatalogProductPage>.Success(new CatalogProductPage(
+                items,
+                hasMore && last is not null ? EncodeCursor(page[pageSize - 1].ModifiedAt, last.Id) : null));
+        }
+        catch (ArgumentException exception)
+        {
+            return Result<CatalogProductPage>.ValidationError(exception.Message);
+        }
+    }
+
     public async Task<Result<CatalogProduct>> UpdateProductAsync(UpdateProductRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -339,4 +382,23 @@ public sealed class CatalogService(
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
     private sealed class DuplicateCatalogValueException(string message) : InvalidOperationException(message);
+
+    private static string EncodeCursor(DateTimeOffset modifiedAt, string id) =>
+        Convert.ToBase64String(Encoding.UTF8.GetBytes($"{modifiedAt.UtcTicks}|{id}"));
+
+    private static (DateTimeOffset ModifiedAt, string Id)? DecodeCursor(string? cursor)
+    {
+        if (string.IsNullOrWhiteSpace(cursor)) return null;
+        try
+        {
+            var parts = Encoding.UTF8.GetString(Convert.FromBase64String(cursor)).Split('|', 2);
+            return parts.Length == 2 && long.TryParse(parts[0], out var ticks)
+                ? new(new DateTimeOffset(ticks, TimeSpan.Zero), parts[1])
+                : throw new ArgumentException("The catalog cursor is invalid.", nameof(cursor));
+        }
+        catch (FormatException)
+        {
+            throw new ArgumentException("The catalog cursor is invalid.", nameof(cursor));
+        }
+    }
 }

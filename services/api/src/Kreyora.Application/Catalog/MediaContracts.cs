@@ -11,6 +11,7 @@ public interface IMediaAssetService
     Task<Result<MediaAssetItem>> ReorderAsync(ReorderMediaRequest request, CancellationToken cancellationToken = default);
     Task<Result<MediaAssetItem>> RequestDeletionAsync(string mediaAssetId, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<MediaAssetItem>>> ListForProductAsync(string productId, CancellationToken cancellationToken = default);
+    Task<Result<MediaReadContent>> OpenReadAsync(string mediaAssetId, CancellationToken cancellationToken = default);
     Task<int> CleanupAsync(CancellationToken cancellationToken = default);
 }
 
@@ -19,6 +20,7 @@ public sealed record CompleteMediaUploadRequest(string MediaAssetId);
 public sealed record AttachMediaToProductRequest(string MediaAssetId, string ProductId, int SortOrder, string? AltText);
 public sealed record ReorderMediaRequest(string MediaAssetId, int SortOrder, string? AltText);
 public sealed record MediaAssetItem(string Id, string? ProductId, string ContentType, long ByteSize, MediaAssetState State, int? SortOrder, string? AltText, DateTimeOffset UploadExpiresAt);
+public sealed record MediaReadContent(Stream Content, string ContentType, long ByteSize);
 
 public sealed record StorageObjectWrite(string ObjectKey, string ContentType, long ByteSize, Stream Content);
 public sealed record StorageObjectMetadata(string ObjectKey, string ContentType, long ByteSize);

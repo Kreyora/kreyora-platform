@@ -74,6 +74,33 @@ public class CatalogServiceTests : IClassFixture<PostgresFixture>
         }
     }
 
+    [Fact]
+    public async Task ListProducts_FiltersBySearchAndUsesAnOpaqueCursor()
+    {
+        var accessor = new TenantContextAccessor();
+        await using var dbContext = fixture.CreateDbContext(accessor);
+        await dbContext.Database.MigrateAsync();
+        var tenant = await CreateTenantAsync(dbContext, "catalog-query");
+        using var scope = accessor.BeginScope(OwnerContext(tenant.Id));
+        var service = CreateService(dbContext, accessor);
+
+        Assert.True((await service.CreateProductAsync(NewCreateRequest("linen-shirt", "LINEN-SHIRT", $"query-{Guid.NewGuid():N}"))).IsSuccess);
+        Assert.True((await service.CreateProductAsync(NewCreateRequest("wool-scarf", "WOOL-SCARF", $"query-{Guid.NewGuid():N}"))).IsSuccess);
+
+        var search = await service.ListProductsAsync(new CatalogProductQuery("linen", null, null, 10));
+        var firstPage = await service.ListProductsAsync(new CatalogProductQuery(null, null, null, 1));
+        var secondPage = await service.ListProductsAsync(new CatalogProductQuery(null, null, firstPage.Value!.NextCursor, 1));
+
+        Assert.True(search.IsSuccess);
+        Assert.Single(search.Value!.Items);
+        Assert.Equal("linen-shirt", search.Value.Items[0].Slug);
+        Assert.True(firstPage.IsSuccess);
+        Assert.NotNull(firstPage.Value!.NextCursor);
+        Assert.True(secondPage.IsSuccess);
+        Assert.Single(secondPage.Value!.Items);
+        Assert.NotEqual(firstPage.Value.Items[0].Id, secondPage.Value.Items[0].Id);
+    }
+
     private static CatalogService CreateService(Kreyora.Infrastructure.Persistence.AppDbContext dbContext, TenantContextAccessor accessor)
     {
         var authorizer = new TenantPermissionAuthorizer(accessor);

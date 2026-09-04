@@ -149,6 +149,17 @@ public sealed class MediaAssetService(
         return Result<IReadOnlyList<MediaAssetItem>>.Success(items.Select(Map).ToArray());
     }
 
+    public async Task<Result<MediaReadContent>> OpenReadAsync(string mediaAssetId, CancellationToken cancellationToken = default)
+    {
+        permissionAuthorizer.Demand(TenantPermissions.CatalogRead);
+        var asset = await dbContext.MediaAssets.AsNoTracking().SingleOrDefaultAsync(item => item.Id == mediaAssetId && item.State == MediaAssetState.Ready, cancellationToken);
+        if (asset is null) return Result<MediaReadContent>.NotFound("The private media asset does not exist in the selected workspace.");
+        var content = await storage.OpenReadAsync(asset.ObjectKey, cancellationToken);
+        return content is null
+            ? Result<MediaReadContent>.NotFound("The private media object is unavailable.")
+            : Result<MediaReadContent>.Success(new MediaReadContent(content, asset.ContentType, asset.ByteSize));
+    }
+
     public async Task<int> CleanupAsync(CancellationToken cancellationToken = default)
     {
         var now = timeProvider.UtcNow;

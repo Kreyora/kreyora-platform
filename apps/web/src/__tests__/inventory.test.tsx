@@ -49,8 +49,8 @@ describe("Inventory — product inventory page", () => {
     expect(content).toContain("Adjust stock");
   });
 
-  it("shows simulated adjustment disclaimer", () => {
-    expect(content).toContain("Stock adjustments are simulated");
+  it("explains that adjustments are recorded in the stock ledger", () => {
+    expect(content).toContain("append-only stock ledger");
   });
 
   it("shows variant inventory cards with on-hand/committed/available", () => {

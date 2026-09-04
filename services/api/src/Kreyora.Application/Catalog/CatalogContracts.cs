@@ -8,6 +8,7 @@ public interface ICatalogService
     Task<Result<CatalogProduct>> CreateProductAsync(CreateProductRequest request, CancellationToken cancellationToken = default);
     Task<Result<CatalogProduct>> GetProductAsync(string productId, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<CatalogProduct>>> ListProductsAsync(CancellationToken cancellationToken = default);
+    Task<Result<CatalogProductPage>> ListProductsAsync(CatalogProductQuery query, CancellationToken cancellationToken = default);
     Task<Result<CatalogProduct>> UpdateProductAsync(UpdateProductRequest request, CancellationToken cancellationToken = default);
     Task<Result<CatalogProduct>> AddVariantAsync(AddProductVariantRequest request, CancellationToken cancellationToken = default);
     Task<Result<CatalogProduct>> UpdateVariantAsync(UpdateProductVariantRequest request, CancellationToken cancellationToken = default);
@@ -80,3 +81,6 @@ public sealed record CatalogVariant(
     decimal? CompareAtPriceNpr,
     bool IsPublished,
     uint Version);
+
+public sealed record CatalogProductQuery(string? Search, ProductPublishState? PublishState, string? Cursor, int PageSize);
+public sealed record CatalogProductPage(IReadOnlyList<CatalogProduct> Items, string? NextCursor);
