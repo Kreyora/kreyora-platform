@@ -76,8 +76,18 @@ public class InventoryServiceTests : IClassFixture<PostgresFixture>
         await dbContext.Database.MigrateAsync();
         var firstTenant = await CreateTenantAsync(dbContext, "inventory-first");
         var secondTenant = await CreateTenantAsync(dbContext, "inventory-second");
-        var firstVariantId = await CreateVariantAsync(dbContext, firstTenant.Id, "first-tee");
-        var secondVariantId = await CreateVariantAsync(dbContext, secondTenant.Id, "second-tee");
+        string firstVariantId;
+        string secondVariantId;
+        using (accessor.BeginScope(OwnerContext(firstTenant.Id)))
+        {
+            firstVariantId = await CreateVariantAsync(dbContext, firstTenant.Id, "first-tee");
+        }
+
+        using (accessor.BeginScope(OwnerContext(secondTenant.Id)))
+        {
+            secondVariantId = await CreateVariantAsync(dbContext, secondTenant.Id, "second-tee");
+        }
+
         var service = CreateService(dbContext, accessor);
 
         using (accessor.BeginScope(OwnerContext(firstTenant.Id)))
