@@ -376,14 +376,14 @@ public sealed class InventoryService(
     private Task<InventoryItem?> LockInventoryItemForVariantAsync(string variantId, CancellationToken cancellationToken)
     {
         var tenantId = tenantContext.RequireCurrent().TenantId;
-        return dbContext.InventoryItems.FromSqlInterpolated($"SELECT * FROM inventory_items WHERE tenant_id = {tenantId} AND variant_id = {variantId} FOR UPDATE")
+        return dbContext.InventoryItems.FromSqlInterpolated($"SELECT k.*, k.xmin FROM inventory_items k WHERE k.tenant_id = {tenantId} AND k.variant_id = {variantId} FOR UPDATE")
             .SingleOrDefaultAsync(cancellationToken);
     }
 
     private async Task<InventoryItem> LockInventoryItemAsync(string inventoryItemId, CancellationToken cancellationToken)
     {
         var tenantId = tenantContext.RequireCurrent().TenantId;
-        return await dbContext.InventoryItems.FromSqlInterpolated($"SELECT * FROM inventory_items WHERE tenant_id = {tenantId} AND id = {inventoryItemId} FOR UPDATE")
+        return await dbContext.InventoryItems.FromSqlInterpolated($"SELECT k.*, k.xmin FROM inventory_items k WHERE k.tenant_id = {tenantId} AND k.id = {inventoryItemId} FOR UPDATE")
             .SingleAsync(cancellationToken);
     }
 
