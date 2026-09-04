@@ -81,7 +81,8 @@ public sealed class CheckoutSessionService(
             dbContext.CheckoutSessionCommands.Add(CheckoutSessionCommand.Create(context.TenantId, CreateOperation, NormalizeKey(request.IdempotencyKey), fingerprint, session.Id));
             await dbContext.SaveChangesAsync(cancellationToken);
             await auditEvents.AppendAsync(new AuditEventWrite("checkout-session.created", "checkout-session", session.Id,
-                Metadata: $"{{\"lineCount\":{session.Items.Count},\"reservationCount\":{reservations.Value!.Count}}}"), cancellationToken);
+                Metadata: $"{{\"lineCount\":{session.Items.Count},\"reservationCount\":{reservations.Value!.Count}}}",
+                ActorKind: Kreyora.Domain.Common.CommerceActorKind.CommerceSystem), cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return Result<CheckoutSessionItemResult>.Success(Map(session, false));
         }
@@ -112,7 +113,8 @@ public sealed class CheckoutSessionService(
             session.Expire(timeProvider.UtcNow);
             await dbContext.SaveChangesAsync(cancellationToken);
             await auditEvents.AppendAsync(new AuditEventWrite("checkout-session.expired", "checkout-session", session.Id,
-                Metadata: $"{{\"reservationCount\":{session.Items.Count},\"automated\":true}}"), cancellationToken);
+                Metadata: $"{{\"reservationCount\":{session.Items.Count},\"automated\":true}}",
+                ActorKind: Kreyora.Domain.Common.CommerceActorKind.CommerceSystem), cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             count++;
         }

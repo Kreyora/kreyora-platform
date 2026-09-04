@@ -55,7 +55,7 @@ public sealed class DeliveryRuleAndQuoteServiceTests : IClassFixture<PostgresFix
             var readiness = await CreateStorefrontService(db, accessor, service).GetReadinessAsync();
             Assert.True(readiness.IsSuccess);
             Assert.DoesNotContain(readiness.Value!.Blockers, blocker => blocker.Code == "delivery_not_configured");
-            Assert.Contains(readiness.Value.Blockers, blocker => blocker.Code == "payment_not_configured");
+            Assert.DoesNotContain(readiness.Value.Blockers, blocker => blocker.Code == "cod_not_configured");
             created = first.Value;
         }
 

@@ -114,6 +114,9 @@ public sealed class DeliveryRuleService(
     public Task<bool> HasActiveRulesAsync(string storeId, CancellationToken cancellationToken = default) =>
         dbContext.DeliveryRules.AnyAsync(rule => rule.StoreId == storeId && rule.IsActive && rule.Zones.Any(), cancellationToken);
 
+    public Task<bool> HasActiveCodRuleAsync(string storeId, CancellationToken cancellationToken = default) =>
+        dbContext.DeliveryRules.AnyAsync(rule => rule.StoreId == storeId && rule.IsActive && rule.CodAvailable && rule.Zones.Any(), cancellationToken);
+
     private Task<Store?> GetStoreAsync(CancellationToken cancellationToken) => dbContext.Stores.SingleOrDefaultAsync(cancellationToken);
     private Task<DeliveryRule?> FindRuleAsync(string ruleId, CancellationToken cancellationToken) =>
         dbContext.DeliveryRules.Include(rule => rule.Zones).SingleOrDefaultAsync(rule => rule.Id == ruleId, cancellationToken);

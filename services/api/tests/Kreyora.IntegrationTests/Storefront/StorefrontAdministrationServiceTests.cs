@@ -43,7 +43,7 @@ public sealed class StorefrontAdministrationServiceTests : IClassFixture<Postgre
         Assert.Equal(1, await db.Stores.CountAsync());
         Assert.Single(await db.StoreCommandIdempotencyRecords.ToListAsync());
         Assert.Contains(readiness.Value!.Blockers, blocker => blocker.Code == "delivery_not_configured");
-        Assert.Contains(readiness.Value.Blockers, blocker => blocker.Code == "payment_not_configured");
+        Assert.Contains(readiness.Value.Blockers, blocker => blocker.Code == "cod_not_configured");
         Assert.Single(await db.AuditEvents.Where(item => item.Action == "store.created").ToListAsync());
     }
 
