@@ -11,6 +11,7 @@ using Kreyora.Infrastructure.Correlation;
 using Kreyora.Infrastructure.Errors;
 using Kreyora.Infrastructure.Logging;
 using Kreyora.Infrastructure.Inventory;
+using Kreyora.Infrastructure.Media;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.ServiceDefaults;
 using Kreyora.WebApi.Configuration;
@@ -140,6 +141,7 @@ if (app.Services.GetService<JobStorage>() is not null)
             job => job.RunAsync(),
             Cron.Minutely);
     }
+    RecurringJob.AddOrUpdate<MediaCleanupJob>("media-cleanup", job => job.RunAsync(), Cron.Daily);
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
