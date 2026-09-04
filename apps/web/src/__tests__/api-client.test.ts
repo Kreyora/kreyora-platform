@@ -66,6 +66,18 @@ describe("apiFetch", () => {
     expect(call[1].headers["Content-Type"]).toBeUndefined();
   });
 
+  it("preserves multipart form data for protected media upload", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}), headers: new Headers() });
+    const form = new FormData();
+    form.append("file", new Blob(["image"], { type: "image/png" }), "product.png");
+
+    await apiFetch("/v1/media/media-1/complete", { method: "POST", body: form });
+
+    const call = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
+    expect(call.body).toBe(form);
+    expect(call.headers["Content-Type"]).toBeUndefined();
+  });
+
   it("returns undefined for 204 No Content", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
