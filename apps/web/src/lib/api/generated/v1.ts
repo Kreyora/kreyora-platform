@@ -2182,7 +2182,8 @@ export interface components {
         };
         AuditEventItem: {
             id: string;
-            actorUserId: string;
+            actorUserId: null | string;
+            actorKind: components["schemas"]["CommerceActorKind"];
             effectiveSupportActorUserId: null | string;
             action: string;
             targetType: string;
@@ -2231,6 +2232,7 @@ export interface components {
         ChangeMembershipRoleRequest: {
             role: components["schemas"]["TenantRole"];
         };
+        CommerceActorKind: number;
         CreateProductRequest: {
             title: string;
             description: null | string;
@@ -2395,7 +2397,8 @@ export interface components {
             /** Format: int32 */
             quantityDelta: number | string;
             reason: string;
-            actorUserId: string;
+            actorUserId: null | string;
+            actorKind: components["schemas"]["CommerceActorKind"];
             /** Format: date-time */
             createdAt: string;
         };

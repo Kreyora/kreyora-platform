@@ -8,6 +8,7 @@ using Kreyora.Application.Inventory;
 using Kreyora.Application.Models;
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Catalog;
+using Kreyora.Domain.Common;
 using Kreyora.Domain.Inventory;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Persistence.Entities;
@@ -23,7 +24,7 @@ public sealed class InventoryService(
     ITenantPermissionAuthorizer permissionAuthorizer,
     IAuditEventService auditEvents,
     Domain.Abstractions.ITimeProvider timeProvider,
-    IOptions<InventoryReservationOptions> reservationOptions) : IInventoryService, ICheckoutInventoryReservationService
+    IOptions<InventoryReservationOptions> reservationOptions) : IInventoryService, ICheckoutInventoryReservationService, IOrderInventoryReservationService
 {
     // PostgreSQL can reject a burst of concurrent serializable transactions before
     // the row lock has a chance to serialize them. Keep this finite, but large
@@ -294,6 +295,50 @@ public sealed class InventoryService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<Result<IReadOnlyList<OrderInventoryCommit>>> CommitForOrderAsync(OrderInventoryCommitRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        tenantContext.RequireCurrent();
+        try
+        {
+            var orderId = NormalizeRequired(request.OrderId, nameof(request.OrderId), 26);
+            var sessionId = NormalizeRequired(request.CheckoutSessionId, nameof(request.CheckoutSessionId), 26);
+            if (request.Lines is null || request.Lines.Count is 0 or > 50) return Result<IReadOnlyList<OrderInventoryCommit>>.ValidationError("An order requires 1-50 checkout reservations.");
+            var lines = request.Lines.Select(line => new OrderInventoryCommitLine(
+                    NormalizeRequired(line.InventoryReservationId, nameof(line.InventoryReservationId), 26),
+                    NormalizeRequired(line.VariantId, nameof(line.VariantId), 26), line.Quantity))
+                .OrderBy(line => line.VariantId, StringComparer.Ordinal).ToArray();
+            if (lines.Any(line => line.Quantity is < 1 or > 100) || lines.GroupBy(line => line.InventoryReservationId, StringComparer.Ordinal).Any(group => group.Count() > 1) || lines.GroupBy(line => line.VariantId, StringComparer.Ordinal).Any(group => group.Count() > 1))
+                return Result<IReadOnlyList<OrderInventoryCommit>>.ValidationError("Order reservations must be unique quantities between 1 and 100.");
+
+            var ids = lines.Select(line => line.InventoryReservationId).ToArray();
+            var reservations = await dbContext.InventoryReservations.Where(reservation => ids.Contains(reservation.Id)).ToListAsync(cancellationToken);
+            if (reservations.Count != lines.Length) return Result<IReadOnlyList<OrderInventoryCommit>>.NotFound("A checkout reservation is unavailable.");
+            var now = timeProvider.UtcNow;
+            var committed = new List<OrderInventoryCommit>();
+            foreach (var line in lines)
+            {
+                var reservation = reservations.Single(item => item.Id == line.InventoryReservationId);
+                if (reservation.Source != InventoryReservationSource.Checkout || reservation.ReferenceId != sessionId || reservation.VariantId != line.VariantId || reservation.Quantity != line.Quantity || reservation.State != InventoryReservationState.Active)
+                    return Result<IReadOnlyList<OrderInventoryCommit>>.Conflict("The checkout reservation is no longer eligible for order creation.");
+                if (reservation.ExpiresAt <= now) return Result<IReadOnlyList<OrderInventoryCommit>>.Conflict("The checkout reservation has expired.");
+                var item = await LockInventoryItemAsync(reservation.InventoryItemId, cancellationToken);
+                item.CommitReservation(reservation.Quantity);
+                reservation.Commit(now);
+                var movement = StockMovement.Create(reservation.TenantId, item.Id, reservation.VariantId, StockMovementType.ReservationCommitted,
+                    -reservation.Quantity, "Checkout reservation committed to order", null, $"order:commit:{orderId}:{reservation.Id}",
+                    Fingerprint(new { orderId, reservation.Id }), "order", orderId, CommerceActorKind.CommerceSystem);
+                dbContext.StockMovements.Add(movement);
+                committed.Add(new OrderInventoryCommit(reservation.Id, reservation.VariantId, movement.Id));
+            }
+            return Result<IReadOnlyList<OrderInventoryCommit>>.Success(committed);
+        }
+        catch (Exception exception) when (IsValidationException(exception))
+        {
+            return Result<IReadOnlyList<OrderInventoryCommit>>.ValidationError(exception.Message);
+        }
+    }
+
     private async Task<Result<InventoryReservationResult>> ReserveStockOnceAsync(
         TenantContext context,
         ReserveStockRequest request,
@@ -356,7 +401,8 @@ public sealed class InventoryService(
             AddExpiryCommand(context.TenantId, current.Id);
             await dbContext.SaveChangesAsync(cancellationToken);
             await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.expired", "inventory-reservation", current.Id,
-                Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{current.Quantity},\"automated\":true}}", ActorUserId: current.ActorUserId), cancellationToken);
+                Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{current.Quantity},\"automated\":true}}", ActorUserId: current.ActorUserId,
+                ActorKind: current.ActorUserId is null ? CommerceActorKind.CommerceSystem : CommerceActorKind.Member), cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             count++;
         }
@@ -387,7 +433,8 @@ public sealed class InventoryService(
                 AddExpiryCommand(context.TenantId, reservation.Id);
                 await dbContext.SaveChangesAsync(cancellationToken);
                 await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.expired", "inventory-reservation", reservation.Id,
-                    Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{reservation.Quantity},\"automated\":true}}", ActorUserId: reservation.ActorUserId), cancellationToken);
+                    Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{reservation.Quantity},\"automated\":true}}", ActorUserId: reservation.ActorUserId,
+                    ActorKind: reservation.ActorUserId is null ? CommerceActorKind.CommerceSystem : CommerceActorKind.Member), cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return Result<InventoryReservationResult>.Conflict("The reservation has expired.");
             }
@@ -451,7 +498,8 @@ public sealed class InventoryService(
             reservation.Expire(now);
             AddExpiryCommand(tenantContext.RequireCurrent().TenantId, reservation.Id);
             await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.expired", "inventory-reservation", reservation.Id,
-                Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{reservation.Quantity},\"automated\":true}}", ActorUserId: reservation.ActorUserId), cancellationToken);
+                Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{reservation.Quantity},\"automated\":true}}", ActorUserId: reservation.ActorUserId,
+                ActorKind: reservation.ActorUserId is null ? CommerceActorKind.CommerceSystem : CommerceActorKind.Member), cancellationToken);
         }
     }
 
@@ -585,6 +633,7 @@ public sealed class InventoryService(
         movement.QuantityDelta,
         movement.Reason,
         movement.ActorUserId,
+        movement.ActorKind,
         movement.CreatedAt);
 
     private void SetExpectedVersion(InventoryItem item, uint expectedVersion) =>
