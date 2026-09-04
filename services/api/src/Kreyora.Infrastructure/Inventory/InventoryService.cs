@@ -25,7 +25,10 @@ public sealed class InventoryService(
     Domain.Abstractions.ITimeProvider timeProvider,
     IOptions<InventoryReservationOptions> reservationOptions) : IInventoryService
 {
-    private const int MaxSerializableAttempts = 3;
+    // PostgreSQL can reject a burst of concurrent serializable transactions before
+    // the row lock has a chance to serialize them. Keep this finite, but large
+    // enough for the documented M04 reservation contention campaign.
+    private const int MaxSerializableAttempts = 20;
 
     public async Task<Result<StockAdjustmentResult>> AdjustStockAsync(StockAdjustmentRequest request, CancellationToken cancellationToken = default)
     {
@@ -197,6 +200,8 @@ public sealed class InventoryService(
                     {
                         return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
                     }
+
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(200, attempt * 15) + Random.Shared.Next(10)), cancellationToken);
                 }
                 catch (DbUpdateException exception) when (IsRetryable(exception))
                 {
@@ -205,6 +210,18 @@ public sealed class InventoryService(
                     {
                         return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
                     }
+
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(200, attempt * 15) + Random.Shared.Next(10)), cancellationToken);
+                }
+                catch (InvalidOperationException exception) when (IsTransientFailure(exception))
+                {
+                    dbContext.ChangeTracker.Clear();
+                    if (attempt == MaxSerializableAttempts)
+                    {
+                        return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
+                    }
+
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(200, attempt * 15) + Random.Shared.Next(10)), cancellationToken);
                 }
             }
 
@@ -586,6 +603,9 @@ public sealed class InventoryService(
 
     private static bool IsRetryable(PostgresException exception) =>
         exception.SqlState is PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.UniqueViolation;
+
+    private static bool IsTransientFailure(InvalidOperationException exception) =>
+        exception.Message.Contains("likely due to a transient failure", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
