@@ -16,6 +16,7 @@ public sealed class CatalogInventoryEndpointAuthorizationTests : IClassFixture<T
     [InlineData("/v1/catalog/products")]
     [InlineData("/v1/inventory/variants/01H00000000000000000000000")]
     [InlineData("/v1/media/products/01H00000000000000000000000")]
+    [InlineData("/v1/store")]
     public async Task TenantOwnedEndpoints_RequireASelectedTenantContextBeforeDispatch(string path)
     {
         var response = await client.GetAsync(path);

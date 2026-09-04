@@ -3,6 +3,7 @@ using Kreyora.Domain.Audit;
 using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Common;
 using Kreyora.Domain.Inventory;
+using Kreyora.Domain.Storefront;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Persistence.Entities;
@@ -36,6 +37,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<InventoryReservation> InventoryReservations => Set<InventoryReservation>();
     public DbSet<InventoryReservationCommand> InventoryReservationCommands => Set<InventoryReservationCommand>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+    public DbSet<Store> Stores => Set<Store>();
+    public DbSet<StoreProductPublication> StoreProductPublications => Set<StoreProductPublication>();
+    public DbSet<StoreCommandIdempotency> StoreCommandIdempotencyRecords => Set<StoreCommandIdempotency>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -67,6 +71,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<InventoryReservation>().HasQueryFilter(reservation => reservation.TenantId == CurrentTenantId);
         builder.Entity<InventoryReservationCommand>().HasQueryFilter(command => command.TenantId == CurrentTenantId);
         builder.Entity<MediaAsset>().HasQueryFilter(asset => asset.TenantId == CurrentTenantId);
+        builder.Entity<Store>().HasQueryFilter(store => store.TenantId == CurrentTenantId);
+        builder.Entity<StoreProductPublication>().HasQueryFilter(publication => publication.TenantId == CurrentTenantId);
+        builder.Entity<StoreCommandIdempotency>().HasQueryFilter(record => record.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -116,6 +123,14 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             if (commandEntry.State is EntityState.Modified or EntityState.Deleted)
             {
                 throw new InvalidOperationException("Inventory reservation commands are append-only and cannot be changed or deleted.");
+            }
+        }
+
+        foreach (var commandEntry in ChangeTracker.Entries<StoreCommandIdempotency>())
+        {
+            if (commandEntry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                throw new InvalidOperationException("Store command records are append-only and cannot be changed or deleted.");
             }
         }
 
