@@ -203,6 +203,69 @@ public class InventoryServiceTests : IClassFixture<PostgresFixture>
         Assert.Equal(2, inventory.Value.AvailableQuantity);
     }
 
+    [Fact]
+    public async Task HighContentionReservations_ThreeRuns_TwelveWorkers_NeverOversell()
+    {
+        const int availableUnits = 10;
+        const int workers = 12;
+        var seedAccessor = new TenantContextAccessor();
+        await using var seedContext = fixture.CreateDbContext(seedAccessor);
+        await seedContext.Database.MigrateAsync();
+        var tenant = await CreateTenantAsync(seedContext, "reservation-campaign");
+
+        for (var run = 0; run < 3; run++)
+        {
+            string variantId;
+            using (seedAccessor.BeginScope(OwnerContext(tenant.Id)))
+            {
+                variantId = await CreateVariantAsync(seedContext, tenant.Id, $"contention-{run}-{Guid.NewGuid():N}"[..30]);
+                Assert.True((await CreateService(seedContext, seedAccessor).AdjustStockAsync(new StockAdjustmentRequest(
+                    variantId, StockMovementType.Receipt, availableUnits, "Campaign receipt", $"stock-{run}-{Guid.NewGuid():N}"))).IsSuccess);
+            }
+
+            var attempts = Enumerable.Range(0, workers).Select(worker => ReserveInIndependentContextAsync(
+                tenant.Id,
+                variantId,
+                $"campaign-{run}-{worker}",
+                $"reserve-{run}-{worker}-{Guid.NewGuid():N}"));
+            var results = await Task.WhenAll(attempts);
+
+            Assert.True(results.Count(result => result.IsSuccess) == availableUnits,
+                string.Join(" | ", results.Where(result => result.IsFailure).Select(result => $"{result.Error!.Status}:{result.Error.Detail}")));
+            Assert.Equal(workers - availableUnits, results.Count(result => result.IsFailure));
+
+            var verifyAccessor = new TenantContextAccessor();
+            await using var verifyContext = fixture.CreateDbContext(verifyAccessor);
+            using var verifyScope = verifyAccessor.BeginScope(OwnerContext(tenant.Id));
+            var service = CreateService(verifyContext, verifyAccessor);
+            var balance = await service.GetInventoryAsync(variantId);
+            var reservations = await service.GetReservationsAsync(variantId, InventoryReservationState.Active, null, 50);
+            var reconciliation = await service.ReconcileInventoryAsync(variantId);
+
+            Assert.True(balance.IsSuccess);
+            Assert.Equal(availableUnits, balance.Value!.OnHandQuantity);
+            Assert.Equal(availableUnits, balance.Value.ReservedQuantity);
+            Assert.Equal(0, balance.Value.AvailableQuantity);
+            Assert.True(reservations.IsSuccess);
+            Assert.Equal(availableUnits, reservations.Value!.Items.Count);
+            Assert.True(reconciliation.IsSuccess);
+            Assert.True(reconciliation.Value!.IsMatch);
+        }
+    }
+
+    private async Task<Kreyora.Application.Models.Result<InventoryReservationResult>> ReserveInIndependentContextAsync(
+        string tenantId,
+        string variantId,
+        string referenceId,
+        string idempotencyKey)
+    {
+        var accessor = new TenantContextAccessor();
+        await using var dbContext = fixture.CreateDbContext(accessor);
+        using var scope = accessor.BeginScope(OwnerContext(tenantId));
+        return await CreateService(dbContext, accessor).ReserveStockAsync(new ReserveStockRequest(
+            variantId, 1, InventoryReservationSource.Manual, referenceId, idempotencyKey));
+    }
+
     private static InventoryService CreateService(Kreyora.Infrastructure.Persistence.AppDbContext dbContext, TenantContextAccessor accessor)
     {
         var authorizer = new TenantPermissionAuthorizer(accessor);

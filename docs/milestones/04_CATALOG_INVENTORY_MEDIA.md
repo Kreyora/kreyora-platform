@@ -23,8 +23,8 @@ Purchasability requires an active store later, a published product/variant, a va
 | 02 | Stock ledger, balances, and adjustments | `APPROVED` |
 | 03 | Reservation concurrency, expiry, and reconciliation | `APPROVED` |
 | 04 | Media authorization and object-storage abstraction | `APPROVED` |
-| 05 | Catalog/inventory APIs and frontend integration | `REVIEW` |
-| 06 | Contention, isolation, and end-to-end verification | `NOT STARTED` |
+| 05 | Catalog/inventory APIs and frontend integration | `APPROVED` |
+| 06 | Contention, isolation, and end-to-end verification | `REVIEW` |
 
 ## Prompt 01 — Catalog and variant domain
 

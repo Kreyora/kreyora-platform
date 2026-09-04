@@ -3,34 +3,36 @@
 ## Active position
 
 - **Milestone:** 04 - Catalog, Inventory, and Media
-- **Step:** M04-S05 - Catalog/Inventory APIs and Frontend Integration
+- **Step:** M04-S06 - Contention, Isolation, and End-to-End Verification
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/04_CATALOG_INVENTORY_MEDIA.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master` with uncommitted M04-S01 approval and M04-S02 planning documentation.
-- **Current checkpoint:** `artifacts/checkpoints/M04-S05.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M04-S04.md`
-- **Last approved state:** M03-S01 through M03-S06 and M04-S01 through M04-S04 are approved.
+- **Current checkpoint:** `artifacts/checkpoints/M04-S06.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M04-S05.md`
+- **Last approved state:** M03-S01 through M03-S06 and M04-S01 through M04-S05 are approved.
 
 ## Current objective
 
-Plan M04-S05: versioned catalog, inventory, and protected-media APIs plus generated-client and seller workspace integration. Storefront, checkout/orders, and M04-S06 verification remain out of scope.
+Plan M04-S06: the catalog/inventory/media contention, tenant-isolation, and end-to-end verification campaign. Storefront, checkout/orders, and Milestone 05 remain out of scope.
 
 ## Next permitted action
 
-Review the M04-S05 checkpoint and approve it before starting M04-S06.
+Review the M04-S06 invariant matrix and approve the Milestone 04 exit gate before starting Milestone 05.
 
 ## Next prohibited action
 
-- Starting M04-S06 or any later step before M04-S05 approval.
+- Starting Milestone 05 or any later milestone before the M04 exit gate is approved.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-04 | M04-S06 verification completed; contention retry defect fixed and review checkpoint created. | Codex |
+| 2026-09-04 | Project owner approved M04-S05; M04-S06 verification planning started. | Project owner / Codex |
 | 2026-09-04 | M04-S05 implementation completed; API contract regenerated and review checkpoint created. | Codex |
 | 2026-09-04 | Project owner approved M04-S04; M04-S05 API/frontend integration planning started. | Project owner / Codex |
 | 2026-09-04 | Project owner approved the M04-S04 plan; media/storage implementation started. | Project owner / Codex |
