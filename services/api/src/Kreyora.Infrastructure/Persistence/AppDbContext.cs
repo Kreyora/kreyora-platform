@@ -2,6 +2,7 @@ using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Audit;
 using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Common;
+using Kreyora.Domain.Inventory;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Persistence.Entities;
@@ -30,6 +31,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<CatalogCommandIdempotency> CatalogCommandIdempotencyRecords => Set<CatalogCommandIdempotency>();
+    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -56,6 +59,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<Product>().HasQueryFilter(product => product.TenantId == CurrentTenantId);
         builder.Entity<ProductVariant>().HasQueryFilter(variant => variant.TenantId == CurrentTenantId);
         builder.Entity<CatalogCommandIdempotency>().HasQueryFilter(record => record.TenantId == CurrentTenantId);
+        builder.Entity<InventoryItem>().HasQueryFilter(item => item.TenantId == CurrentTenantId);
+        builder.Entity<StockMovement>().HasQueryFilter(movement => movement.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -89,6 +94,14 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             if (auditEntry.State is EntityState.Modified or EntityState.Deleted)
             {
                 throw new InvalidOperationException("Audit events are append-only and cannot be changed or deleted.");
+            }
+        }
+
+        foreach (var movementEntry in ChangeTracker.Entries<StockMovement>())
+        {
+            if (movementEntry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                throw new InvalidOperationException("Stock movements are append-only and cannot be changed or deleted.");
             }
         }
 
