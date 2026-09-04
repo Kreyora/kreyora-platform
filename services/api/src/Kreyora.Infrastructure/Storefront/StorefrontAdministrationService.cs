@@ -275,16 +275,17 @@ public sealed class StorefrontAdministrationService(
         if (!catalogReady) blockers.Add(new StoreReadinessBlocker("catalog_not_ready", "catalog"));
         var deliveryReady = await deliveryRules.HasActiveRulesAsync(store.Id, cancellationToken);
         if (!deliveryReady) blockers.Add(new StoreReadinessBlocker("delivery_not_configured", "delivery"));
-        blockers.Add(new StoreReadinessBlocker("payment_not_configured", "payments"));
+        var paymentReady = await deliveryRules.HasActiveCodRuleAsync(store.Id, cancellationToken);
+        if (!paymentReady) blockers.Add(new StoreReadinessBlocker("cod_not_configured", "payments"));
         var sections = new[]
         {
             new StoreReadinessSection("profile", profileReady),
             new StoreReadinessSection("policies", policiesReady),
             new StoreReadinessSection("catalog", catalogReady),
             new StoreReadinessSection("delivery", deliveryReady),
-            new StoreReadinessSection("payments", false)
+            new StoreReadinessSection("payments", paymentReady)
         };
-        return new StoreReadiness(blockers.Count == 0, false, sections, blockers);
+        return new StoreReadiness(blockers.Count == 0, blockers.Count == 0, sections, blockers);
     }
 
     private static StoreSettings ToSettings(StoreSettingsInput input) => new(

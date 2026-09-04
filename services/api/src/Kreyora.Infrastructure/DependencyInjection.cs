@@ -135,6 +135,9 @@ public static class DependencyInjection
             services.AddScoped<IDeliveryRuleService>(serviceProvider => serviceProvider.GetRequiredService<DeliveryRuleService>());
             services.AddScoped<IDeliveryRuleReadService>(serviceProvider => serviceProvider.GetRequiredService<DeliveryRuleService>());
             services.AddScoped<IStorefrontAdministrationService, StorefrontAdministrationService>();
+            services.AddScoped<IPublicStorefrontContextAccessor, PublicStorefrontContextAccessor>();
+            services.AddScoped<IPublicStorefrontResolver, PublicStorefrontResolver>();
+            services.AddScoped<IPublicStorefrontService, PublicStorefrontService>();
             services.AddScoped<IStorefrontQuoteService, StorefrontQuoteService>();
             services.AddScoped<ICustomerCheckoutService, CustomerCheckoutService>();
             services.AddScoped<IStorefrontCheckoutSessionService, CheckoutSessionService>();

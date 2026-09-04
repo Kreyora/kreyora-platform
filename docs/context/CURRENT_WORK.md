@@ -3,34 +3,37 @@
 ## Active position
 
 - **Milestone:** 05 - Storefront, Delivery, Checkout, and Canonical Orders
-- **Step:** M05-S04 - Canonical Order Aggregate and Transactional Creation
+- **Step:** M05-S05 - Public APIs, Host/Slug Resolution, and Abuse Controls
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/05_STOREFRONT_CHECKOUT_ORDERS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M05-S04.md`
+- **Current checkpoint:** `artifacts/checkpoints/M05-S05.md`
 - **Previous checkpoint:** `artifacts/checkpoints/M05-S01.md`
 - **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, and M05-S01 through M05-S03 are approved. Milestone 04 exit gate is approved.
 
 ## Current objective
 
-Review M05-S04: one active M05-S03 checkout session converts into an immutable canonical order while its reserved stock commits in the same PostgreSQL transaction. Public routes, seller order UI, payment configuration/proof, and operational transitions remain out of scope.
+Review M05-S05: the bounded anonymous storefront API, public projection boundary, rate/cache/request controls, live OpenAPI/TypeScript contract, and PostgreSQL-backed verification are complete. Frontend customer-journey integration, merchant-QR configuration/proof, seller order UI, and M06 operational transitions remain out of scope.
 
 ## Next permitted action
 
-Review and approve M05-S04. Only after approval may Graphify be refreshed and M05-S05 planning begin.
+Project-owner review and approval of `artifacts/checkpoints/M05-S05.md`. Only after approval may Graphify be refreshed and M05-S06 planning begin.
 
 ## Next prohibited action
 
-- Adding a public order route, payment configuration/proof, seller UI, or M06 order operations before M05-S04 review and approval.
+- Implementing public storefront APIs, payment configuration/proof, seller UI, or M06 order operations before M05-S05 plan approval.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-05 | M05-S05 implementation completed: public host/dev-slug boundary, safe catalog/media projections, anonymous COD flow, OpenAPI/TypeScript refresh, PostgreSQL-backed regression, frontend CI, scoped Docker cleanup, and review checkpoint. | Codex |
+| 2026-09-05 | Project owner approved M05-S05 plan and ADR-009; implementation started. | Project owner / Codex |
+| 2026-09-05 | Project owner approved M05-S04. Graphify refreshed; M05-S05 public-storefront boundary plan drafted. | Project owner / Codex |
 | 2026-09-05 | M05-S04 implementation completed: immutable canonical order creation, system provenance, migration, live contract refresh, PostgreSQL/Testcontainers regression, frontend compatibility checks, cleanup, and review checkpoint. | Codex |
 | 2026-09-05 | Project owner approved M05-S04; implementation started. | Project owner / Codex |
 | 2026-09-05 | Project owner approved M05-S03. Graphify refreshed; M05-S04 canonical-order plan drafted. | Project owner / Codex |

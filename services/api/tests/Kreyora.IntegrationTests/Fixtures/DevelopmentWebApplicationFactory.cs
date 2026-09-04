@@ -35,6 +35,8 @@ public sealed class DevelopmentWebApplicationFactory : WebApplicationFactory<Kre
                 ["Database:ConnectionString"] = string.Empty,
                 ["ConnectionStrings:kreyora"] = string.Empty,
                 ["Cors:AllowedOrigins:0"] = "https://test.kreyora.test",
+                ["PublicStorefront:PlatformBaseDomain"] = "kreyora.test",
+                ["PublicStorefront:EnableDevelopmentSlugRoutes"] = "true",
                 ["Email:Smtp:ApplicationName"] = "Kreyora Test",
                 ["Email:Smtp:Host"] = "smtp.kreyora.test",
                 ["Email:Smtp:Port"] = "587",
