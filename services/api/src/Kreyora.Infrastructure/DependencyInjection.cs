@@ -15,6 +15,7 @@ using Kreyora.Infrastructure.Correlation;
 using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Inventory;
+using Kreyora.Infrastructure.Media;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Support;
 using Kreyora.Infrastructure.Tenancy;
@@ -35,6 +36,12 @@ public static class DependencyInjection
         services.AddOptions<InventoryReservationOptions>()
             .BindConfiguration(InventoryReservationOptions.SectionName)
             .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddOptions<MediaStorageOptions>()
+            .BindConfiguration(MediaStorageOptions.SectionName)
+            .ValidateDataAnnotations()
+            .Validate(options => options.IsValidForEnvironment(environment.IsDevelopment() || environment.IsEnvironment("Testing")),
+                "Media storage must use Local only in Development or a complete HTTPS R2 configuration.")
             .ValidateOnStart();
         var smtpOptions = configuration.GetSection(SmtpEmailOptions.SectionName).Get<SmtpEmailOptions>() ?? new SmtpEmailOptions();
         services.AddOptions<SmtpEmailOptions>()
@@ -108,7 +115,15 @@ public static class DependencyInjection
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<ICatalogService, CatalogService>();
             services.AddScoped<IInventoryService, InventoryService>();
+            services.AddScoped<IMediaAssetService, MediaAssetService>();
+            services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>
+                serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>().Value.Provider == "R2"
+                    ? new R2PrivateObjectStorage(serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>())
+                    : new LocalPrivateObjectStorage(
+                        serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>(),
+                        environment));
             services.AddTransient<InventoryReservationExpiryJob>();
+            services.AddTransient<MediaCleanupJob>();
         }
 
         return services;
