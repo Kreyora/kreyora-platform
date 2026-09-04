@@ -1,4 +1,5 @@
 using Kreyora.Domain.Catalog;
+using Kreyora.Domain.Common;
 using Kreyora.Domain.Inventory;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -12,6 +13,7 @@ public sealed class StockMovementConfiguration : IEntityTypeConfiguration<StockM
         builder.ToTable("stock_movements", table =>
         {
             table.HasCheckConstraint("ck_stock_movements_quantity_non_zero", "quantity_delta <> 0");
+            table.HasCheckConstraint("ck_stock_movements_actor_provenance", "(actor_kind = 'Member' AND actor_user_id IS NOT NULL) OR (actor_kind = 'CommerceSystem' AND actor_user_id IS NULL)");
         });
         builder.HasKey(movement => movement.Id);
         builder.Property(movement => movement.Id).HasMaxLength(26);
@@ -21,7 +23,8 @@ public sealed class StockMovementConfiguration : IEntityTypeConfiguration<StockM
         builder.Property(movement => movement.Type).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(movement => movement.QuantityDelta).IsRequired();
         builder.Property(movement => movement.Reason).IsRequired().HasMaxLength(StockMovement.ReasonMaxLength);
-        builder.Property(movement => movement.ActorUserId).IsRequired().HasMaxLength(26);
+        builder.Property(movement => movement.ActorUserId).HasMaxLength(26);
+        builder.Property(movement => movement.ActorKind).HasConversion<string>().HasMaxLength(32).HasDefaultValue(CommerceActorKind.Member).IsRequired();
         builder.Property(movement => movement.IdempotencyKey).IsRequired().HasMaxLength(StockMovement.IdempotencyKeyMaxLength);
         builder.Property(movement => movement.RequestFingerprint).IsRequired().HasMaxLength(64);
         builder.Property(movement => movement.ReferenceType).HasMaxLength(64);

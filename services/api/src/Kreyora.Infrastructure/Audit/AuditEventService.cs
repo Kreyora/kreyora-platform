@@ -4,6 +4,7 @@ using Kreyora.Application.Audit;
 using Kreyora.Application.Authorization;
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Audit;
+using Kreyora.Domain.Common;
 using Kreyora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,14 +20,17 @@ public sealed class AuditEventService(
     {
         ArgumentNullException.ThrowIfNull(write);
         var context = tenantContext.RequireCurrent();
-        var actor = write.ActorUserId ?? context.UserId
-            ?? throw new InvalidOperationException("Audit events require an actor user.");
+        var actorKind = write.ActorKind ?? CommerceActorKind.Member;
+        var actor = actorKind == CommerceActorKind.CommerceSystem
+            ? null
+            : write.ActorUserId ?? context.UserId ?? throw new InvalidOperationException("Audit events require an actor user.");
         dbContext.AuditEvents.Add(AuditEvent.Create(
             context.TenantId, actor, write.Action, write.TargetType, write.TargetId,
             DateTimeOffset.UtcNow, correlation.CorrelationId, write.Reason,
             AuditMetadataSanitizer.Sanitize(write.Metadata),
             context.IsReadOnlySupport ? context.UserId : null,
-            context.IsReadOnlySupport ? context.SupportAccessGrantId : null));
+            context.IsReadOnlySupport ? context.SupportAccessGrantId : null,
+            actorKind));
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -49,7 +53,7 @@ public sealed class AuditEventService(
         var records = await query.Take(pageSize + 1).ToListAsync(cancellationToken);
         var hasMore = records.Count > pageSize;
         var items = records.Take(pageSize).Select(item => new AuditEventItem(
-            item.Id, item.ActorUserId, item.EffectiveSupportActorUserId, item.Action, item.TargetType,
+            item.Id, item.ActorUserId, item.ActorKind, item.EffectiveSupportActorUserId, item.Action, item.TargetType,
             item.TargetId, item.OccurredAt, item.Reason, item.CorrelationId, item.Metadata)).ToArray();
         var last = items.LastOrDefault();
         var next = hasMore && last is not null ? EncodeCursor(last.OccurredAt, last.Id) : null;

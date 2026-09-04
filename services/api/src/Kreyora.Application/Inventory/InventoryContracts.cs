@@ -1,4 +1,5 @@
 using Kreyora.Application.Models;
+using Kreyora.Domain.Common;
 using Kreyora.Domain.Inventory;
 
 namespace Kreyora.Application.Inventory;
@@ -22,6 +23,11 @@ public interface ICheckoutInventoryReservationService
 {
     Task<Result<IReadOnlyList<CheckoutInventoryReservation>>> ReserveForCheckoutAsync(CheckoutInventoryReservationRequest request, CancellationToken cancellationToken = default);
     Task ExpireForCheckoutAsync(string checkoutSessionId, CancellationToken cancellationToken = default);
+}
+
+public interface IOrderInventoryReservationService
+{
+    Task<Result<IReadOnlyList<OrderInventoryCommit>>> CommitForOrderAsync(OrderInventoryCommitRequest request, CancellationToken cancellationToken = default);
 }
 
 public sealed record StockAdjustmentRequest(
@@ -51,7 +57,8 @@ public sealed record InventoryStockMovement(
     StockMovementType Type,
     int QuantityDelta,
     string Reason,
-    string ActorUserId,
+    string? ActorUserId,
+    CommerceActorKind ActorKind,
     DateTimeOffset CreatedAt);
 
 public sealed record StockAdjustmentResult(
@@ -100,3 +107,6 @@ public sealed record InventoryReservationPage(IReadOnlyList<InventoryReservation
 public sealed record CheckoutInventoryReservationRequest(string CheckoutSessionId, IReadOnlyList<CheckoutInventoryLine> Lines, DateTimeOffset ExpiresAt);
 public sealed record CheckoutInventoryLine(string VariantId, int Quantity);
 public sealed record CheckoutInventoryReservation(string VariantId, string InventoryReservationId);
+public sealed record OrderInventoryCommitRequest(string OrderId, string CheckoutSessionId, IReadOnlyList<OrderInventoryCommitLine> Lines);
+public sealed record OrderInventoryCommitLine(string InventoryReservationId, string VariantId, int Quantity);
+public sealed record OrderInventoryCommit(string InventoryReservationId, string VariantId, string StockMovementId);

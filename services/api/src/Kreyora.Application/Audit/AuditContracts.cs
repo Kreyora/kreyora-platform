@@ -1,4 +1,5 @@
 using Kreyora.Application.Models;
+using Kreyora.Domain.Common;
 
 namespace Kreyora.Application.Audit;
 
@@ -14,10 +15,11 @@ public sealed record AuditEventWrite(
     string TargetId,
     string? Reason = null,
     string? Metadata = null,
-    string? ActorUserId = null);
+    string? ActorUserId = null,
+    CommerceActorKind? ActorKind = null);
 
 public sealed record AuditEventItem(
-    string Id, string ActorUserId, string? EffectiveSupportActorUserId, string Action,
+    string Id, string? ActorUserId, CommerceActorKind ActorKind, string? EffectiveSupportActorUserId, string Action,
     string TargetType, string TargetId, DateTimeOffset OccurredAt, string? Reason,
     string CorrelationId, string? Metadata);
 
