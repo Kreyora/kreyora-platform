@@ -20,8 +20,8 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | Store entity, readiness, settings, and publication | `REVIEW` |
-| 02 | Delivery rules and server-side quote engine | `NOT STARTED` |
+| 01 | Store entity, readiness, settings, and publication | `APPROVED` |
+| 02 | Delivery rules and server-side quote engine | `REVIEW` |
 | 03 | Customer/contact, cart intent, and checkout reservation | `NOT STARTED` |
 | 04 | Canonical order aggregate and transactional creation | `NOT STARTED` |
 | 05 | Public APIs, host/slug resolution, and abuse controls | `NOT STARTED` |

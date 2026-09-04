@@ -56,5 +56,7 @@ public sealed class ScalarEndpointTests : IClassFixture<DevelopmentWebApplicatio
         Assert.True(paths.TryGetProperty("/v1/store", out _));
         Assert.True(paths.TryGetProperty("/v1/store/readiness", out _));
         Assert.True(paths.TryGetProperty("/v1/store/publications/{productId}", out _));
+        Assert.True(paths.TryGetProperty("/v1/store/delivery-rules", out _));
+        Assert.True(paths.TryGetProperty("/v1/store/delivery-rules/{id}", out _));
     }
 }
