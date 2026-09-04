@@ -30,6 +30,7 @@ public sealed class ProductVariantConfiguration : IEntityTypeConfiguration<Produ
             .HasColumnName("xmin")
             .IsConcurrencyToken()
             .ValueGeneratedOnAddOrUpdate();
+        builder.HasAlternateKey(variant => new { variant.TenantId, variant.Id });
         builder.HasIndex(variant => new { variant.TenantId, variant.NormalizedSku }).IsUnique();
         builder.HasIndex(variant => new { variant.TenantId, variant.ProductId });
     }

@@ -3,35 +3,39 @@
 ## Active position
 
 - **Milestone:** 04 - Catalog, Inventory, and Media
-- **Step:** M04-S01 - Catalog and Variant Domain
+- **Step:** M04-S02 - Stock Ledger, Balances, and Adjustments
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/04_CATALOG_INVENTORY_MEDIA.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `feat/master/m03-s04` with uncommitted M03-S06 verification changes.
-- **Current checkpoint:** `artifacts/checkpoints/M04-S01.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M03-S06.md`
-- **Last approved state:** M03-S01 through M03-S06 are approved and merged.
+- **Branch:** `master` with uncommitted M04-S01 approval and M04-S02 planning documentation.
+- **Current checkpoint:** `docs/plan/M04-S02_STOCK_LEDGER_PLAN.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M04-S01.md`
+- **Last approved state:** M03-S01 through M03-S06 and M04-S01 are approved.
 
 ## Current objective
 
-M04-S01 establishes the tenant-scoped catalog and variant domain: canonical NPR prices, publication rules, tenant-scoped slug/SKU uniqueness, optimistic concurrency, authorization, idempotent creates, and audit evidence. Inventory, media, APIs, and frontend integration remain out of scope.
+Review M04-S02: the tenant-scoped, append-only stock ledger, derived balances, authorized adjustments, idempotency, audit evidence, and reconciliation. Reservations, APIs, and frontend integration remain out of scope.
 
 ## Next permitted action
 
-Review the M04-S01 implementation and either approve it or request changes.
+Review the M04-S02 checkpoint and approve it before any M04-S03 planning or implementation begins.
 
 ## Next prohibited action
 
-- Starting M04-S02 or any later Milestone 04 step before M04-S01 is approved.
-- Adding inventory, media, HTTP API, generated-client, frontend-integration, storefront, or provider work during M04-S01.
+- Starting any later Milestone 04 step before the M04-S02 implementation is reviewed and approved.
+- Adding reservations, media, HTTP API, generated-client, frontend-integration, storefront, or provider work during M04-S02.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-04 | M04-S02 stock-ledger implementation completed; review checkpoint created. | Codex |
+| 2026-09-04 | Project owner approved the M04-S02 plan; stock-ledger implementation started. | Project owner / Codex |
+| 2026-09-04 | M04-S02 stock-ledger implementation plan completed; approval is required before code changes. | Codex |
+| 2026-09-04 | Project owner approved M04-S01; M04-S02 stock-ledger planning started. | Project owner / Codex |
 | 2026-09-04 | M04-S01 catalog/variant implementation completed and is ready for review. | Codex |
 | 2026-09-04 | M04-S01 implementation started after the approved catalog/variant plan. | Codex |
 | 2026-09-04 | Project owner approved the M03 exit gate; M04-S01 catalog/variant implementation plan created. | Project owner / Codex |

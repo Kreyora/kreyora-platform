@@ -3,6 +3,7 @@ using Kreyora.Application.Audit;
 using Kreyora.Application.Authentication;
 using Kreyora.Application.Authorization;
 using Kreyora.Application.Catalog;
+using Kreyora.Application.Inventory;
 using Kreyora.Application.Messaging;
 using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
@@ -13,6 +14,7 @@ using Kreyora.Infrastructure.Catalog;
 using Kreyora.Infrastructure.Correlation;
 using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
+using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Support;
 using Kreyora.Infrastructure.Tenancy;
@@ -101,6 +103,7 @@ public static class DependencyInjection
             services.AddScoped<ITenantOutboxProcessor, TenantOutboxProcessor>();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<ICatalogService, CatalogService>();
+            services.AddScoped<IInventoryService, InventoryService>();
         }
 
         return services;
