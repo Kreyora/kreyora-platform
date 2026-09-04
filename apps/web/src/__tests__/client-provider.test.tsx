@@ -8,6 +8,7 @@ import {
   useOrderClient,
 } from "@/lib/providers/client-provider";
 import type { ReactNode } from "react";
+import type { CatalogClient } from "@/lib/ports/catalog-client";
 
 function wrapper({ children }: { children: ReactNode }) {
   return <ClientProvider>{children}</ClientProvider>;
@@ -49,13 +50,20 @@ describe("ClientProvider", () => {
   });
 
   it("allows overriding specific clients", () => {
-    const customCatalog = {
+    const customCatalog: CatalogClient = {
       listProducts: async () => ({ items: [], cursor: null, hasMore: false, totalCount: 0 }),
       getProduct: async () => {
         throw new Error("not implemented");
       },
       getVariants: async () => [],
       getCollections: async () => [],
+      createProduct: async () => { throw new Error("not implemented"); },
+      updateProduct: async () => { throw new Error("not implemented"); },
+      setPublication: async () => { throw new Error("not implemented"); },
+      archiveProduct: async () => { throw new Error("not implemented"); },
+      addVariant: async () => { throw new Error("not implemented"); },
+      uploadMedia: async () => { throw new Error("not implemented"); },
+      deleteMedia: async () => { throw new Error("not implemented"); },
     };
 
     function customWrapper({ children }: { children: ReactNode }) {

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useClients } from "@/lib/providers/client-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductForm } from "@/components/seller/product-form";
@@ -12,6 +13,7 @@ import type { Product, Collection } from "@/lib/types";
 
 export default function EditProductPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { catalog } = useClients();
   const [product, setProduct] = useState<Product | null>(null);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -34,7 +36,13 @@ export default function EditProductPage() {
     };
   }, [catalog, id]);
 
-  const handleDelete = useCallback(() => {
+  const archiveProduct = useCallback(async () => {
+    if (!product) return;
+    await catalog.archiveProduct(product);
+    router.push("/catalog");
+  }, [catalog, product, router]);
+
+  const handleDelete = useCallback(async () => {
     setShowDeleteDialog(true);
   }, []);
 
@@ -100,6 +108,12 @@ export default function EditProductPage() {
               collections={collections}
               isEdit
               onDelete={handleDelete}
+              onSave={async (input) => {
+                const updated = await catalog.updateProduct(product, input);
+                setProduct(updated);
+              }}
+              onUploadMedia={async (file, altText) => setProduct(await catalog.uploadMedia(product.id, file, altText))}
+              onDeleteMedia={async (mediaId) => setProduct(await catalog.deleteMedia(product.id, mediaId))}
             />
           </div>
         </TabsPrimitive.Content>
@@ -141,15 +155,13 @@ export default function EditProductPage() {
             <h2 className="text-base font-semibold text-[var(--color-ink-primary)]">
               Delete product?
             </h2>
-            <p className="mt-2 text-sm text-[var(--color-ink-secondary)]">
-              This action is simulated and will not actually delete the product.
-            </p>
+            <p className="mt-2 text-sm text-[var(--color-ink-secondary)]">Archiving removes this product from seller catalog workflows. It does not erase its audit history.</p>
             <div className="mt-4 flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => setShowDeleteDialog(false)}>
-                Delete (simulated)
+              <Button onClick={() => void archiveProduct()}>
+                Archive product
               </Button>
             </div>
           </div>

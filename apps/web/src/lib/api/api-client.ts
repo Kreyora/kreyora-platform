@@ -15,7 +15,7 @@ function getBaseUrl(): string {
 }
 
 export interface ApiFetchOptions extends Omit<RequestInit, "body"> {
-  body?: unknown;
+  body?: BodyInit | unknown;
 }
 
 export async function apiFetch<T>(
@@ -24,6 +24,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { body, headers: extraHeaders, ...rest } = options;
   const correlationId = generateId();
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -31,7 +32,7 @@ export async function apiFetch<T>(
     ...(extraHeaders as Record<string, string>),
   };
 
-  if (body !== undefined) {
+  if (body !== undefined && !isFormData) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -39,7 +40,7 @@ export async function apiFetch<T>(
     ...rest,
     credentials: "include",
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined || isFormData ? body : JSON.stringify(body),
   });
 
   if (!response.ok) {

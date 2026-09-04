@@ -38,6 +38,8 @@ export interface Product {
   tags: string[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  /** PostgreSQL concurrency token returned by the API; omitted by fixture data. */
+  version?: number;
 }
 
 export interface Collection {

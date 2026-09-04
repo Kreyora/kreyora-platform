@@ -140,8 +140,9 @@ describe("Catalog — shared ProductForm component", () => {
     expect(content).toContain("Tags");
   });
 
-  it("shows simulated save disclaimer", () => {
-    expect(content).toContain("Changes are simulated and will not be persisted");
+  it("uses a real save action rather than a simulated disclaimer", () => {
+    expect(content).toContain("Create product");
+    expect(content).not.toContain("Changes are simulated and will not be persisted");
   });
 
   it("renders ViewerBadge for viewer role", () => {

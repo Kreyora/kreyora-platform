@@ -61,4 +61,69 @@ export const mockCatalogClient: CatalogClient = {
     await delay();
     return collections;
   },
+
+  async createProduct(input) {
+    await delay();
+    return {
+      id: `demo-product-${Date.now()}`,
+      tenantId: "demo-tenant",
+      title: input.title,
+      description: input.description ?? "",
+      slug: input.slug,
+      publishState: "draft",
+      variants: input.variants.map((variant, index) => ({
+        id: `demo-variant-${index}`,
+        productId: "demo-product",
+        sku: variant.sku,
+        name: variant.name,
+        options: variant.options ?? {},
+        price: { amount: variant.priceNpr, currency: "NPR" },
+        compareAtPrice: variant.compareAtPriceNpr ? { amount: variant.compareAtPriceNpr, currency: "NPR" } : undefined,
+        isPublished: variant.isPublished,
+        createdAt: "",
+        updatedAt: "",
+      })),
+      media: [], collections: [], tags: [], createdAt: "", updatedAt: "",
+    };
+  },
+
+  async updateProduct(current, input) {
+    await delay();
+    return { ...current, ...input, description: input.description ?? "" };
+  },
+
+  async setPublication(current, state) {
+    await delay();
+    return { ...current, publishState: state };
+  },
+
+  async archiveProduct(current) {
+    await delay();
+    return { ...current, publishState: "archived" };
+  },
+
+  async addVariant(current, input) {
+    await delay();
+    return {
+      ...current,
+      variants: [...current.variants, {
+        id: `demo-variant-${Date.now()}`, productId: current.id, sku: input.sku, name: input.name,
+        options: input.options ?? {}, price: { amount: input.priceNpr, currency: "NPR" },
+        compareAtPrice: input.compareAtPriceNpr ? { amount: input.compareAtPriceNpr, currency: "NPR" } : undefined,
+        isPublished: input.isPublished, createdAt: "", updatedAt: "",
+      }],
+    };
+  },
+
+  async uploadMedia(productId, file, altText) {
+    await delay();
+    const current = await this.getProduct(productId);
+    return { ...current, media: [...current.media, { id: `demo-media-${Date.now()}`, url: URL.createObjectURL(file), altText, width: 0, height: 0, mimeType: file.type, sortOrder: current.media.length }] };
+  },
+
+  async deleteMedia(productId, mediaId) {
+    await delay();
+    const current = await this.getProduct(productId);
+    return { ...current, media: current.media.filter((item) => item.id !== mediaId) };
+  },
 };

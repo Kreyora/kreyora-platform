@@ -8,13 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/hooks/use-session";
 import { ViewerBadge } from "@/components/viewer-badge";
 import type { Product, ProductVariant, MediaAsset, Collection } from "@/lib/types";
+import type { ProductInput, ProductVariantInput } from "@/lib/ports/catalog-client";
 
 interface ProductFormProps {
   product?: Product;
   collections: Collection[];
   isEdit?: boolean;
-  onSave?: () => void;
-  onDelete?: () => void;
+  onSave: (input: ProductInput & { initialVariant?: ProductVariantInput }) => Promise<void>;
+  onDelete?: () => Promise<void>;
+  onUploadMedia?: (file: File, altText?: string) => Promise<void>;
+  onDeleteMedia?: (mediaId: string) => Promise<void>;
 }
 
 function slugify(text: string): string {
@@ -71,7 +74,7 @@ function VariantsSection({ variants }: { variants: ProductVariant[] }) {
   );
 }
 
-function MediaSection({ media }: { media: MediaAsset[] }) {
+function MediaSection({ media, onDelete }: { media: MediaAsset[]; onDelete?: (id: string) => Promise<void> }) {
   if (media.length === 0) {
     return (
       <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] bg-[var(--color-canvas-subtle)] p-6 text-center text-sm text-[var(--color-ink-secondary)]">
@@ -108,6 +111,11 @@ function MediaSection({ media }: { media: MediaAsset[] }) {
           <span className="mt-1 text-[10px] text-[var(--color-ink-secondary)]">
             #{m.sortOrder}
           </span>
+          {onDelete && (
+            <button type="button" onClick={() => void onDelete(m.id)} className="mt-2 text-xs text-[var(--color-danger)] underline">
+              Remove
+            </button>
+          )}
         </div>
       ))}
     </div>
@@ -120,6 +128,8 @@ export function ProductForm({
   isEdit = false,
   onSave,
   onDelete,
+  onUploadMedia,
+  onDeleteMedia,
 }: ProductFormProps) {
   const { effectiveRole } = useSession();
   const isViewer = effectiveRole === "viewer";
@@ -129,10 +139,15 @@ export function ProductForm({
   const [slug, setSlug] = useState(product?.slug ?? "");
   const [publishState, setPublishState] = useState<"draft" | "published" | "unpublished" | "archived">(product?.publishState ?? "draft");
   const [tags, setTags] = useState(product?.tags.join(", ") ?? "");
+  const [variantName, setVariantName] = useState("Default");
+  const [variantSku, setVariantSku] = useState("");
+  const [variantPrice, setVariantPrice] = useState("");
+  const [mediaAltText, setMediaAltText] = useState("");
   const [selectedCollections, setSelectedCollections] = useState<string[]>(
     product?.collections ?? [],
   );
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleTitleChange(value: string) {
     setTitle(value);
@@ -149,12 +164,26 @@ export function ProductForm({
     );
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaving(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      await onSave({
+        title,
+        description: description || undefined,
+        slug,
+        initialVariant: isEdit ? undefined : {
+          sku: variantSku,
+          name: variantName,
+          priceNpr: Number(variantPrice),
+          isPublished: publishState === "published",
+        },
+      });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "We could not save this product. Please try again.");
+    } finally {
       setSaving(false);
-      onSave?.();
-    }, 600);
+    }
   }
 
   return (
@@ -240,6 +269,15 @@ export function ProductForm({
         hint="Comma-separated tags for search and organization"
       />
 
+      {!isEdit && (
+        <div className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4 sm:grid-cols-3">
+          <p className="sm:col-span-3 text-sm font-medium text-[var(--color-ink-primary)]">First variant</p>
+          <Input label="Variant name" value={variantName} onChange={(event) => setVariantName(event.target.value)} disabled={isViewer} required />
+          <Input label="SKU" value={variantSku} onChange={(event) => setVariantSku(event.target.value)} disabled={isViewer} required />
+          <Input label="Price (NPR)" type="number" min="1" step="0.01" value={variantPrice} onChange={(event) => setVariantPrice(event.target.value)} disabled={isViewer} required />
+        </div>
+      )}
+
       {/* Variants (edit mode) */}
       {isEdit && product && (
         <div>
@@ -249,7 +287,7 @@ export function ProductForm({
             </p>
             {!isViewer && (
               <Button variant="outline" size="sm" disabled>
-                Add variant (simulated)
+                Add variant (available in the next catalog update)
               </Button>
             )}
           </div>
@@ -265,32 +303,32 @@ export function ProductForm({
               Media ({product.media.length})
             </p>
             {!isViewer && (
-              <Button variant="outline" size="sm" disabled>
-                Upload media (simulated)
-              </Button>
+              <label className="inline-flex min-h-9 cursor-pointer items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm font-medium text-[var(--color-ink-primary)] hover:bg-[var(--color-canvas-subtle)]">
+                Upload media
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file && onUploadMedia) void onUploadMedia(file, mediaAltText || undefined); event.currentTarget.value = ""; }} />
+              </label>
             )}
           </div>
-          <MediaSection media={product.media} />
+          {!isViewer && onUploadMedia && <Input label="Image alt text" value={mediaAltText} onChange={(event) => setMediaAltText(event.target.value)} placeholder="Describe this image" />}
+          <div className="mt-3"><MediaSection media={product.media} onDelete={isViewer ? undefined : onDeleteMedia} /></div>
         </div>
       )}
 
       {/* Actions */}
       {!isViewer && (
         <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] pt-6">
-          <Button onClick={handleSave} loading={saving}>
-            {isEdit ? "Save changes" : "Create product"} (simulated)
+          <Button onClick={() => void handleSave()} loading={saving} disabled={!title || !slug || (!isEdit && (!variantSku || !variantPrice))}>
+            {isEdit ? "Save changes" : "Create product"}
           </Button>
           {isEdit && onDelete && (
-            <Button variant="ghost" onClick={onDelete}>
-              Delete (simulated)
+            <Button variant="ghost" onClick={() => void onDelete()}>
+              Archive product
             </Button>
           )}
         </div>
       )}
 
-      <p className="text-xs text-[var(--color-ink-secondary)]">
-        Changes are simulated and will not be persisted.
-      </p>
+      {error && <p role="alert" className="text-sm text-[var(--color-danger)]">{error}</p>}
     </div>
   );
 }

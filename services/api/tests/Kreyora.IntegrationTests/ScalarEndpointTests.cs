@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Kreyora.IntegrationTests.Fixtures;
 
 namespace Kreyora.IntegrationTests;
@@ -38,5 +39,19 @@ public sealed class ScalarEndpointTests : IClassFixture<DevelopmentWebApplicatio
 
         Assert.Equal(HttpStatusCode.NotFound, scalarResponse.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, openApiResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task OpenApi_ContainsTheCatalogInventoryAndProtectedMediaContracts()
+    {
+        var response = await _developmentClient.GetAsync("/openapi/v1.json");
+        response.EnsureSuccessStatusCode();
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var paths = document.RootElement.GetProperty("paths");
+
+        Assert.True(paths.TryGetProperty("/v1/catalog/products", out _));
+        Assert.True(paths.TryGetProperty("/v1/inventory/variants/{variantId}", out _));
+        Assert.True(paths.TryGetProperty("/v1/media/{id}/content", out _));
     }
 }
