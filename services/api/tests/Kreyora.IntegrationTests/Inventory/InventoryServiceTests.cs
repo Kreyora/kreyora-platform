@@ -194,8 +194,10 @@ public class InventoryServiceTests : IClassFixture<PostgresFixture>
                 variantId, 3, InventoryReservationSource.Manual, "contention-two", $"second-{Guid.NewGuid():N}")));
 
         Assert.Single(results, result => result.IsSuccess);
-        using var verifyScope = seedAccessor.BeginScope(OwnerContext(tenant.Id));
-        var inventory = await CreateService(seedContext, seedAccessor).GetInventoryAsync(variantId);
+        var verifyAccessor = new TenantContextAccessor();
+        await using var verifyContext = fixture.CreateDbContext(verifyAccessor);
+        using var verifyScope = verifyAccessor.BeginScope(OwnerContext(tenant.Id));
+        var inventory = await CreateService(verifyContext, verifyAccessor).GetInventoryAsync(variantId);
         Assert.True(inventory.IsSuccess);
         Assert.Equal(3, inventory.Value!.ReservedQuantity);
         Assert.Equal(2, inventory.Value.AvailableQuantity);

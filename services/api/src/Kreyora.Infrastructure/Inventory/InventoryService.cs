@@ -184,27 +184,31 @@ public sealed class InventoryService(
         try
         {
             request = Normalize(request);
-            var fingerprint = Fingerprint(new { request.VariantId, request.Quantity, request.Source, request.ReferenceId });
-            await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
-            var replay = await FindReplayAsync(InventoryReservationCommandOperation.Reserve, request.IdempotencyKey, fingerprint, cancellationToken);
-            if (replay is not null) return replay;
+            for (var attempt = 1; attempt <= MaxSerializableAttempts; attempt++)
+            {
+                try
+                {
+                    return await ReserveStockOnceAsync(context, request, cancellationToken);
+                }
+                catch (PostgresException exception) when (IsRetryable(exception))
+                {
+                    dbContext.ChangeTracker.Clear();
+                    if (attempt == MaxSerializableAttempts)
+                    {
+                        return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
+                    }
+                }
+                catch (DbUpdateException exception) when (IsRetryable(exception))
+                {
+                    dbContext.ChangeTracker.Clear();
+                    if (attempt == MaxSerializableAttempts)
+                    {
+                        return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
+                    }
+                }
+            }
 
-            var item = await LockInventoryItemForVariantAsync(request.VariantId, cancellationToken);
-            if (item is null) return Result<InventoryReservationResult>.NotFound("No tracked inventory exists for this variant in the selected workspace.");
-            await ExpireDueForItemAsync(item, cancellationToken);
-            item.Reserve(request.Quantity);
-            var actor = context.UserId ?? throw new InvalidOperationException("Stock reservations require an authenticated actor.");
-            var now = timeProvider.UtcNow;
-            var reservation = InventoryReservation.Create(context.TenantId, item.Id, item.VariantId, request.Quantity, request.Source,
-                request.ReferenceId, actor, now.Add(reservationOptions.Value.DefaultDuration), now);
-            dbContext.InventoryReservations.Add(reservation);
-            dbContext.InventoryReservationCommands.Add(InventoryReservationCommand.Create(context.TenantId, reservation.Id,
-                InventoryReservationCommandOperation.Reserve, request.IdempotencyKey, fingerprint));
-            await dbContext.SaveChangesAsync(cancellationToken);
-            await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.created", "inventory-reservation", reservation.Id,
-                Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"variantId\":\"{item.VariantId}\",\"quantity\":{reservation.Quantity},\"source\":\"{reservation.Source}\"}}"), cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return Result<InventoryReservationResult>.Success(new InventoryReservationResult(Map(reservation), Map(item), null, false));
+            return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
         }
         catch (Exception exception) when (IsValidationException(exception))
         {
@@ -219,6 +223,34 @@ public sealed class InventoryService(
         {
             return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
         }
+    }
+
+    private async Task<Result<InventoryReservationResult>> ReserveStockOnceAsync(
+        TenantContext context,
+        ReserveStockRequest request,
+        CancellationToken cancellationToken)
+    {
+        var fingerprint = Fingerprint(new { request.VariantId, request.Quantity, request.Source, request.ReferenceId });
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        var replay = await FindReplayAsync(InventoryReservationCommandOperation.Reserve, request.IdempotencyKey, fingerprint, cancellationToken);
+        if (replay is not null) return replay;
+
+        var item = await LockInventoryItemForVariantAsync(request.VariantId, cancellationToken);
+        if (item is null) return Result<InventoryReservationResult>.NotFound("No tracked inventory exists for this variant in the selected workspace.");
+        await ExpireDueForItemAsync(item, cancellationToken);
+        item.Reserve(request.Quantity);
+        var actor = context.UserId ?? throw new InvalidOperationException("Stock reservations require an authenticated actor.");
+        var now = timeProvider.UtcNow;
+        var reservation = InventoryReservation.Create(context.TenantId, item.Id, item.VariantId, request.Quantity, request.Source,
+            request.ReferenceId, actor, now.Add(reservationOptions.Value.DefaultDuration), now);
+        dbContext.InventoryReservations.Add(reservation);
+        dbContext.InventoryReservationCommands.Add(InventoryReservationCommand.Create(context.TenantId, reservation.Id,
+            InventoryReservationCommandOperation.Reserve, request.IdempotencyKey, fingerprint));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.created", "inventory-reservation", reservation.Id,
+            Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"variantId\":\"{item.VariantId}\",\"quantity\":{reservation.Quantity},\"source\":\"{reservation.Source}\"}}"), cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return Result<InventoryReservationResult>.Success(new InventoryReservationResult(Map(reservation), Map(item), null, false));
     }
 
     public Task<Result<InventoryReservationResult>> CommitReservationAsync(ReservationTransitionRequest request, CancellationToken cancellationToken = default) =>
@@ -550,10 +582,10 @@ public sealed class InventoryService(
         exception is ArgumentException or ArgumentOutOfRangeException or InvalidOperationException;
 
     private static bool IsRetryable(DbUpdateException exception) =>
-        exception.InnerException is PostgresException
-        {
-            SqlState: PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.UniqueViolation
-        };
+        exception.InnerException is PostgresException postgresException && IsRetryable(postgresException);
+
+    private static bool IsRetryable(PostgresException exception) =>
+        exception.SqlState is PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.UniqueViolation;
 
     private static bool IsUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
