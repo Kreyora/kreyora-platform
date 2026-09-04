@@ -12,6 +12,7 @@ using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Tenancy;
 using Kreyora.IntegrationTests.Fixtures;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Kreyora.IntegrationTests.Inventory;
 
@@ -134,11 +135,77 @@ public class InventoryServiceTests : IClassFixture<PostgresFixture>
         await Assert.ThrowsAsync<InvalidOperationException>(() => dbContext.SaveChangesAsync());
     }
 
+    [Fact]
+    public async Task Reservation_ReserveReplayAndCommit_MaintainsBothBalances()
+    {
+        var accessor = new TenantContextAccessor();
+        await using var dbContext = fixture.CreateDbContext(accessor);
+        await dbContext.Database.MigrateAsync();
+        var tenant = await CreateTenantAsync(dbContext, "reservation-lifecycle");
+        using var scope = accessor.BeginScope(OwnerContext(tenant.Id));
+        var variantId = await CreateVariantAsync(dbContext, tenant.Id, "reservation-tee");
+        var service = CreateService(dbContext, accessor);
+        Assert.True((await service.AdjustStockAsync(new StockAdjustmentRequest(
+            variantId, StockMovementType.Receipt, 10, "Supplier receipt", $"stock-{Guid.NewGuid():N}"))).IsSuccess);
+
+        var reserveRequest = new ReserveStockRequest(variantId, 4, InventoryReservationSource.Manual, "manual-hold-1", $"reserve-{Guid.NewGuid():N}");
+        var reservation = await service.ReserveStockAsync(reserveRequest);
+        var replay = await service.ReserveStockAsync(reserveRequest);
+        var committed = await service.CommitReservationAsync(new ReservationTransitionRequest(
+            reservation.Value!.Reservation.Id, $"commit-{Guid.NewGuid():N}"));
+
+        Assert.True(reservation.IsSuccess);
+        Assert.True(replay.IsSuccess);
+        Assert.True(replay.Value!.WasReplayed);
+        Assert.Equal(10, reservation.Value.Balance.OnHandQuantity);
+        Assert.Equal(4, reservation.Value.Balance.ReservedQuantity);
+        Assert.True(committed.IsSuccess);
+        Assert.Equal(6, committed.Value!.Balance.OnHandQuantity);
+        Assert.Equal(0, committed.Value.Balance.ReservedQuantity);
+        Assert.Equal(StockMovementType.ReservationCommitted, committed.Value.Movement!.Type);
+        Assert.Equal("reservation", (await dbContext.StockMovements.SingleAsync(item => item.Type == StockMovementType.ReservationCommitted)).ReferenceType);
+    }
+
+    [Fact]
+    public async Task ConcurrentReservations_ForTheLastUnits_DoNotOversell()
+    {
+        var seedAccessor = new TenantContextAccessor();
+        await using var seedContext = fixture.CreateDbContext(seedAccessor);
+        await seedContext.Database.MigrateAsync();
+        var tenant = await CreateTenantAsync(seedContext, "reservation-contention");
+        string variantId;
+        using (seedAccessor.BeginScope(OwnerContext(tenant.Id)))
+        {
+            variantId = await CreateVariantAsync(seedContext, tenant.Id, "contention-tee");
+            Assert.True((await CreateService(seedContext, seedAccessor).AdjustStockAsync(new StockAdjustmentRequest(
+                variantId, StockMovementType.Receipt, 5, "Supplier receipt", $"stock-{Guid.NewGuid():N}"))).IsSuccess);
+        }
+
+        var firstAccessor = new TenantContextAccessor();
+        var secondAccessor = new TenantContextAccessor();
+        await using var firstContext = fixture.CreateDbContext(firstAccessor);
+        await using var secondContext = fixture.CreateDbContext(secondAccessor);
+        using var firstScope = firstAccessor.BeginScope(OwnerContext(tenant.Id));
+        using var secondScope = secondAccessor.BeginScope(OwnerContext(tenant.Id));
+        var results = await Task.WhenAll(
+            CreateService(firstContext, firstAccessor).ReserveStockAsync(new ReserveStockRequest(
+                variantId, 3, InventoryReservationSource.Manual, "contention-one", $"first-{Guid.NewGuid():N}")),
+            CreateService(secondContext, secondAccessor).ReserveStockAsync(new ReserveStockRequest(
+                variantId, 3, InventoryReservationSource.Manual, "contention-two", $"second-{Guid.NewGuid():N}")));
+
+        Assert.Single(results, result => result.IsSuccess);
+        using var verifyScope = seedAccessor.BeginScope(OwnerContext(tenant.Id));
+        var inventory = await CreateService(seedContext, seedAccessor).GetInventoryAsync(variantId);
+        Assert.True(inventory.IsSuccess);
+        Assert.Equal(3, inventory.Value!.ReservedQuantity);
+        Assert.Equal(2, inventory.Value.AvailableQuantity);
+    }
+
     private static InventoryService CreateService(Kreyora.Infrastructure.Persistence.AppDbContext dbContext, TenantContextAccessor accessor)
     {
         var authorizer = new TenantPermissionAuthorizer(accessor);
         var audit = new AuditEventService(dbContext, accessor, new Correlation("inventory-integration-test"), authorizer);
-        return new InventoryService(dbContext, accessor, authorizer, audit);
+        return new InventoryService(dbContext, accessor, authorizer, audit, new TestTimeProvider(), Options.Create(new InventoryReservationOptions()));
     }
 
     private static async Task<Tenant> CreateTenantAsync(Kreyora.Infrastructure.Persistence.AppDbContext dbContext, string prefix)
@@ -166,5 +233,10 @@ public class InventoryServiceTests : IClassFixture<PostgresFixture>
     {
         public string CorrelationId => correlationId;
         public void SetCorrelationId(string value) { }
+    }
+
+    private sealed class TestTimeProvider : Kreyora.Domain.Abstractions.ITimeProvider
+    {
+        public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
     }
 }

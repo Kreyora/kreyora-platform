@@ -33,6 +33,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<CatalogCommandIdempotency> CatalogCommandIdempotencyRecords => Set<CatalogCommandIdempotency>();
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<InventoryReservation> InventoryReservations => Set<InventoryReservation>();
+    public DbSet<InventoryReservationCommand> InventoryReservationCommands => Set<InventoryReservationCommand>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -61,6 +63,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<CatalogCommandIdempotency>().HasQueryFilter(record => record.TenantId == CurrentTenantId);
         builder.Entity<InventoryItem>().HasQueryFilter(item => item.TenantId == CurrentTenantId);
         builder.Entity<StockMovement>().HasQueryFilter(movement => movement.TenantId == CurrentTenantId);
+        builder.Entity<InventoryReservation>().HasQueryFilter(reservation => reservation.TenantId == CurrentTenantId);
+        builder.Entity<InventoryReservationCommand>().HasQueryFilter(command => command.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -102,6 +106,14 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             if (movementEntry.State is EntityState.Modified or EntityState.Deleted)
             {
                 throw new InvalidOperationException("Stock movements are append-only and cannot be changed or deleted.");
+            }
+        }
+
+        foreach (var commandEntry in ChangeTracker.Entries<InventoryReservationCommand>())
+        {
+            if (commandEntry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                throw new InvalidOperationException("Inventory reservation commands are append-only and cannot be changed or deleted.");
             }
         }
 

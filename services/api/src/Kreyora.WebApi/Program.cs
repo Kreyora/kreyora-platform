@@ -10,6 +10,7 @@ using Kreyora.Infrastructure.BackgroundJobs;
 using Kreyora.Infrastructure.Correlation;
 using Kreyora.Infrastructure.Errors;
 using Kreyora.Infrastructure.Logging;
+using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.ServiceDefaults;
 using Kreyora.WebApi.Configuration;
@@ -126,6 +127,19 @@ if (args.Contains("--seed"))
 {
     await DevSeedHook.SeedDevelopmentDataAsync(app.Services);
     return;
+}
+
+if (app.Services.GetService<JobStorage>() is not null)
+{
+    using var scope = app.Services.CreateScope();
+    var reservationOptions = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<InventoryReservationOptions>>().Value;
+    if (reservationOptions.ExpiryJobEnabled)
+    {
+        RecurringJob.AddOrUpdate<InventoryReservationExpiryJob>(
+            "inventory-reservation-expiry",
+            job => job.RunAsync(),
+            Cron.Minutely);
+    }
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
