@@ -35,6 +35,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<InventoryReservation> InventoryReservations => Set<InventoryReservation>();
     public DbSet<InventoryReservationCommand> InventoryReservationCommands => Set<InventoryReservationCommand>();
+    public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -65,6 +66,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<StockMovement>().HasQueryFilter(movement => movement.TenantId == CurrentTenantId);
         builder.Entity<InventoryReservation>().HasQueryFilter(reservation => reservation.TenantId == CurrentTenantId);
         builder.Entity<InventoryReservationCommand>().HasQueryFilter(command => command.TenantId == CurrentTenantId);
+        builder.Entity<MediaAsset>().HasQueryFilter(asset => asset.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
