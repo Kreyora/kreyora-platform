@@ -32,6 +32,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
+        services.AddOptions<InventoryReservationOptions>()
+            .BindConfiguration(InventoryReservationOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
         var smtpOptions = configuration.GetSection(SmtpEmailOptions.SectionName).Get<SmtpEmailOptions>() ?? new SmtpEmailOptions();
         services.AddOptions<SmtpEmailOptions>()
             .BindConfiguration(SmtpEmailOptions.SectionName)
@@ -104,6 +108,7 @@ public static class DependencyInjection
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<ICatalogService, CatalogService>();
             services.AddScoped<IInventoryService, InventoryService>();
+            services.AddTransient<InventoryReservationExpiryJob>();
         }
 
         return services;

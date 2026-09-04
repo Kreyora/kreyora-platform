@@ -10,7 +10,9 @@ using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Inventory;
 using Kreyora.Infrastructure.Persistence;
+using Kreyora.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace Kreyora.Infrastructure.Inventory;
@@ -19,7 +21,9 @@ public sealed class InventoryService(
     AppDbContext dbContext,
     ITenantContextAccessor tenantContext,
     ITenantPermissionAuthorizer permissionAuthorizer,
-    IAuditEventService auditEvents) : IInventoryService
+    IAuditEventService auditEvents,
+    Domain.Abstractions.ITimeProvider timeProvider,
+    IOptions<InventoryReservationOptions> reservationOptions) : IInventoryService
 {
     private const int MaxSerializableAttempts = 3;
 
@@ -170,6 +174,249 @@ public sealed class InventoryService(
             ledgerTotal,
             item.OnHandQuantity,
             ledgerTotal == item.OnHandQuantity));
+    }
+
+    public async Task<Result<InventoryReservationResult>> ReserveStockAsync(ReserveStockRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        permissionAuthorizer.Demand(TenantPermissions.InventoryWrite);
+        var context = tenantContext.RequireCurrent();
+        try
+        {
+            request = Normalize(request);
+            for (var attempt = 1; attempt <= MaxSerializableAttempts; attempt++)
+            {
+                try
+                {
+                    return await ReserveStockOnceAsync(context, request, cancellationToken);
+                }
+                catch (PostgresException exception) when (IsRetryable(exception))
+                {
+                    dbContext.ChangeTracker.Clear();
+                    if (attempt == MaxSerializableAttempts)
+                    {
+                        return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
+                    }
+                }
+                catch (DbUpdateException exception) when (IsRetryable(exception))
+                {
+                    dbContext.ChangeTracker.Clear();
+                    if (attempt == MaxSerializableAttempts)
+                    {
+                        return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
+                    }
+                }
+            }
+
+            return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
+        }
+        catch (Exception exception) when (IsValidationException(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<InventoryReservationResult>.ValidationError(exception.Message);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
+        }
+        catch (DbUpdateException)
+        {
+            return Result<InventoryReservationResult>.Conflict("The stock reservation conflicted with another update. Please retry.");
+        }
+    }
+
+    private async Task<Result<InventoryReservationResult>> ReserveStockOnceAsync(
+        TenantContext context,
+        ReserveStockRequest request,
+        CancellationToken cancellationToken)
+    {
+        var fingerprint = Fingerprint(new { request.VariantId, request.Quantity, request.Source, request.ReferenceId });
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        var replay = await FindReplayAsync(InventoryReservationCommandOperation.Reserve, request.IdempotencyKey, fingerprint, cancellationToken);
+        if (replay is not null) return replay;
+
+        var item = await LockInventoryItemForVariantAsync(request.VariantId, cancellationToken);
+        if (item is null) return Result<InventoryReservationResult>.NotFound("No tracked inventory exists for this variant in the selected workspace.");
+        await ExpireDueForItemAsync(item, cancellationToken);
+        item.Reserve(request.Quantity);
+        var actor = context.UserId ?? throw new InvalidOperationException("Stock reservations require an authenticated actor.");
+        var now = timeProvider.UtcNow;
+        var reservation = InventoryReservation.Create(context.TenantId, item.Id, item.VariantId, request.Quantity, request.Source,
+            request.ReferenceId, actor, now.Add(reservationOptions.Value.DefaultDuration), now);
+        dbContext.InventoryReservations.Add(reservation);
+        dbContext.InventoryReservationCommands.Add(InventoryReservationCommand.Create(context.TenantId, reservation.Id,
+            InventoryReservationCommandOperation.Reserve, request.IdempotencyKey, fingerprint));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.created", "inventory-reservation", reservation.Id,
+            Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"variantId\":\"{item.VariantId}\",\"quantity\":{reservation.Quantity},\"source\":\"{reservation.Source}\"}}"), cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return Result<InventoryReservationResult>.Success(new InventoryReservationResult(Map(reservation), Map(item), null, false));
+    }
+
+    public Task<Result<InventoryReservationResult>> CommitReservationAsync(ReservationTransitionRequest request, CancellationToken cancellationToken = default) =>
+        TransitionReservationAsync(request, InventoryReservationCommandOperation.Commit, cancellationToken);
+
+    public Task<Result<InventoryReservationResult>> ReleaseReservationAsync(ReservationTransitionRequest request, CancellationToken cancellationToken = default) =>
+        TransitionReservationAsync(request, InventoryReservationCommandOperation.Release, cancellationToken);
+
+    public async Task<Result<InventoryReservationPage>> GetReservationsAsync(string variantId, InventoryReservationState? state, string? cursor, int pageSize, CancellationToken cancellationToken = default)
+    {
+        permissionAuthorizer.Demand(TenantPermissions.InventoryRead);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        var query = dbContext.InventoryReservations.AsNoTracking().Where(item => item.VariantId == variantId);
+        if (state is not null) query = query.Where(item => item.State == state);
+        var items = await query.OrderByDescending(item => item.CreatedAt).ThenByDescending(item => item.Id).Take(pageSize).ToListAsync(cancellationToken);
+        return Result<InventoryReservationPage>.Success(new InventoryReservationPage(items.Select(Map).ToArray(), null));
+    }
+
+    public async Task<int> ExpireDueReservationsAsync(CancellationToken cancellationToken = default)
+    {
+        var context = tenantContext.RequireCurrent();
+        var now = timeProvider.UtcNow;
+        var due = await dbContext.InventoryReservations.Where(item => item.State == InventoryReservationState.Active && item.ExpiresAt <= now)
+            .OrderBy(item => item.ExpiresAt).ThenBy(item => item.Id).Take(reservationOptions.Value.ExpiryBatchSize).ToListAsync(cancellationToken);
+        var count = 0;
+        foreach (var reservation in due)
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            var current = await dbContext.InventoryReservations.SingleOrDefaultAsync(item => item.Id == reservation.Id, cancellationToken);
+            if (current is null || current.State != InventoryReservationState.Active || current.ExpiresAt > timeProvider.UtcNow) continue;
+            var item = await dbContext.InventoryItems.SingleAsync(item => item.Id == current.InventoryItemId, cancellationToken);
+            item.ReleaseReservation(current.Quantity);
+            current.Expire(timeProvider.UtcNow);
+            AddExpiryCommand(context.TenantId, current.Id);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.expired", "inventory-reservation", current.Id,
+                Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{current.Quantity},\"automated\":true}}", ActorUserId: current.ActorUserId), cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            count++;
+        }
+        return count;
+    }
+
+    private async Task<Result<InventoryReservationResult>> TransitionReservationAsync(ReservationTransitionRequest request, InventoryReservationCommandOperation operation, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        permissionAuthorizer.Demand(TenantPermissions.InventoryWrite);
+        var context = tenantContext.RequireCurrent();
+        try
+        {
+            request = Normalize(request);
+            var fingerprint = Fingerprint(new { request.ReservationId });
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            var replay = await FindReplayAsync(operation, request.IdempotencyKey, fingerprint, cancellationToken);
+            if (replay is not null) return replay;
+            var reservation = await dbContext.InventoryReservations.SingleOrDefaultAsync(item => item.Id == request.ReservationId, cancellationToken);
+            if (reservation is null) return Result<InventoryReservationResult>.NotFound("The reservation does not exist in the selected workspace.");
+            var item = await LockInventoryItemAsync(reservation.InventoryItemId, cancellationToken);
+            var now = timeProvider.UtcNow;
+            if (reservation.State != InventoryReservationState.Active) return Result<InventoryReservationResult>.Conflict("The reservation has already reached a terminal state.");
+            if (reservation.ExpiresAt <= now)
+            {
+                item.ReleaseReservation(reservation.Quantity);
+                reservation.Expire(now);
+                AddExpiryCommand(context.TenantId, reservation.Id);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.expired", "inventory-reservation", reservation.Id,
+                    Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{reservation.Quantity},\"automated\":true}}", ActorUserId: reservation.ActorUserId), cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return Result<InventoryReservationResult>.Conflict("The reservation has expired.");
+            }
+
+            StockMovement? movement = null;
+            if (operation == InventoryReservationCommandOperation.Commit)
+            {
+                item.CommitReservation(reservation.Quantity);
+                reservation.Commit(now);
+                movement = StockMovement.Create(context.TenantId, item.Id, item.VariantId, StockMovementType.ReservationCommitted,
+                    -reservation.Quantity, "Reservation committed", context.UserId ?? throw new InvalidOperationException("An actor is required."),
+                    $"reservation:commit:{reservation.Id}", Fingerprint(new { reservation.Id, operation }), "reservation", reservation.Id);
+                dbContext.StockMovements.Add(movement);
+            }
+            else
+            {
+                item.ReleaseReservation(reservation.Quantity);
+                reservation.Release(now);
+            }
+
+            dbContext.InventoryReservationCommands.Add(InventoryReservationCommand.Create(context.TenantId, reservation.Id, operation, request.IdempotencyKey, fingerprint));
+            await dbContext.SaveChangesAsync(cancellationToken);
+            var action = operation == InventoryReservationCommandOperation.Commit ? "inventory.reservation.committed" : "inventory.reservation.released";
+            await auditEvents.AppendAsync(new AuditEventWrite(action, "inventory-reservation", reservation.Id,
+                Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{reservation.Quantity}}}"), cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return Result<InventoryReservationResult>.Success(new InventoryReservationResult(Map(reservation), Map(item), movement is null ? null : Map(movement), false));
+        }
+        catch (Exception exception) when (IsValidationException(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<InventoryReservationResult>.ValidationError(exception.Message);
+        }
+        catch (DbUpdateException)
+        {
+            return Result<InventoryReservationResult>.Conflict("The reservation transition conflicted with another update. Please retry.");
+        }
+    }
+
+    private async Task<Result<InventoryReservationResult>?> FindReplayAsync(InventoryReservationCommandOperation operation, string idempotencyKey, string fingerprint, CancellationToken cancellationToken)
+    {
+        var command = await dbContext.InventoryReservationCommands.SingleOrDefaultAsync(item => item.Operation == operation && item.IdempotencyKey == idempotencyKey, cancellationToken);
+        if (command is null) return null;
+        if (!string.Equals(command.RequestFingerprint, fingerprint, StringComparison.Ordinal))
+            return Result<InventoryReservationResult>.Conflict("The idempotency key was already used for a different reservation command.");
+        var reservation = await dbContext.InventoryReservations.SingleAsync(item => item.Id == command.ReservationId, cancellationToken);
+        var item = await dbContext.InventoryItems.SingleAsync(item => item.Id == reservation.InventoryItemId, cancellationToken);
+        var movement = operation == InventoryReservationCommandOperation.Commit
+            ? await dbContext.StockMovements.SingleOrDefaultAsync(item => item.ReferenceType == "reservation" && item.ReferenceId == reservation.Id, cancellationToken)
+            : null;
+        return Result<InventoryReservationResult>.Success(new InventoryReservationResult(Map(reservation), Map(item), movement is null ? null : Map(movement), true));
+    }
+
+    private async Task ExpireDueForItemAsync(InventoryItem item, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.UtcNow;
+        var due = await dbContext.InventoryReservations.Where(reservation => reservation.InventoryItemId == item.Id && reservation.State == InventoryReservationState.Active && reservation.ExpiresAt <= now).ToListAsync(cancellationToken);
+        foreach (var reservation in due)
+        {
+            item.ReleaseReservation(reservation.Quantity);
+            reservation.Expire(now);
+            AddExpiryCommand(tenantContext.RequireCurrent().TenantId, reservation.Id);
+            await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.expired", "inventory-reservation", reservation.Id,
+                Metadata: $"{{\"inventoryItemId\":\"{item.Id}\",\"quantity\":{reservation.Quantity},\"automated\":true}}", ActorUserId: reservation.ActorUserId), cancellationToken);
+        }
+    }
+
+    private static ReserveStockRequest Normalize(ReserveStockRequest request) => new(NormalizeRequired(request.VariantId, nameof(request.VariantId), 26), request.Quantity,
+        Enum.IsDefined(request.Source) ? request.Source : throw new ArgumentOutOfRangeException(nameof(request)), NormalizeRequired(request.ReferenceId, nameof(request.ReferenceId), InventoryReservation.ReferenceIdMaxLength), NormalizeRequired(request.IdempotencyKey, nameof(request.IdempotencyKey), 256));
+
+    private static ReservationTransitionRequest Normalize(ReservationTransitionRequest request) => new(NormalizeRequired(request.ReservationId, nameof(request.ReservationId), 26), NormalizeRequired(request.IdempotencyKey, nameof(request.IdempotencyKey), 256));
+
+    private static string Fingerprint<T>(T value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value))));
+
+    private static InventoryReservationItem Map(InventoryReservation item) => new(item.Id, item.InventoryItemId, item.VariantId, item.Quantity, item.Source, item.ReferenceId, item.State, item.ExpiresAt, item.CommittedAt, item.ReleasedAt, item.ExpiredAt);
+
+    private void AddExpiryCommand(string tenantId, string reservationId)
+    {
+        dbContext.InventoryReservationCommands.Add(InventoryReservationCommand.Create(
+            tenantId,
+            reservationId,
+            InventoryReservationCommandOperation.Expire,
+            $"expiry:{reservationId}",
+            Fingerprint(new { reservationId })));
+    }
+
+    private Task<InventoryItem?> LockInventoryItemForVariantAsync(string variantId, CancellationToken cancellationToken)
+    {
+        var tenantId = tenantContext.RequireCurrent().TenantId;
+        return dbContext.InventoryItems.FromSqlInterpolated($"SELECT k.*, k.xmin FROM inventory_items k WHERE k.tenant_id = {tenantId} AND k.variant_id = {variantId} FOR UPDATE")
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    private async Task<InventoryItem> LockInventoryItemAsync(string inventoryItemId, CancellationToken cancellationToken)
+    {
+        var tenantId = tenantContext.RequireCurrent().TenantId;
+        return await dbContext.InventoryItems.FromSqlInterpolated($"SELECT k.*, k.xmin FROM inventory_items k WHERE k.tenant_id = {tenantId} AND k.id = {inventoryItemId} FOR UPDATE")
+            .SingleAsync(cancellationToken);
     }
 
     private async Task<Result<StockAdjustmentResult>> AdjustStockOnceAsync(
@@ -335,10 +582,10 @@ public sealed class InventoryService(
         exception is ArgumentException or ArgumentOutOfRangeException or InvalidOperationException;
 
     private static bool IsRetryable(DbUpdateException exception) =>
-        exception.InnerException is PostgresException
-        {
-            SqlState: PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.UniqueViolation
-        };
+        exception.InnerException is PostgresException postgresException && IsRetryable(postgresException);
+
+    private static bool IsRetryable(PostgresException exception) =>
+        exception.SqlState is PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected or PostgresErrorCodes.UniqueViolation;
 
     private static bool IsUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };

@@ -20,6 +20,8 @@ public sealed class StockMovement : BaseEntity, ITenantOwned
     public string ActorUserId { get; private set; } = string.Empty;
     public string IdempotencyKey { get; private set; } = string.Empty;
     public string RequestFingerprint { get; private set; } = string.Empty;
+    public string? ReferenceType { get; private set; }
+    public string? ReferenceId { get; private set; }
 
     public static StockMovement Create(
         string tenantId,
@@ -30,7 +32,9 @@ public sealed class StockMovement : BaseEntity, ITenantOwned
         string reason,
         string actorUserId,
         string idempotencyKey,
-        string requestFingerprint) => new()
+        string requestFingerprint,
+        string? referenceType = null,
+        string? referenceId = null) => new()
     {
         TenantId = Require(tenantId, nameof(tenantId), 26),
         InventoryItemId = Require(inventoryItemId, nameof(inventoryItemId), 26),
@@ -40,7 +44,9 @@ public sealed class StockMovement : BaseEntity, ITenantOwned
         Reason = Require(reason, nameof(reason), ReasonMaxLength),
         ActorUserId = Require(actorUserId, nameof(actorUserId), 26),
         IdempotencyKey = Require(idempotencyKey, nameof(idempotencyKey), IdempotencyKeyMaxLength),
-        RequestFingerprint = Require(requestFingerprint, nameof(requestFingerprint), 64)
+        RequestFingerprint = Require(requestFingerprint, nameof(requestFingerprint), 64),
+        ReferenceType = Optional(referenceType, nameof(referenceType), 64),
+        ReferenceId = Optional(referenceId, nameof(referenceId), 160)
     };
 
     private static StockMovementType RequireDefined(StockMovementType type) =>
@@ -57,6 +63,15 @@ public sealed class StockMovement : BaseEntity, ITenantOwned
         var normalized = string.IsNullOrWhiteSpace(value)
             ? throw new ArgumentException("A value is required.", parameterName)
             : value.Trim();
+        return normalized.Length > maxLength
+            ? throw new ArgumentOutOfRangeException(parameterName, $"Value cannot exceed {maxLength} characters.")
+            : normalized;
+    }
+
+    private static string? Optional(string? value, string parameterName, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var normalized = value.Trim();
         return normalized.Length > maxLength
             ? throw new ArgumentOutOfRangeException(parameterName, $"Value cannot exceed {maxLength} characters.")
             : normalized;

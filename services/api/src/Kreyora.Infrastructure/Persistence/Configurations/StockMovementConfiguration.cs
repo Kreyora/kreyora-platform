@@ -24,6 +24,8 @@ public sealed class StockMovementConfiguration : IEntityTypeConfiguration<StockM
         builder.Property(movement => movement.ActorUserId).IsRequired().HasMaxLength(26);
         builder.Property(movement => movement.IdempotencyKey).IsRequired().HasMaxLength(StockMovement.IdempotencyKeyMaxLength);
         builder.Property(movement => movement.RequestFingerprint).IsRequired().HasMaxLength(64);
+        builder.Property(movement => movement.ReferenceType).HasMaxLength(64);
+        builder.Property(movement => movement.ReferenceId).HasMaxLength(160);
         builder.Property(movement => movement.CreatedAt).IsRequired();
         builder.Property(movement => movement.ModifiedAt).IsRequired();
         builder.HasIndex(movement => new { movement.TenantId, movement.IdempotencyKey }).IsUnique();
