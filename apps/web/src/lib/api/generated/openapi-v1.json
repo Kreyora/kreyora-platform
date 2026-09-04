@@ -694,6 +694,206 @@
         }
       }
     },
+    "/v1/store/delivery-rules": {
+      "get": {
+        "tags": [
+          "DeliveryRules"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRulePage"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRulePage"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRulePage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DeliveryRules"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryRuleInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryRuleInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryRuleInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/store/delivery-rules/{id}": {
+      "get": {
+        "tags": [
+          "DeliveryRules"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "DeliveryRules"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeliveryRuleBody"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeliveryRuleBody"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeliveryRuleBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryRuleItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/inventory/variants/{variantId}": {
       "get": {
         "tags": [
@@ -2654,6 +2854,243 @@
           }
         }
       },
+      "DeliveryFeeType": {
+        "type": "integer"
+      },
+      "DeliveryRuleInput": {
+        "required": [
+          "name",
+          "priority",
+          "feeType",
+          "baseFeeNpr",
+          "freeAboveNpr",
+          "estimatedEtaText",
+          "codAvailable",
+          "isActive",
+          "zones"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "priority": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "feeType": {
+            "$ref": "#/components/schemas/DeliveryFeeType"
+          },
+          "baseFeeNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "freeAboveNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "estimatedEtaText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codAvailable": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "zones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryZoneInput"
+            }
+          }
+        }
+      },
+      "DeliveryRuleItem": {
+        "required": [
+          "id",
+          "name",
+          "priority",
+          "feeType",
+          "baseFeeNpr",
+          "freeAboveNpr",
+          "estimatedEtaText",
+          "codAvailable",
+          "isActive",
+          "zones",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "priority": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "feeType": {
+            "$ref": "#/components/schemas/DeliveryFeeType"
+          },
+          "baseFeeNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "freeAboveNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "estimatedEtaText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codAvailable": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "zones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryRuleZoneItem"
+            }
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "uint32"
+          }
+        }
+      },
+      "DeliveryRulePage": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryRuleItem"
+            }
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "DeliveryRuleZoneItem": {
+        "required": [
+          "district",
+          "municipality",
+          "locality"
+        ],
+        "type": "object",
+        "properties": {
+          "district": {
+            "type": "string"
+          },
+          "municipality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DeliveryZoneInput": {
+        "required": [
+          "district",
+          "municipality",
+          "locality"
+        ],
+        "type": "object",
+        "properties": {
+          "district": {
+            "type": "string"
+          },
+          "municipality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "EffectivePermissionsResponse": {
         "required": [
           "tenantId",
@@ -3799,6 +4236,26 @@
           }
         }
       },
+      "UpdateDeliveryRuleBody": {
+        "required": [
+          "rule",
+          "expectedVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "rule": {
+            "$ref": "#/components/schemas/DeliveryRuleInput"
+          },
+          "expectedVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "uint32"
+          }
+        }
+      },
       "UpdateProductBody": {
         "required": [
           "title",
@@ -3900,6 +4357,9 @@
     },
     {
       "name": "Catalog"
+    },
+    {
+      "name": "DeliveryRules"
     },
     {
       "name": "Inventory"

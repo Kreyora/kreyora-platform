@@ -621,6 +621,141 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/store/delivery-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeliveryRulePage"];
+                        "application/json": components["schemas"]["DeliveryRulePage"];
+                        "text/json": components["schemas"]["DeliveryRulePage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DeliveryRuleInput"];
+                    "text/json": components["schemas"]["DeliveryRuleInput"];
+                    "application/*+json": components["schemas"]["DeliveryRuleInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeliveryRuleItem"];
+                        "application/json": components["schemas"]["DeliveryRuleItem"];
+                        "text/json": components["schemas"]["DeliveryRuleItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store/delivery-rules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeliveryRuleItem"];
+                        "application/json": components["schemas"]["DeliveryRuleItem"];
+                        "text/json": components["schemas"]["DeliveryRuleItem"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateDeliveryRuleBody"];
+                    "text/json": components["schemas"]["UpdateDeliveryRuleBody"];
+                    "application/*+json": components["schemas"]["UpdateDeliveryRuleBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeliveryRuleItem"];
+                        "application/json": components["schemas"]["DeliveryRuleItem"];
+                        "text/json": components["schemas"]["DeliveryRuleItem"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/inventory/variants/{variantId}": {
         parameters: {
             query?: never;
@@ -2125,6 +2260,57 @@ export interface components {
             items: components["schemas"]["AuditEventItem"][];
             nextCursor: null | string;
         };
+        DeliveryFeeType: number;
+        DeliveryRuleInput: {
+            name: string;
+            /** Format: int32 */
+            priority: number | string;
+            feeType: components["schemas"]["DeliveryFeeType"];
+            /** Format: double */
+            baseFeeNpr: number | string;
+            /** Format: double */
+            freeAboveNpr: null | number | string;
+            estimatedEtaText: null | string;
+            codAvailable: boolean;
+            isActive: boolean;
+            zones: components["schemas"]["DeliveryZoneInput"][];
+        };
+        DeliveryRuleItem: {
+            id: string;
+            name: string;
+            /** Format: int32 */
+            priority: number | string;
+            feeType: components["schemas"]["DeliveryFeeType"];
+            /** Format: double */
+            baseFeeNpr: number | string;
+            /** Format: double */
+            freeAboveNpr: null | number | string;
+            estimatedEtaText: null | string;
+            codAvailable: boolean;
+            isActive: boolean;
+            zones: components["schemas"]["DeliveryRuleZoneItem"][];
+            /** Format: uint32 */
+            version: number | string;
+        };
+        DeliveryRulePage: {
+            items: components["schemas"]["DeliveryRuleItem"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+        };
+        DeliveryRuleZoneItem: {
+            district: string;
+            municipality: null | string;
+            locality: null | string;
+        };
+        DeliveryZoneInput: {
+            district: string;
+            municipality: null | string;
+            locality: null | string;
+        };
         EffectivePermissionsResponse: {
             tenantId: string;
             role: null | string;
@@ -2387,6 +2573,11 @@ export interface components {
         ThresholdBody: {
             /** Format: int32 */
             threshold: number | string;
+            /** Format: uint32 */
+            expectedVersion: number | string;
+        };
+        UpdateDeliveryRuleBody: {
+            rule: components["schemas"]["DeliveryRuleInput"];
             /** Format: uint32 */
             expectedVersion: number | string;
         };

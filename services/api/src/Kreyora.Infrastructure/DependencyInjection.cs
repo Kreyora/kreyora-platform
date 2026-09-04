@@ -45,6 +45,11 @@ public static class DependencyInjection
             .Validate(options => options.IsValidForEnvironment(environment.IsDevelopment() || environment.IsEnvironment("Testing")),
                 "Media storage must use Local only in Development or a complete HTTPS R2 configuration.")
             .ValidateOnStart();
+        services.AddOptions<StorefrontQuoteOptions>()
+            .BindConfiguration(StorefrontQuoteOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddDataProtection();
         var smtpOptions = configuration.GetSection(SmtpEmailOptions.SectionName).Get<SmtpEmailOptions>() ?? new SmtpEmailOptions();
         services.AddOptions<SmtpEmailOptions>()
             .BindConfiguration(SmtpEmailOptions.SectionName)
@@ -117,7 +122,12 @@ public static class DependencyInjection
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<ICatalogService, CatalogService>();
             services.AddScoped<IStorefrontCatalogReadService, StorefrontCatalogReadService>();
+            services.AddScoped<IStorefrontInventoryReadService, StorefrontInventoryReadService>();
+            services.AddScoped<DeliveryRuleService>();
+            services.AddScoped<IDeliveryRuleService>(serviceProvider => serviceProvider.GetRequiredService<DeliveryRuleService>());
+            services.AddScoped<IDeliveryRuleReadService>(serviceProvider => serviceProvider.GetRequiredService<DeliveryRuleService>());
             services.AddScoped<IStorefrontAdministrationService, StorefrontAdministrationService>();
+            services.AddScoped<IStorefrontQuoteService, StorefrontQuoteService>();
             services.AddScoped<IInventoryService, InventoryService>();
             services.AddScoped<IMediaAssetService, MediaAssetService>();
             services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>

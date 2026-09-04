@@ -126,7 +126,8 @@ public sealed class StorefrontAdministrationServiceTests : IClassFixture<Postgre
     {
         var authorizer = new TenantPermissionAuthorizer(accessor);
         var audit = new AuditEventService(db, accessor, new Correlation("storefront-integration-test"), authorizer);
-        return new StorefrontAdministrationService(db, accessor, authorizer, audit, new StorefrontCatalogReadService(db));
+        var deliveryRules = new DeliveryRuleService(db, accessor, authorizer, audit);
+        return new StorefrontAdministrationService(db, accessor, authorizer, audit, new StorefrontCatalogReadService(db), deliveryRules);
     }
 
     private static CreateStoreRequest NewCreateRequest(string slug, string key) => new(new StoreSettingsInput(
