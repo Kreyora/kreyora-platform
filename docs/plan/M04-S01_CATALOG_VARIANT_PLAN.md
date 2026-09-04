@@ -4,7 +4,7 @@
 
 - **Milestone:** 04 — Catalog, Inventory, and Media
 - **Step:** 01 — Catalog and variant domain
-- **Status:** Implementation complete; review pending
+- **Status:** Approved — 2026-09-04
 - **Prerequisite:** M03 exit gate approved on 2026-09-04
 
 Establish the tenant-scoped, authoritative product and variant model. This step creates the catalog facts that later inventory, media, storefront, checkout, and AI tools will read. It does not make stock, media, public storefronts, or frontend catalog screens real yet.
