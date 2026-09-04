@@ -19,7 +19,8 @@ public sealed class StorefrontAdministrationService(
     ITenantContextAccessor tenantContext,
     ITenantPermissionAuthorizer permissionAuthorizer,
     IAuditEventService auditEvents,
-    IStorefrontCatalogReadService catalog) : IStorefrontAdministrationService
+    IStorefrontCatalogReadService catalog,
+    IDeliveryRuleReadService deliveryRules) : IStorefrontAdministrationService
 {
     private const string CreateOperation = "store.create";
     private const string ActivateOperation = "store.activate";
@@ -272,14 +273,15 @@ public sealed class StorefrontAdministrationService(
             }
         }
         if (!catalogReady) blockers.Add(new StoreReadinessBlocker("catalog_not_ready", "catalog"));
-        blockers.Add(new StoreReadinessBlocker("delivery_not_configured", "delivery"));
+        var deliveryReady = await deliveryRules.HasActiveRulesAsync(store.Id, cancellationToken);
+        if (!deliveryReady) blockers.Add(new StoreReadinessBlocker("delivery_not_configured", "delivery"));
         blockers.Add(new StoreReadinessBlocker("payment_not_configured", "payments"));
         var sections = new[]
         {
             new StoreReadinessSection("profile", profileReady),
             new StoreReadinessSection("policies", policiesReady),
             new StoreReadinessSection("catalog", catalogReady),
-            new StoreReadinessSection("delivery", false),
+            new StoreReadinessSection("delivery", deliveryReady),
             new StoreReadinessSection("payments", false)
         };
         return new StoreReadiness(blockers.Count == 0, false, sections, blockers);

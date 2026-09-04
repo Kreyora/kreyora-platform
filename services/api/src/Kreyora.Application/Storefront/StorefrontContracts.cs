@@ -17,6 +17,31 @@ public interface IStorefrontAdministrationService
 public interface IStorefrontCatalogReadService
 {
     Task<bool> IsPublishedPurchasableAsync(string productId, CancellationToken cancellationToken = default);
+    Task<StorefrontCatalogVariant?> GetPublishedVariantAsync(string variantId, CancellationToken cancellationToken = default);
+}
+
+public interface IStorefrontInventoryReadService
+{
+    Task<int?> GetAvailableQuantityAsync(string variantId, CancellationToken cancellationToken = default);
+}
+
+public interface IDeliveryRuleReadService
+{
+    Task<bool> HasActiveRulesAsync(string storeId, CancellationToken cancellationToken = default);
+}
+
+public interface IDeliveryRuleService
+{
+    Task<Result<DeliveryRuleItem>> GetAsync(string ruleId, CancellationToken cancellationToken = default);
+    Task<Result<DeliveryRulePage>> ListAsync(DeliveryRuleQuery query, CancellationToken cancellationToken = default);
+    Task<Result<DeliveryRuleItem>> CreateAsync(CreateDeliveryRuleRequest request, CancellationToken cancellationToken = default);
+    Task<Result<DeliveryRuleItem>> UpdateAsync(UpdateDeliveryRuleRequest request, CancellationToken cancellationToken = default);
+}
+
+public interface IStorefrontQuoteService
+{
+    Task<Result<StorefrontDeliveryQuote>> CreateQuoteAsync(StorefrontQuoteRequest request, CancellationToken cancellationToken = default);
+    Task<Result<StorefrontDeliveryQuote>> ReadQuoteAsync(string quoteToken, CancellationToken cancellationToken = default);
 }
 
 public sealed record CreateStoreRequest(StoreSettingsInput Settings, string IdempotencyKey);
@@ -24,6 +49,12 @@ public sealed record UpdateStoreRequest(StoreSettingsInput Settings, uint Expect
 public sealed record ActivateStoreRequest(uint ExpectedVersion, string IdempotencyKey);
 public sealed record SetStoreProductVisibilityRequest(string ProductId, StoreProductVisibility Visibility, uint ExpectedVersion, string IdempotencyKey);
 public sealed record StorePublicationQuery(int Page, int PageSize);
+public sealed record DeliveryRuleQuery(int Page, int PageSize);
+public sealed record CreateDeliveryRuleRequest(DeliveryRuleInput Rule, string IdempotencyKey);
+public sealed record UpdateDeliveryRuleRequest(string RuleId, DeliveryRuleInput Rule, uint ExpectedVersion);
+public sealed record StorefrontQuoteRequest(IReadOnlyList<StorefrontQuoteLineRequest> Lines, StorefrontDestinationInput Destination);
+public sealed record StorefrontQuoteLineRequest(string VariantId, int Quantity);
+public sealed record StorefrontDestinationInput(string CountryCode, string District, string? Municipality, string? Locality);
 
 public sealed record StoreSettingsInput(
     string DisplayName,
@@ -71,3 +102,32 @@ public sealed record StoreReadinessSection(string Name, bool IsReady);
 public sealed record StoreReadinessBlocker(string Code, string Section);
 public sealed record StoreProductPublicationItem(string Id, string ProductId, StoreProductVisibility Visibility, uint Version);
 public sealed record StorePublicationPage(IReadOnlyList<StoreProductPublicationItem> Items, int Page, int PageSize, int TotalCount);
+public sealed record StorefrontCatalogVariant(string ProductId, string ProductTitle, string VariantId, string VariantName, decimal UnitPriceNpr);
+public sealed record DeliveryRuleInput(
+    string Name,
+    int Priority,
+    DeliveryFeeType FeeType,
+    decimal BaseFeeNpr,
+    decimal? FreeAboveNpr,
+    string? EstimatedEtaText,
+    bool CodAvailable,
+    bool IsActive,
+    IReadOnlyList<DeliveryZoneInput> Zones);
+public sealed record DeliveryRuleZoneItem(string District, string? Municipality, string? Locality);
+public sealed record DeliveryRuleItem(
+    string Id,
+    string Name,
+    int Priority,
+    DeliveryFeeType FeeType,
+    decimal BaseFeeNpr,
+    decimal? FreeAboveNpr,
+    string? EstimatedEtaText,
+    bool CodAvailable,
+    bool IsActive,
+    IReadOnlyList<DeliveryRuleZoneItem> Zones,
+    uint Version);
+public sealed record DeliveryRulePage(IReadOnlyList<DeliveryRuleItem> Items, int Page, int PageSize, int TotalCount);
+public sealed record StorefrontQuoteLine(string ProductId, string ProductTitle, string VariantId, string VariantName, int Quantity, decimal UnitPriceNpr, decimal LineSubtotalNpr);
+public sealed record StorefrontQuoteDelivery(string RuleId, string RuleName, decimal FeeNpr, string? EstimatedEtaText, bool CodAvailable);
+public sealed record StorefrontQuoteTotals(decimal MerchandiseSubtotalNpr, decimal DiscountNpr, decimal DeliveryFeeNpr, decimal TaxNpr, decimal ProviderFeeNpr, decimal PlatformFeeNpr, decimal TotalNpr, string Currency);
+public sealed record StorefrontDeliveryQuote(string QuoteToken, DateTimeOffset ExpiresAt, IReadOnlyList<StorefrontQuoteLine> Lines, StorefrontQuoteDelivery Delivery, StorefrontQuoteTotals Totals);

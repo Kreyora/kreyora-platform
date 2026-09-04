@@ -40,6 +40,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<Store> Stores => Set<Store>();
     public DbSet<StoreProductPublication> StoreProductPublications => Set<StoreProductPublication>();
     public DbSet<StoreCommandIdempotency> StoreCommandIdempotencyRecords => Set<StoreCommandIdempotency>();
+    public DbSet<DeliveryRule> DeliveryRules => Set<DeliveryRule>();
+    public DbSet<DeliveryRuleZone> DeliveryRuleZones => Set<DeliveryRuleZone>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -74,6 +76,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<Store>().HasQueryFilter(store => store.TenantId == CurrentTenantId);
         builder.Entity<StoreProductPublication>().HasQueryFilter(publication => publication.TenantId == CurrentTenantId);
         builder.Entity<StoreCommandIdempotency>().HasQueryFilter(record => record.TenantId == CurrentTenantId);
+        builder.Entity<DeliveryRule>().HasQueryFilter(rule => rule.TenantId == CurrentTenantId);
+        builder.Entity<DeliveryRuleZone>().HasQueryFilter(zone => zone.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
