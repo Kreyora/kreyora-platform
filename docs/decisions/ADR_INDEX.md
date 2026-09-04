@@ -20,6 +20,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-006 | Inventory reservation consistency and Hangfire expiry | `Accepted` | 2026-09-04 | — |
 | ADR-005 | Owner-issued read-only PlatformSupport audit access | `Accepted` | 2026-08-02 | — |
 | ADR-004 | SMTP password reset delivery | `Accepted` | 2026-08-02 | — |
 | ADR-003 | Verified tenant selection context | `Accepted` | 2026-08-01 | — |
@@ -30,6 +31,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-006 | Inventory reservation consistency and Hangfire expiry | `Accepted` | 2026-09-04 | — |
 | ADR-005 | Owner-issued read-only PlatformSupport audit access | `Accepted` | 2026-08-02 | — |
 | ADR-004 | SMTP password reset delivery | `Accepted` | 2026-08-02 | — |
 | ADR-003 | Verified tenant selection context | `Accepted` | 2026-08-01 | — |

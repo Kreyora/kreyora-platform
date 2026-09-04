@@ -48,6 +48,48 @@ public sealed class InventoryItem : BaseEntity, ITenantOwned
         LowStockThreshold = threshold;
     }
 
+    public void Reserve(int quantity)
+    {
+        RequirePositive(quantity, nameof(quantity));
+        if (quantity > AvailableQuantity)
+        {
+            throw new InvalidOperationException("The requested quantity exceeds available inventory.");
+        }
+
+        ReservedQuantity = checked(ReservedQuantity + quantity);
+    }
+
+    public void ReleaseReservation(int quantity)
+    {
+        RequirePositive(quantity, nameof(quantity));
+        if (quantity > ReservedQuantity)
+        {
+            throw new InvalidOperationException("The reservation quantity exceeds currently reserved inventory.");
+        }
+
+        ReservedQuantity -= quantity;
+    }
+
+    public void CommitReservation(int quantity)
+    {
+        RequirePositive(quantity, nameof(quantity));
+        if (quantity > ReservedQuantity || quantity > OnHandQuantity)
+        {
+            throw new InvalidOperationException("The reservation cannot be committed from the current inventory balance.");
+        }
+
+        ReservedQuantity -= quantity;
+        OnHandQuantity -= quantity;
+    }
+
+    private static void RequirePositive(int value, string parameterName)
+    {
+        if (value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(parameterName, "Quantity must be greater than zero.");
+        }
+    }
+
     private static string RequireId(string value, string parameterName)
     {
         var normalized = string.IsNullOrWhiteSpace(value)

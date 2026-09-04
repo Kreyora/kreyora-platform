@@ -11,6 +11,11 @@ public interface IInventoryService
     Task<Result<IReadOnlyList<InventoryBalance>>> GetLowStockAsync(CancellationToken cancellationToken = default);
     Task<Result<InventoryBalance>> SetLowStockThresholdAsync(SetLowStockThresholdRequest request, CancellationToken cancellationToken = default);
     Task<Result<InventoryReconciliation>> ReconcileInventoryAsync(string variantId, CancellationToken cancellationToken = default);
+    Task<Result<InventoryReservationResult>> ReserveStockAsync(ReserveStockRequest request, CancellationToken cancellationToken = default);
+    Task<Result<InventoryReservationResult>> CommitReservationAsync(ReservationTransitionRequest request, CancellationToken cancellationToken = default);
+    Task<Result<InventoryReservationResult>> ReleaseReservationAsync(ReservationTransitionRequest request, CancellationToken cancellationToken = default);
+    Task<Result<InventoryReservationPage>> GetReservationsAsync(string variantId, InventoryReservationState? state, string? cursor, int pageSize, CancellationToken cancellationToken = default);
+    Task<int> ExpireDueReservationsAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed record StockAdjustmentRequest(
@@ -56,3 +61,33 @@ public sealed record InventoryReconciliation(
     int LedgerOnHandQuantity,
     int MaterializedOnHandQuantity,
     bool IsMatch);
+
+public sealed record ReserveStockRequest(
+    string VariantId,
+    int Quantity,
+    InventoryReservationSource Source,
+    string ReferenceId,
+    string IdempotencyKey);
+
+public sealed record ReservationTransitionRequest(string ReservationId, string IdempotencyKey);
+
+public sealed record InventoryReservationItem(
+    string Id,
+    string InventoryItemId,
+    string VariantId,
+    int Quantity,
+    InventoryReservationSource Source,
+    string ReferenceId,
+    InventoryReservationState State,
+    DateTimeOffset ExpiresAt,
+    DateTimeOffset? CommittedAt,
+    DateTimeOffset? ReleasedAt,
+    DateTimeOffset? ExpiredAt);
+
+public sealed record InventoryReservationResult(
+    InventoryReservationItem Reservation,
+    InventoryBalance Balance,
+    InventoryStockMovement? Movement,
+    bool WasReplayed);
+
+public sealed record InventoryReservationPage(IReadOnlyList<InventoryReservationItem> Items, string? NextCursor);
