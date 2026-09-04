@@ -45,4 +45,18 @@ export const mockInventoryClient: InventoryClient = {
     await delay();
     return inventoryItems.filter((i) => i.isLowStock);
   },
+
+  async adjustStock(input) {
+    await delay();
+    const current = await this.getInventory(input.variantId);
+    const change = input.type === "damage" || input.type === "correctionDecrease"
+      ? -Math.abs(input.quantity)
+      : Math.abs(input.quantity);
+    return { ...current, onHand: current.onHand + change, available: current.available + change };
+  },
+
+  async setLowStockThreshold(current, threshold) {
+    await delay();
+    return { ...current, lowStockThreshold: threshold, isLowStock: current.available <= threshold };
+  },
 };

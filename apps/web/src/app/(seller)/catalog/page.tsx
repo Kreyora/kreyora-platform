@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useClients } from "@/lib/providers/client-provider";
 import { useSession } from "@/hooks/use-session";
@@ -40,7 +40,7 @@ export default function CatalogPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([catalog.listProducts(), catalog.getCollections()]).then(
+    Promise.all([catalog.listProducts({ search: search || undefined, publishState: statusFilter || undefined }), catalog.getCollections()]).then(
       ([p, c]) => {
         if (!cancelled) {
           setProducts(p.items);
@@ -52,27 +52,11 @@ export default function CatalogPage() {
     return () => {
       cancelled = true;
     };
-  }, [catalog]);
+  }, [catalog, search, statusFilter]);
 
-  const filtered = useMemo(() => {
-    let result = products;
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.tags.some((t) => t.toLowerCase().includes(q)),
-      );
-    }
-    if (statusFilter) {
-      result = result.filter((p) => p.publishState === statusFilter);
-    }
-    if (collectionFilter) {
-      result = result.filter((p) => p.collections.includes(collectionFilter));
-    }
-    return result;
-  }, [products, search, statusFilter, collectionFilter]);
+  const filtered = collectionFilter
+    ? products.filter((product) => product.collections.includes(collectionFilter))
+    : products;
 
   if (isLoading) {
     return (

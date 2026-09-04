@@ -3,35 +3,36 @@
 ## Active position
 
 - **Milestone:** 04 - Catalog, Inventory, and Media
-- **Step:** M04-S04 - Media Authorization and Object-Storage Abstraction
+- **Step:** M04-S05 - Catalog/Inventory APIs and Frontend Integration
 - **Status:** `REVIEW`
 - **Active milestone file:** `docs/milestones/04_CATALOG_INVENTORY_MEDIA.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master` with uncommitted M04-S01 approval and M04-S02 planning documentation.
-- **Current checkpoint:** `docs/plan/M04-S04_MEDIA_STORAGE_PLAN.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M04-S03.md`
-- **Last approved state:** M03-S01 through M03-S06 and M04-S01 through M04-S03 are approved.
+- **Current checkpoint:** `artifacts/checkpoints/M04-S05.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M04-S04.md`
+- **Last approved state:** M03-S01 through M03-S06 and M04-S01 through M04-S04 are approved.
 
 ## Current objective
 
-Plan M04-S04: tenant-scoped private media metadata, a provider-neutral storage interface, local development storage, and the Cloudflare R2 configuration seam. Public media delivery, API/frontend integration, checkout/orders, and storefront work remain out of scope.
+Plan M04-S05: versioned catalog, inventory, and protected-media APIs plus generated-client and seller workspace integration. Storefront, checkout/orders, and M04-S06 verification remain out of scope.
 
 ## Next permitted action
 
-Review the M04-S04 checkpoint and approve it before any M04-S05 planning or implementation begins.
+Review the M04-S05 checkpoint and approve it before starting M04-S06.
 
 ## Next prohibited action
 
-- Starting M04-S04 implementation before its plan is approved.
-- Starting M04-S05 or any later step.
+- Starting M04-S06 or any later step before M04-S05 approval.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-04 | M04-S05 implementation completed; API contract regenerated and review checkpoint created. | Codex |
+| 2026-09-04 | Project owner approved M04-S04; M04-S05 API/frontend integration planning started. | Project owner / Codex |
 | 2026-09-04 | Project owner approved the M04-S04 plan; media/storage implementation started. | Project owner / Codex |
 | 2026-09-04 | Project owner approved M04-S03; M04-S04 media/storage planning started. | Project owner / Codex |
 | 2026-09-04 | M04-S03 PostgreSQL/Testcontainers inventory suite passed (5/5); step remains in review pending project-owner approval. | Codex |

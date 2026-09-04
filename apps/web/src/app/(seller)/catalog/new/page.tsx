@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useClients } from "@/lib/providers/client-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductForm } from "@/components/seller/product-form";
@@ -9,6 +10,7 @@ import type { Collection } from "@/lib/types";
 
 export default function NewProductPage() {
   const { catalog } = useClients();
+  const router = useRouter();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,7 +51,14 @@ export default function NewProductPage() {
       </h1>
 
       <div className="max-w-2xl">
-        <ProductForm collections={collections} />
+        <ProductForm
+          collections={collections}
+          onSave={async (input) => {
+            if (!input.initialVariant) throw new Error("Add a first variant before creating the product.");
+            const created = await catalog.createProduct({ ...input, variants: [input.initialVariant] });
+            router.push(`/catalog/${created.id}`);
+          }}
+        />
       </div>
     </div>
   );

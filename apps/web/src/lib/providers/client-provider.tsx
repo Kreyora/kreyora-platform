@@ -31,7 +31,7 @@ import {
   mockReportingClient,
   mockAuditClient,
 } from "@/lib/adapters/mock";
-import { apiAuthClient, apiAuditClient, apiIdentityClient } from "@/lib/adapters/api";
+import { apiAuthClient, apiAuditClient, apiCatalogClient, apiIdentityClient, apiInventoryClient } from "@/lib/adapters/api";
 
 /**
  * Determined at build time from the NEXT_PUBLIC_API_URL env var.
@@ -72,8 +72,8 @@ export interface ClientSet {
 const defaultClients: ClientSet = {
   auth: USING_FIXTURE_ADAPTERS ? mockAuthClient : apiAuthClient,
   identity: USING_FIXTURE_ADAPTERS ? mockIdentityClient : apiIdentityClient,
-  catalog: mockCatalogClient,
-  inventory: mockInventoryClient,
+  catalog: USING_FIXTURE_ADAPTERS ? mockCatalogClient : apiCatalogClient,
+  inventory: USING_FIXTURE_ADAPTERS ? mockInventoryClient : apiInventoryClient,
   storefront: mockStorefrontClient,
   checkout: mockCheckoutClient,
   order: mockOrderClient,

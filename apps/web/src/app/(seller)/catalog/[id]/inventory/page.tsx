@@ -62,6 +62,7 @@ export default function ProductInventoryPage() {
   const [adjReason, setAdjReason] = useState("");
   const [adjusting, setAdjusting] = useState(false);
   const [adjustSuccess, setAdjustSuccess] = useState(false);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,16 +95,32 @@ export default function ProductInventoryPage() {
     };
   }, [catalog, inventory, id]);
 
-  const handleAdjust = useCallback(() => {
+  const handleAdjust = useCallback(async () => {
+    const quantity = Number(adjQty);
+    if (!selectedVariantId || !Number.isInteger(quantity) || quantity === 0 || !adjReason.trim()) {
+      setAdjustError("Enter a non-zero whole quantity and a reason.");
+      return;
+    }
     setAdjusting(true);
-    setTimeout(() => {
+    setAdjustError(null);
+    try {
+      const updated = await inventory.adjustStock({
+        variantId: selectedVariantId,
+        type: quantity > 0 ? "receipt" : "correctionDecrease",
+        quantity: Math.abs(quantity),
+        reason: adjReason.trim(),
+      });
+      setVariantData((current) => current.map((entry) => entry.variant.id === selectedVariantId ? { ...entry, inventory: updated } : entry));
       setAdjusting(false);
       setAdjustSuccess(true);
       setAdjQty("");
       setAdjReason("");
       setTimeout(() => setAdjustSuccess(false), 3000);
-    }, 600);
-  }, []);
+    } catch (caught) {
+      setAdjustError(caught instanceof Error ? caught.message : "We could not adjust stock. Please try again.");
+      setAdjusting(false);
+    }
+  }, [adjQty, adjReason, inventory, selectedVariantId]);
 
   if (isLoading || !product) {
     return (
@@ -314,17 +331,18 @@ export default function ProductInventoryPage() {
                   rows={2}
                   placeholder="Reason for adjustment"
                 />
-                <Button onClick={handleAdjust} loading={adjusting} disabled={!adjQty}>
-                  Adjust stock (simulated)
+                <Button onClick={() => void handleAdjust()} loading={adjusting} disabled={!adjQty || !adjReason.trim()}>
+                  Adjust stock
                 </Button>
                 {adjustSuccess && (
                   <p className="text-sm text-[var(--color-success)]">
-                    Stock adjustment simulated successfully.
+                    Stock adjustment saved successfully.
                   </p>
                 )}
+                {adjustError && <p role="alert" className="text-sm text-[var(--color-danger)]">{adjustError}</p>}
               </div>
               <p className="mt-3 text-xs text-[var(--color-ink-secondary)]">
-                Stock adjustments are simulated and will not be persisted.
+                Every adjustment is recorded in the append-only stock ledger.
               </p>
             </div>
           )}
