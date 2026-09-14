@@ -262,7 +262,8 @@ public sealed class NotificationOutboxLifecycleTests : IClassFixture<PostgresFix
         var n1 = await db.NotificationRequests.SingleAsync(n => n.Id == notification.Id);
         Assert.Equal(NotificationStatus.Failed, n1.Status);
         Assert.Equal(1, n1.AttemptCount);
-        Assert.Equal(clock.UtcNow.AddMinutes(1), n1.NextRetryAt);
+        Assert.NotNull(n1.NextRetryAt);
+        Assert.Equal(clock.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds(), n1.NextRetryAt.Value.ToUnixTimeMilliseconds());
 
         // Advance clock by 30 seconds -> NextRetryAt not reached -> not delivered
         clock.UtcNow = clock.UtcNow.AddSeconds(30);
@@ -282,7 +283,8 @@ public sealed class NotificationOutboxLifecycleTests : IClassFixture<PostgresFix
         var n2 = await db.NotificationRequests.SingleAsync(n => n.Id == notification.Id);
         Assert.Equal(NotificationStatus.Failed, n2.Status);
         Assert.Equal(2, n2.AttemptCount);
-        Assert.Equal(clock.UtcNow.AddMinutes(5), n2.NextRetryAt);
+        Assert.NotNull(n2.NextRetryAt);
+        Assert.Equal(clock.UtcNow.AddMinutes(5).ToUnixTimeMilliseconds(), n2.NextRetryAt.Value.ToUnixTimeMilliseconds());
 
         // Advance clock past 5 minutes -> Attempt 3 -> Max attempts reached -> DeadLettered!
         clock.UtcNow = clock.UtcNow.AddMinutes(6);
