@@ -1,6 +1,6 @@
 # M05-S05 — Public Storefront API, Resolution, and Abuse-Control Plan
 
-**Status:** `REVIEW`
+**Status:** `APPROVED`
 **Scope:** Add the anonymous, server-authoritative HTTP boundary for active platform stores: trusted production host resolution, development-slug routing, published storefront reads, public quote/session/COD-order writes, bounded public media delivery, and abuse controls.
 
 ## 1. Outcome and non-goals

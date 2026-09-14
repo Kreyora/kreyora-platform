@@ -24,8 +24,8 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 | 02 | Delivery rules and server-side quote engine | `APPROVED` |
 | 03 | Customer/contact, cart intent, and checkout reservation | `APPROVED` |
 | 04 | Canonical order aggregate and transactional creation | `APPROVED` |
-| 05 | Public APIs, host/slug resolution, and abuse controls | `REVIEW` |
-| 06 | Frontend integration and complete customer journey | `NOT STARTED` |
+| 05 | Public APIs, host/slug resolution, and abuse controls | `APPROVED` |
+| 06 | Frontend integration and complete customer journey | `REVIEW` |
 | 07 | Tampering, concurrency, expiry, and isolation verification | `NOT STARTED` |
 
 ## Prompt 01 — Store entity, readiness, settings, and publication
@@ -60,7 +60,7 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 
 ## Prompt 06 — Frontend integration and complete customer journey
 
-> Replace the Milestone 01 storefront, cart, delivery quote, checkout, and confirmation fixture adapters with generated real API clients while retaining explicit demo mode. Preserve the approved UI and implement real recovery for price change, insufficient stock, expired quote/session, unavailable delivery, duplicate submit, validation error, and transient server failure. The UI may display calculations returned by the server but must not become their authority. Add mobile end-to-end coverage from public store to COD order and merchant-QR-awaiting-verification order.
+> Replace the Milestone 01 storefront, cart, delivery quote, checkout, and confirmation fixture adapters with generated real API clients while retaining explicit demo mode. Preserve the approved UI and implement real recovery for price change, insufficient stock, expired quote/session, unavailable delivery, duplicate submit, validation error, and transient server failure. The UI may display calculations returned by the server but must not become their authority. Add mobile end-to-end coverage from public store to a COD order. **Conflict record:** the prior merchant-QR-awaiting-verification clause is superseded by accepted ADR-009: public checkout remains COD-only until M06 establishes real merchant configuration and proof handling.
 
 **Review checkpoint:** approve real customer journey on mobile/desktop and confirm fixture imports are absent outside demo adapters.
 

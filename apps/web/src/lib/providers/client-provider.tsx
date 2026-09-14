@@ -9,6 +9,7 @@ import type { StorefrontClient } from "@/lib/ports/storefront-client";
 import type { CheckoutClient } from "@/lib/ports/checkout-client";
 import type { OrderClient } from "@/lib/ports/order-client";
 import type { PaymentClient } from "@/lib/ports/payment-client";
+import type { PublicCheckoutClient, PublicStorefrontClient } from "@/lib/ports/public-storefront-client";
 import type { ConversationClient } from "@/lib/ports/conversation-client";
 import type { IntegrationClient } from "@/lib/ports/integration-client";
 import type { AIClient } from "@/lib/ports/ai-client";
@@ -30,8 +31,10 @@ import {
   mockBillingClient,
   mockReportingClient,
   mockAuditClient,
+  mockPublicCheckoutClient,
+  mockPublicStorefrontClient,
 } from "@/lib/adapters/mock";
-import { apiAuthClient, apiAuditClient, apiCatalogClient, apiIdentityClient, apiInventoryClient } from "@/lib/adapters/api";
+import { apiAuthClient, apiAuditClient, apiCatalogClient, apiIdentityClient, apiInventoryClient, apiPublicCheckoutClient, apiPublicStorefrontClient } from "@/lib/adapters/api";
 
 /**
  * Determined at build time from the NEXT_PUBLIC_API_URL env var.
@@ -39,6 +42,8 @@ import { apiAuthClient, apiAuditClient, apiCatalogClient, apiIdentityClient, api
  * adapters power the demo mode.
  */
 export const USING_FIXTURE_ADAPTERS = !process.env.NEXT_PUBLIC_API_URL;
+/** Public storefronts can use same-host production routes without a seller API URL. */
+export const USING_PUBLIC_FIXTURE_ADAPTERS = process.env.NEXT_PUBLIC_PUBLIC_API_MODE !== "host" && !process.env.NEXT_PUBLIC_API_URL;
 
 if (
   USING_FIXTURE_ADAPTERS &&
@@ -67,6 +72,8 @@ export interface ClientSet {
   billing: BillingClient;
   reporting: ReportingClient;
   audit: AuditClient;
+  publicStorefront: PublicStorefrontClient;
+  publicCheckout: PublicCheckoutClient;
 }
 
 const defaultClients: ClientSet = {
@@ -84,6 +91,8 @@ const defaultClients: ClientSet = {
   billing: mockBillingClient,
   reporting: mockReportingClient,
   audit: USING_FIXTURE_ADAPTERS ? mockAuditClient : apiAuditClient,
+  publicStorefront: USING_PUBLIC_FIXTURE_ADAPTERS ? mockPublicStorefrontClient : apiPublicStorefrontClient,
+  publicCheckout: USING_PUBLIC_FIXTURE_ADAPTERS ? mockPublicCheckoutClient : apiPublicCheckoutClient,
 };
 
 const ClientContext = createContext<ClientSet>(defaultClients);
@@ -157,4 +166,12 @@ export function useReportingClient(): ReportingClient {
 
 export function useAuditClient(): AuditClient {
   return useContext(ClientContext).audit;
+}
+
+export function usePublicStorefrontClient(): PublicStorefrontClient {
+  return useContext(ClientContext).publicStorefront;
+}
+
+export function usePublicCheckoutClient(): PublicCheckoutClient {
+  return useContext(ClientContext).publicCheckout;
 }
