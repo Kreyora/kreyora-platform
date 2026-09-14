@@ -88,6 +88,99 @@ public sealed class Order : BaseEntity, ITenantOwned
         Items.Add(item);
     }
 
+    public void Confirm(DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.Confirm);
+        Status = OrderStatus.Confirmed;
+        ModifiedAt = now;
+    }
+
+    public void Cancel(string reason, DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.Cancel);
+        if (!OrderTransitionPolicy.ValidateReason(OrderAction.Cancel, reason, out var error))
+            throw new ArgumentException(error, nameof(reason));
+
+        Status = OrderStatus.Cancelled;
+        if (FulfilmentStatus != FulfilmentStatus.Delivered)
+        {
+            FulfilmentStatus = FulfilmentStatus.Cancelled;
+        }
+        ModifiedAt = now;
+    }
+
+    public void Prepare(DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.Prepare);
+        FulfilmentStatus = FulfilmentStatus.Ready;
+        if (Status == OrderStatus.Confirmed)
+        {
+            Status = OrderStatus.Processing;
+        }
+        ModifiedAt = now;
+    }
+
+    public void Dispatch(DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.Dispatch);
+        FulfilmentStatus = FulfilmentStatus.Dispatched;
+        if (Status == OrderStatus.Confirmed)
+        {
+            Status = OrderStatus.Processing;
+        }
+        ModifiedAt = now;
+    }
+
+    public void Deliver(DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.Deliver);
+        FulfilmentStatus = FulfilmentStatus.Delivered;
+        Status = OrderStatus.Fulfilled;
+        ModifiedAt = now;
+    }
+
+    public void MarkDeliveryFailed(string reason, DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.MarkDeliveryFailed);
+        if (!OrderTransitionPolicy.ValidateReason(OrderAction.MarkDeliveryFailed, reason, out var error))
+            throw new ArgumentException(error, nameof(reason));
+
+        FulfilmentStatus = FulfilmentStatus.Failed;
+        ModifiedAt = now;
+    }
+
+    public void VerifyPayment(DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.VerifyPayment);
+        PaymentStatus = PaymentStatus.Paid;
+        ModifiedAt = now;
+    }
+
+    public void RejectPayment(string reason, DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.RejectPayment);
+        if (!OrderTransitionPolicy.ValidateReason(OrderAction.RejectPayment, reason, out var error))
+            throw new ArgumentException(error, nameof(reason));
+
+        PaymentStatus = PaymentStatus.Failed;
+        ModifiedAt = now;
+    }
+
+    public void MarkCodCollected(DateTimeOffset now)
+    {
+        EnsureTransitionAllowed(OrderAction.MarkCodCollected);
+        PaymentStatus = PaymentStatus.Paid;
+        ModifiedAt = now;
+    }
+
+    private void EnsureTransitionAllowed(OrderAction action)
+    {
+        if (!OrderTransitionPolicy.CanExecute(this, action, Tenancy.TenantRole.Owner, out var denialReason))
+        {
+            throw new InvalidOperationException(denialReason);
+        }
+    }
+
     private static string Require(string value, string parameterName, int maximumLength)
     {
         var normalized = string.IsNullOrWhiteSpace(value) ? throw new ArgumentException("A value is required.", parameterName) : value.Trim();

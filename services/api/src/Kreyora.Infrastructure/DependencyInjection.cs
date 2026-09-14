@@ -145,6 +145,7 @@ public static class DependencyInjection
         services.AddScoped<ICheckoutInventoryReservationService>(serviceProvider => (InventoryService)serviceProvider.GetRequiredService<IInventoryService>());
         services.AddScoped<IOrderInventoryReservationService>(serviceProvider => (InventoryService)serviceProvider.GetRequiredService<IInventoryService>());
         services.AddScoped<IOrderCreationService, OrderCreationService>();
+        services.AddScoped<IOrderOperationService, OrderOperationService>();
             services.AddScoped<IMediaAssetService, MediaAssetService>();
             services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>
                 serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>().Value.Provider == "R2"
