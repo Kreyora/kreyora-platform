@@ -10,6 +10,7 @@ using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Common;
 using Kreyora.Domain.Inventory;
 using Kreyora.Domain.Orders;
+using Kreyora.Domain.Payments;
 using Kreyora.Domain.Storefront;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Persistence.Entities;
@@ -104,6 +105,13 @@ public sealed class OrderCreationService(
         }
 
         dbContext.Orders.Add(order);
+        var paymentAttempt = PaymentAttempt.Create(
+            context.TenantId,
+            order.Id,
+            order.PaymentMethod,
+            order.TotalNpr,
+            order.Currency);
+        dbContext.PaymentAttempts.Add(paymentAttempt);
         var committed = await inventory.CommitForOrderAsync(new OrderInventoryCommitRequest(order.Id, session.Id,
             session.Items.Select(item => new OrderInventoryCommitLine(item.InventoryReservationId, item.VariantId, item.Quantity)).ToArray()), cancellationToken);
         if (committed.IsFailure)

@@ -8,6 +8,7 @@ using Kreyora.Application.Models;
 using Kreyora.Application.Orders;
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Orders;
+using Kreyora.Domain.Payments;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -63,7 +64,9 @@ public sealed class OrderOperationService(
         {
             normalized.OrderId,
             action = normalized.Action.ToString(),
-            reason = normalized.Reason ?? string.Empty
+            reason = normalized.Reason ?? string.Empty,
+            paymentAttemptId = normalized.PaymentAttemptId ?? string.Empty,
+            providerReference = normalized.ProviderReference ?? string.Empty
         });
 
         for (var attempt = 1; attempt <= MaxAttempts; attempt++)
@@ -154,12 +157,24 @@ public sealed class OrderOperationService(
                         break;
                     case OrderAction.VerifyPayment:
                         order.VerifyPayment(now);
+                        {
+                            var paymentAttempt = await GetTargetPaymentAttemptAsync(dbContext, order.Id, normalized.PaymentAttemptId, OrderPaymentMethod.MerchantQr, cancellationToken);
+                            paymentAttempt?.Verify(context.UserId ?? "system", now, normalized.ProviderReference);
+                        }
                         break;
                     case OrderAction.RejectPayment:
                         order.RejectPayment(normalized.Reason!, now);
+                        {
+                            var paymentAttempt = await GetTargetPaymentAttemptAsync(dbContext, order.Id, normalized.PaymentAttemptId, OrderPaymentMethod.MerchantQr, cancellationToken);
+                            paymentAttempt?.Reject(context.UserId ?? "system", normalized.Reason!, now);
+                        }
                         break;
                     case OrderAction.MarkCodCollected:
                         order.MarkCodCollected(now);
+                        {
+                            var paymentAttempt = await GetTargetPaymentAttemptAsync(dbContext, order.Id, normalized.PaymentAttemptId, OrderPaymentMethod.CashOnDelivery, cancellationToken);
+                            paymentAttempt?.MarkCollected(context.UserId ?? "system", now, normalized.ProviderReference);
+                        }
                         break;
                     default:
                         throw new InvalidOperationException($"Unsupported order action: {normalized.Action}");
@@ -235,7 +250,28 @@ public sealed class OrderOperationService(
         Enum.IsDefined(request.Action) ? request.Action : throw new ArgumentOutOfRangeException(nameof(request), "Invalid order action."),
         Optional(request.Reason, 500),
         request.ExpectedVersion,
-        Require(request.IdempotencyKey, nameof(request.IdempotencyKey), 256));
+        Require(request.IdempotencyKey, nameof(request.IdempotencyKey), 256),
+        Optional(request.PaymentAttemptId, 26),
+        Optional(request.ProviderReference, 128));
+
+    private static async Task<PaymentAttempt?> GetTargetPaymentAttemptAsync(
+        AppDbContext dbContext,
+        string orderId,
+        string? specifiedAttemptId,
+        OrderPaymentMethod method,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(specifiedAttemptId))
+        {
+            return await dbContext.PaymentAttempts
+                .SingleOrDefaultAsync(a => a.Id == specifiedAttemptId && a.OrderId == orderId, cancellationToken);
+        }
+
+        return await dbContext.PaymentAttempts
+            .Where(a => a.OrderId == orderId && a.Method == method)
+            .OrderByDescending(a => a.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 
     private static string Require(string value, string parameterName, int maximumLength)
     {

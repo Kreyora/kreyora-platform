@@ -6,6 +6,7 @@ using Kreyora.Application.Catalog;
 using Kreyora.Application.Customers;
 using Kreyora.Application.Inventory;
 using Kreyora.Application.Orders;
+using Kreyora.Application.Payments;
 using Kreyora.Application.Messaging;
 using Kreyora.Application.Storefront;
 using Kreyora.Application.Support;
@@ -20,6 +21,7 @@ using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Orders;
+using Kreyora.Infrastructure.Payments;
 using Kreyora.Infrastructure.Media;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Storefront;
@@ -146,6 +148,8 @@ public static class DependencyInjection
         services.AddScoped<IOrderInventoryReservationService>(serviceProvider => (InventoryService)serviceProvider.GetRequiredService<IInventoryService>());
         services.AddScoped<IOrderCreationService, OrderCreationService>();
         services.AddScoped<IOrderOperationService, OrderOperationService>();
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IStorePaymentConfigurationService, StorePaymentConfigurationService>();
             services.AddScoped<IMediaAssetService, MediaAssetService>();
             services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>
                 serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>().Value.Provider == "R2"
