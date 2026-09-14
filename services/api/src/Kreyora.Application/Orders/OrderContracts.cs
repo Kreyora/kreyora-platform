@@ -22,7 +22,9 @@ public sealed record ExecuteOrderActionRequest(
     OrderAction Action,
     string? Reason,
     uint ExpectedVersion,
-    string IdempotencyKey);
+    string IdempotencyKey,
+    string? PaymentAttemptId = null,
+    string? ProviderReference = null);
 
 public sealed record OrderOperationResult(
     string OrderId,
