@@ -177,6 +177,22 @@ public sealed class PaymentAttempt : BaseEntity, ITenantOwned
         ModifiedAt = now;
     }
 
+    public void Expire(DateTimeOffset now)
+    {
+        if (Status is PaymentAttemptStatus.Verified or PaymentAttemptStatus.Collected)
+        {
+            throw new InvalidOperationException($"Cannot expire payment attempt in {Status} status.");
+        }
+
+        if (Status == PaymentAttemptStatus.Expired)
+        {
+            return;
+        }
+
+        Status = PaymentAttemptStatus.Expired;
+        ModifiedAt = now;
+    }
+
     private static string Require(string value, string parameterName, int maximumLength)
     {
         var normalized = string.IsNullOrWhiteSpace(value) ? throw new ArgumentException("A value is required.", parameterName) : value.Trim();

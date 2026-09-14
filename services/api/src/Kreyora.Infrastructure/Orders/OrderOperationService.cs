@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Kreyora.Application.Audit;
 using Kreyora.Application.Authorization;
+using Kreyora.Application.Inventory;
 using Kreyora.Application.Models;
 using Kreyora.Application.Orders;
 using Kreyora.Application.Tenancy;
@@ -20,6 +21,7 @@ public sealed class OrderOperationService(
     AppDbContext dbContext,
     ITenantContextAccessor tenantContext,
     ITenantPermissionAuthorizer authorizer,
+    IOrderInventoryReservationService inventory,
     IAuditEventService auditEvents,
     Domain.Abstractions.ITimeProvider timeProvider) : IOrderOperationService
 {
@@ -107,6 +109,7 @@ public sealed class OrderOperationService(
 
                 // 3. Load Order and check tenant ownership
                 var order = await dbContext.Orders
+                    .Include(o => o.Items)
                     .SingleOrDefaultAsync(o => o.Id == normalized.OrderId, cancellationToken);
 
                 if (order is null)
@@ -142,6 +145,28 @@ public sealed class OrderOperationService(
                         break;
                     case OrderAction.Cancel:
                         order.Cancel(normalized.Reason!, now);
+                        if (order.Items.Count > 0)
+                        {
+                            var restockLines = order.Items
+                                .Select(item => new OrderInventoryRestockLine(item.VariantId, item.Quantity))
+                                .ToArray();
+                            var restockResult = await inventory.RestockForOrderAsync(
+                                new OrderInventoryRestockRequest(order.Id, normalized.Reason!, restockLines),
+                                cancellationToken);
+                            if (restockResult.IsFailure)
+                            {
+                                dbContext.ChangeTracker.Clear();
+                                return Result<OrderOperationResult>.Failure(restockResult.Error!);
+                            }
+                        }
+
+                        var pendingAttempts = await dbContext.PaymentAttempts
+                            .Where(pa => pa.OrderId == order.Id && (pa.Status == PaymentAttemptStatus.Pending || pa.Status == PaymentAttemptStatus.AwaitingProof || pa.Status == PaymentAttemptStatus.ProofSubmitted))
+                            .ToListAsync(cancellationToken);
+                        foreach (var pa in pendingAttempts)
+                        {
+                            pa.Expire(now);
+                        }
                         break;
                     case OrderAction.Prepare:
                         order.Prepare(now);
@@ -187,6 +212,45 @@ public sealed class OrderOperationService(
                     normalized.IdempotencyKey,
                     fingerprint,
                     order.Id));
+
+                // 9. Record Outbox Message
+                var outboxType = normalized.Action switch
+                {
+                    OrderAction.Confirm => "order.confirmed.v1",
+                    OrderAction.Cancel => "order.cancelled.v1",
+                    OrderAction.Prepare => "order.prepared.v1",
+                    OrderAction.Dispatch => "order.dispatched.v1",
+                    OrderAction.Deliver => "order.delivered.v1",
+                    OrderAction.MarkDeliveryFailed => "order.delivery_failed.v1",
+                    OrderAction.VerifyPayment => "payment.verified.v1",
+                    OrderAction.RejectPayment => "payment.rejected.v1",
+                    OrderAction.MarkCodCollected => "payment.cod_collected.v1",
+                    _ => null
+                };
+
+                if (outboxType is not null)
+                {
+                    dbContext.OutboxMessages.Add(new OutboxMessage
+                    {
+                        TenantId = context.TenantId,
+                        Type = outboxType,
+                        Content = JsonSerializer.Serialize(new
+                        {
+                            orderId = order.Id,
+                            orderNumber = order.OrderNumber,
+                            storeId = order.StoreId,
+                            action = normalized.Action.ToString(),
+                            priorStatus,
+                            newStatus = order.Status,
+                            priorPaymentStatus,
+                            newPaymentStatus = order.PaymentStatus,
+                            priorFulfilmentStatus,
+                            newFulfilmentStatus = order.FulfilmentStatus,
+                            reason = normalized.Reason,
+                            timestamp = now
+                        })
+                    });
+                }
 
                 await dbContext.SaveChangesAsync(cancellationToken);
 

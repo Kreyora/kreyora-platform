@@ -28,6 +28,7 @@ public interface ICheckoutInventoryReservationService
 public interface IOrderInventoryReservationService
 {
     Task<Result<IReadOnlyList<OrderInventoryCommit>>> CommitForOrderAsync(OrderInventoryCommitRequest request, CancellationToken cancellationToken = default);
+    Task<Result<IReadOnlyList<OrderInventoryRestock>>> RestockForOrderAsync(OrderInventoryRestockRequest request, CancellationToken cancellationToken = default);
 }
 
 public sealed record StockAdjustmentRequest(
@@ -110,3 +111,6 @@ public sealed record CheckoutInventoryReservation(string VariantId, string Inven
 public sealed record OrderInventoryCommitRequest(string OrderId, string CheckoutSessionId, IReadOnlyList<OrderInventoryCommitLine> Lines);
 public sealed record OrderInventoryCommitLine(string InventoryReservationId, string VariantId, int Quantity);
 public sealed record OrderInventoryCommit(string InventoryReservationId, string VariantId, string StockMovementId);
+public sealed record OrderInventoryRestockRequest(string OrderId, string Reason, IReadOnlyList<OrderInventoryRestockLine> Lines);
+public sealed record OrderInventoryRestockLine(string VariantId, int Quantity);
+public sealed record OrderInventoryRestock(string VariantId, int QuantityRestocked, string StockMovementId);

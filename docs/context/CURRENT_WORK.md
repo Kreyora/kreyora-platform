@@ -3,37 +3,38 @@
 ## Active position
 
 - **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** 02 — COD and merchant-QR payment domain
+- **Step:** 03 — Inventory allocation, cancellation, and fulfilment coordination
 - **Status:** `REVIEW`
-- **Plan state:** Implementation complete. PaymentAttempt aggregate, PaymentProof entity, StorePaymentConfiguration, EF Core migration, IPaymentService, IStorePaymentConfigurationService, controllers, unit tests, and real PostgreSQL integration tests verified. Checkpoint created at `artifacts/checkpoints/M06-S02.md`.
+- **Plan state:** Implementation complete. StockMovementType.OrderRestock added, PaymentAttempt.Expire implemented, RestockForOrderAsync implemented in InventoryService with row-level locks, OrderOperationService coordinated with atomic restock on cancellation, payment attempt expiry, and outbox event publishing. Comprehensive PostgreSQL Testcontainers integration test suite (11 tests) and full solution tests (291 tests) verified. Checkpoint created at `artifacts/checkpoints/M06-S03.md`.
 - **Active milestone file:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M06-S02.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M06-S01.md`
-- **Last approved state:** Milestones 03, 04, 05 complete and approved. Milestone 06 Step 01 approved.
+- **Current checkpoint:** `artifacts/checkpoints/M06-S03.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M06-S02.md` (APPROVED)
+- **Last approved state:** Milestone 06 Step 02 (COD and merchant-QR payment domain) approved.
 
 ## Current objective
 
-Establish COD and merchant-QR payment domain, store payment configuration, PaymentAttempt aggregate, manual payment proof upload via existing private object storage, verification decision, COD collection record, and provider-neutral transaction references.
+Establish order lifecycle coordination, stock ownership timeline, atomic restock compensation on cancellation, payment verification effects, fulfilment progression, duplicate command safety, and stock reconciliation across all terminal paths.
 
 ## Next permitted action
 
-Project-owner review and approval of M06-S02 checkpoint (`artifacts/checkpoints/M06-S02.md`).
+Project-owner review and approval of M06-S03 checkpoint (`artifacts/checkpoints/M06-S03.md`).
 
 ## Next prohibited action
 
-- Starting M06-S02 implementation before the plan is approved.
-- Advancing to M06-S03 (inventory coordination) or later steps.
+- Starting M06-S04 (notifications) before M06-S03 approval.
 - Committing, pushing, deploying, or modifying schema without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
-| 2026-09-14 | Completed M06-S01 implementation: pure domain transition policy engine, Order aggregate methods, OrderOperationService with authorization, xmin concurrency, OrderCommand idempotency, audit events, 45 domain unit tests, and 8 real PostgreSQL integration tests. Checkpoint created. Status -> REVIEW. | Antigravity |
+| 2026-09-15 | Completed M06-S03 implementation: StockMovementType.OrderRestock, PaymentAttempt.Expire, RestockForOrderAsync in InventoryService, OrderOperationService coordination with atomic restock and payment attempt expiration on cancel, OutboxMessage events across transitions, 11 real PostgreSQL integration tests in OrderFulfilmentInventoryCoordinationTests, full solution green (291 tests). Status -> REVIEW. | Antigravity |
+| 2026-09-14 | Project owner approved M06-S02. Commenced Phase 1 (Architect) planning for M06-S03 (Inventory allocation, cancellation, and fulfilment coordination). Status -> PLANNING. | Project owner / Antigravity |
+| 2026-09-14 | Completed M06-S02 implementation: PaymentAttempt aggregate, PaymentProof entity with magic-byte validation, StorePaymentConfiguration, EF Core migration, IPaymentService, IStorePaymentConfigurationService, controllers, unit tests, and real PostgreSQL integration tests verified. Checkpoint created. Status -> APPROVED. | Antigravity |
 | 2026-09-14 | Completed Phase 1 (Architect) planning for M06-S01. Created durable plan `docs/plan/M06-S01_ORDER_STATE_TRANSITIONS_PLAN.md` and handoff `task.md`. Status -> PLANNING. | Antigravity |
 | 2026-09-14 | Project owner approved Milestone 05 Exit Gate (`artifacts/checkpoints/M05-EXIT.md`). All 6 exit criteria satisfied; Milestone 05 complete. Status -> APPROVED. | Project owner / Antigravity |
 | 2026-09-14 | Milestone 05 exit-gate verification completed: clean diff confirmation, live Docker Compose walkthrough from fresh seller workspace to public COD order completion, database snapshot inspection, and review checkpoint `artifacts/checkpoints/M05-EXIT.md`. Status -> REVIEW. | Antigravity |
