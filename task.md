@@ -1,45 +1,46 @@
-# Handoff: Milestone 06 Step 02 — COD and Merchant-QR Payment Domain
+# Handoff: Milestone 06 Step 03 — Inventory Allocation, Cancellation, and Fulfilment Coordination
 
 ## 1. Overview
 
 - **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** 02 — COD and merchant-QR payment domain
-- **Phase:** Phase 2 (Builder) Implementation & Verification
-- **Governing Plan:** `docs/plan/M06-S02_COD_MERCHANT_QR_PAYMENT_PLAN.md`
+- **Step:** 03 — Inventory allocation, cancellation, and fulfilment coordination
+- **Phase:** Phase 2 (Builder) Complete — Awaiting Review Checkpoint Approval
+- **Governing Plan:** `docs/plan/M06-S03_INVENTORY_ALLOCATION_FULFILMENT_PLAN.md`
+- **Checkpoint Report:** `artifacts/checkpoints/M06-S03.md`
 - **Milestone Reference:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
 
 ---
 
-## 2. Implementation Tasks
+## 2. Implementation Tasks (Phase 2 Builder)
 
-- [ ] **Task 1: Domain Entities & Enums**
-  - Create `PaymentAttemptStatus` & `PaymentProofStatus` in `Kreyora.Domain.Payments`
-  - Create `PaymentAttempt` aggregate root in `Kreyora.Domain.Payments`
-  - Create `PaymentProof` entity in `Kreyora.Domain.Payments`
-  - Create `StorePaymentConfiguration` entity in `Kreyora.Domain.Storefront`
-- [ ] **Task 2: Application Contracts**
-  - Create `PaymentContracts.cs` in `Kreyora.Application.Payments` with `IPaymentService` and `IStorePaymentConfigurationService`
-  - Extend `ExecuteOrderActionRequest` in `Kreyora.Application.Orders.OrderContracts` with optional `PaymentAttemptId`
-- [ ] **Task 3: EF Core Mapping & Database Migration**
-  - Create `PaymentAttemptConfiguration.cs`
-  - Create `PaymentProofConfiguration.cs`
-  - Create `StorePaymentConfigurationConfiguration.cs`
-  - Register DbSets and tenant query filters in `AppDbContext`
-  - Add EF migration `AddPaymentDomain` and test for pending changes
-- [ ] **Task 4: Infrastructure Services**
-  - Implement `PaymentService.cs` in `Kreyora.Infrastructure.Payments` (handling attempts, proof upload via `IPrivateObjectStorage`, proof download)
-  - Implement `StorePaymentConfigurationService.cs` in `Kreyora.Infrastructure.Payments` (get and update configuration with authorization and validation)
-  - Update `OrderCreationService.cs` to create initial `PaymentAttempt` on order creation
-  - Update `OrderOperationService.cs` to update `PaymentAttempt` status and record verification/rejection/collection details transactionally
-  - Register new services in `DependencyInjection.cs`
-- [ ] **Task 5: WebApi Controllers**
-  - Create `PaymentController.cs` for payment attempts, proof submission, and proof retrieval
-  - Create `StorePaymentConfigurationController.cs` for store payment configuration GET/PUT
-- [ ] **Task 6: Unit & Integration Testing**
-  - Unit tests: `PaymentAttemptTests`, `PaymentProofTests`, `StorePaymentConfigurationTests`
-  - Integration tests: `PaymentServiceTests`, `StorePaymentConfigurationServiceTests`, update `OrderOperationServiceTests` and `OrderCreationServiceTests`
-- [ ] **Task 7: Quality Gates & Checkpoint Report**
-  - Run full solution build and tests
-  - Verify `has-pending-model-changes`
-  - Create checkpoint `artifacts/checkpoints/M06-S02.md` with status `REVIEW`
-  - Update `CURRENT_WORK.md` and `06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
+- [x] **Task 1: Domain Entities & Enums**
+  - Added `OrderRestock` to `StockMovementType` in `Kreyora.Domain.Inventory`.
+  - Added `Expire(DateTimeOffset now)` method to `PaymentAttempt` in `Kreyora.Domain.Payments`.
+  - Added unit tests for `PaymentAttempt.Expire` in `Kreyora.UnitTests`.
+
+- [x] **Task 2: Application Contracts**
+  - Added `RestockForOrderAsync` method to `IOrderInventoryReservationService` in `Kreyora.Application.Inventory.InventoryContracts`.
+  - Defined `OrderInventoryRestockRequest`, `OrderInventoryRestockLine`, and `OrderInventoryRestock` records.
+
+- [x] **Task 3: Infrastructure Inventory Service Implementation**
+  - Implemented `RestockForOrderAsync` in `Kreyora.Infrastructure.Inventory.InventoryService`.
+  - Acquired row locks (`SELECT ... FOR UPDATE`), updated `OnHandQuantity` via `item.ApplyMovement`, and appended `StockMovement` of type `StockMovementType.OrderRestock`.
+
+- [x] **Task 4: Order Operation Service Coordination**
+  - Injected `IOrderInventoryReservationService` into `OrderOperationService`.
+  - Ensured `order.Items` are loaded via `.Include(o => o.Items)`.
+  - Coordinated atomic stock restock and unverified `PaymentAttempt.Expire` when `OrderAction.Cancel` is executed.
+  - Recorded provider-neutral `OutboxMessage` records across all successful operational actions (`order.confirmed.v1`, `order.cancelled.v1`, `order.prepared.v1`, `order.dispatched.v1`, `order.delivered.v1`, `order.delivery_failed.v1`, `payment.verified.v1`, `payment.rejected.v1`, `payment.cod_collected.v1`).
+
+- [x] **Task 5: Real PostgreSQL Integration Testing**
+  - Created `OrderFulfilmentInventoryCoordinationTests.cs` in `Kreyora.IntegrationTests.Orders` (11 tests).
+  - Tested all terminal lifecycles and verified exact inventory reconciliation (`ReconcileInventoryAsync`).
+  - Tested concurrent Cancel vs. Dispatch conflicts and serializable resolution.
+  - Tested duplicate Cancel command replay with idempotent zero double-restock.
+  - Updated existing test helpers in `OrderOperationServiceTests.cs` and `PaymentServiceTests.cs`.
+
+- [x] **Task 6: Quality Gates & Review Checkpoint**
+  - Verified full test suite passes (170 Unit, 6 Architecture, 5 Contract, 110 Integration = 291 total).
+  - Verified EF migration model has no pending changes.
+  - Created review checkpoint `artifacts/checkpoints/M06-S03.md` with status `REVIEW`.
+  - Updated `docs/context/CURRENT_WORK.md` and `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`.

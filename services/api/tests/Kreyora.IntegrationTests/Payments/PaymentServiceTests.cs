@@ -13,6 +13,7 @@ using Kreyora.Domain.Storefront;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authorization;
+using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Media;
 using Kreyora.Infrastructure.Orders;
 using Kreyora.Infrastructure.Payments;
@@ -323,7 +324,9 @@ public sealed class PaymentServiceTests : IClassFixture<PostgresFixture>
     {
         var authorizer = new TenantPermissionAuthorizer(accessor);
         var audit = new AuditEventService(db, accessor, new Correlation("payment-order-test"), authorizer);
-        return new OrderOperationService(db, accessor, authorizer, audit, clock);
+        var options = Options.Create(new InventoryReservationOptions());
+        var inventory = new InventoryService(db, accessor, authorizer, audit, clock, options);
+        return new OrderOperationService(db, accessor, authorizer, inventory, audit, clock);
     }
 
     private static TenantContext OwnerContext(string tenantId) =>

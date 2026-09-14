@@ -9,6 +9,7 @@ using Kreyora.Domain.Storefront;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authorization;
+using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Orders;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Tenancy;
@@ -333,7 +334,9 @@ public sealed class OrderOperationServiceTests : IClassFixture<PostgresFixture>
     {
         var authorizer = new TenantPermissionAuthorizer(accessor);
         var audit = new AuditEventService(db, accessor, new Correlation("order-operation-test"), authorizer);
-        return new OrderOperationService(db, accessor, authorizer, audit, clock);
+        var options = Microsoft.Extensions.Options.Options.Create(new InventoryReservationOptions());
+        var inventory = new InventoryService(db, accessor, authorizer, audit, clock, options);
+        return new OrderOperationService(db, accessor, authorizer, inventory, audit, clock);
     }
 
     private static async Task<Order> CreateDirectOrderAsync(AppDbContext db, string tenantId, OrderPaymentMethod paymentMethod)

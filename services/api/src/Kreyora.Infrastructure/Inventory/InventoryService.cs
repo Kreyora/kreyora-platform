@@ -344,6 +344,73 @@ public sealed class InventoryService(
         }
     }
 
+    public async Task<Result<IReadOnlyList<OrderInventoryRestock>>> RestockForOrderAsync(OrderInventoryRestockRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var context = tenantContext.RequireCurrent();
+        try
+        {
+            var orderId = NormalizeRequired(request.OrderId, nameof(request.OrderId), 26);
+            var reason = NormalizeRequired(request.Reason, nameof(request.Reason), 500);
+            if (request.Lines is null || request.Lines.Count is 0 or > 50)
+                return Result<IReadOnlyList<OrderInventoryRestock>>.ValidationError("Restock requires 1-50 lines.");
+
+            var lines = request.Lines.Select(line => new OrderInventoryRestockLine(
+                    NormalizeRequired(line.VariantId, nameof(line.VariantId), 26),
+                    line.Quantity))
+                .OrderBy(line => line.VariantId, StringComparer.Ordinal)
+                .ToArray();
+
+            if (lines.Any(line => line.Quantity is < 1 or > 100) || lines.GroupBy(line => line.VariantId, StringComparer.Ordinal).Any(group => group.Count() > 1))
+                return Result<IReadOnlyList<OrderInventoryRestock>>.ValidationError("Restock lines must have unique variants with quantities between 1 and 100.");
+
+            var restocked = new List<OrderInventoryRestock>();
+            foreach (var line in lines)
+            {
+                var item = await LockInventoryItemForVariantAsync(line.VariantId, cancellationToken);
+                if (item is null)
+                    return Result<IReadOnlyList<OrderInventoryRestock>>.NotFound($"No tracked inventory exists for variant {line.VariantId}.");
+
+                item.ApplyMovement(line.Quantity);
+
+                var movementReason = $"Restock from cancelled order {orderId}: {reason}";
+                if (movementReason.Length > StockMovement.ReasonMaxLength)
+                    movementReason = movementReason[..StockMovement.ReasonMaxLength];
+
+                var actorUserId = context.UserId;
+                var actorKind = actorUserId is not null ? CommerceActorKind.Member : CommerceActorKind.CommerceSystem;
+
+                var movement = StockMovement.Create(
+                    context.TenantId,
+                    item.Id,
+                    line.VariantId,
+                    StockMovementType.OrderRestock,
+                    line.Quantity,
+                    movementReason,
+                    actorUserId,
+                    $"order:cancel:restock:{orderId}:{line.VariantId}",
+                    Fingerprint(new { orderId, line.VariantId, line.Quantity }),
+                    "order",
+                    orderId,
+                    actorKind);
+
+                dbContext.StockMovements.Add(movement);
+                restocked.Add(new OrderInventoryRestock(line.VariantId, line.Quantity, movement.Id));
+            }
+
+            return Result<IReadOnlyList<OrderInventoryRestock>>.Success(restocked);
+        }
+        catch (InvalidOperationException exception) when (IsTransientFailure(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            throw;
+        }
+        catch (Exception exception) when (IsValidationException(exception))
+        {
+            return Result<IReadOnlyList<OrderInventoryRestock>>.ValidationError(exception.Message);
+        }
+    }
+
     private async Task<Result<InventoryReservationResult>> ReserveStockOnceAsync(
         TenantContext context,
         ReserveStockRequest request,
