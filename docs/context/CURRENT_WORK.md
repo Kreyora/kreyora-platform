@@ -21,7 +21,7 @@ Review `artifacts/checkpoints/M05-S07.md` and the completed storefront/checkout 
 
 ## Next permitted action
 
-Project-owner approval of M05-S07. Graphify refresh remains deferred until approval.
+Project-owner approval of M05-S07. Graphify was refreshed on explicit project-owner request for the Antigravity transition; this does not approve M05-S07 or permit the next milestone step.
 
 ## Next prohibited action
 
@@ -32,6 +32,7 @@ Project-owner approval of M05-S07. Graphify refresh remains deferred until appro
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-14 | Graphify code graph refreshed explicitly for the Antigravity transition (4,271 nodes, 10,127 edges). M05-S07 remains `REVIEW`; no milestone scope advanced. | Project owner / Codex |
 | 2026-09-14 | M05-S07 implementation completed: public tampering/isolation/idempotency coverage, real expiry-job verification, transient-contention retry fix, full PostgreSQL and frontend regression, scoped Testcontainers cleanup, and review checkpoint. | Codex |
 | 2026-09-14 | Project owner approved M05-S06; M05-S07 commerce invariant verification implementation began. | Project owner / Codex |
 | 2026-09-07 | M05-S06 implementation completed: typed anonymous public adapters, server-authoritative COD checkout, safe cart/confirmation behavior, frontend regression/build, PostgreSQL/Testcontainers regression and scoped cleanup. | Codex |
