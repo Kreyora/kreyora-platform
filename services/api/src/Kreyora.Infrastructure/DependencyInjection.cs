@@ -8,6 +8,7 @@ using Kreyora.Application.Inventory;
 using Kreyora.Application.Orders;
 using Kreyora.Application.Payments;
 using Kreyora.Application.Messaging;
+using Kreyora.Application.Notifications;
 using Kreyora.Application.Storefront;
 using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
@@ -20,6 +21,7 @@ using Kreyora.Infrastructure.Customers;
 using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Inventory;
+using Kreyora.Infrastructure.Notifications;
 using Kreyora.Infrastructure.Orders;
 using Kreyora.Infrastructure.Payments;
 using Kreyora.Infrastructure.Media;
@@ -157,9 +159,17 @@ public static class DependencyInjection
                     : new LocalPrivateObjectStorage(
                         serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>(),
                         environment));
+            services.AddOptions<NotificationOptions>()
+                .BindConfiguration(NotificationOptions.SectionName)
+                .ValidateDataAnnotations();
+            services.AddSingleton<INotificationTemplateRegistry, NotificationTemplateRegistry>();
+            services.AddScoped<INotificationDeliveryProvider, DevelopmentNotificationProvider>();
+            services.AddScoped<INotificationService, NotificationService>();
             services.AddTransient<InventoryReservationExpiryJob>();
             services.AddTransient<CheckoutSessionExpiryJob>();
             services.AddTransient<MediaCleanupJob>();
+            services.AddTransient<OutboxNotificationProcessorJob>();
+            services.AddTransient<NotificationDeliveryJob>();
         }
 
         return services;

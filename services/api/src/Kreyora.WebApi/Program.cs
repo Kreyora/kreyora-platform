@@ -13,6 +13,7 @@ using Kreyora.Infrastructure.Errors;
 using Kreyora.Infrastructure.Logging;
 using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Media;
+using Kreyora.Infrastructure.Notifications;
 using Kreyora.Infrastructure.Persistence;
 using Kreyora.Infrastructure.Storefront;
 using Kreyora.ServiceDefaults;
@@ -206,6 +207,8 @@ if (app.Services.GetService<JobStorage>() is not null)
     }
     RecurringJob.AddOrUpdate<MediaCleanupJob>("media-cleanup", job => job.RunAsync(), Cron.Daily);
     RecurringJob.AddOrUpdate<CheckoutSessionExpiryJob>("checkout-session-expiry", job => job.RunAsync(), Cron.Minutely);
+    RecurringJob.AddOrUpdate<OutboxNotificationProcessorJob>("outbox-notification-processor", job => job.RunAsync(), Cron.Minutely);
+    RecurringJob.AddOrUpdate<NotificationDeliveryJob>("notification-delivery", job => job.RunAsync(), Cron.Minutely);
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
