@@ -26,7 +26,7 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 | 04 | Canonical order aggregate and transactional creation | `APPROVED` |
 | 05 | Public APIs, host/slug resolution, and abuse controls | `APPROVED` |
 | 06 | Frontend integration and complete customer journey | `APPROVED` |
-| 07 | Tampering, concurrency, expiry, and isolation verification | `REVIEW` |
+| 07 | Tampering, concurrency, expiry, and isolation verification | `APPROVED` |
 
 ## Prompt 01 — Store entity, readiness, settings, and publication
 
@@ -71,6 +71,8 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 **Review checkpoint:** approve the invariant matrix with no unresolved critical/high defect.
 
 ## Milestone exit gate
+
+**Status:** `APPROVED` (Approved by project owner on 2026-09-14 per `artifacts/checkpoints/M05-EXIT.md`)
 
 - A fresh authorized seller configures and publishes a ready platform-subdomain store.
 - A customer completes the real COD checkout path. Merchant-QR configuration, proof handling, and merchant-QR verification are M06 work under ADR-009.
