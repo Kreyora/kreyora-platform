@@ -333,6 +333,11 @@ public sealed class InventoryService(
             }
             return Result<IReadOnlyList<OrderInventoryCommit>>.Success(committed);
         }
+        catch (InvalidOperationException exception) when (IsTransientFailure(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            throw;
+        }
         catch (Exception exception) when (IsValidationException(exception))
         {
             return Result<IReadOnlyList<OrderInventoryCommit>>.ValidationError(exception.Message);

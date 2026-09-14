@@ -51,6 +51,11 @@ public sealed class OrderCreationService(
                     dbContext.ChangeTracker.Clear();
                     await Task.Delay(TimeSpan.FromMilliseconds(20 * attempt + Random.Shared.Next(10)), cancellationToken);
                 }
+                catch (InvalidOperationException exception) when (IsTransientFailure(exception) && attempt < MaxSerializableAttempts)
+                {
+                    dbContext.ChangeTracker.Clear();
+                    await Task.Delay(TimeSpan.FromMilliseconds(20 * attempt + Random.Shared.Next(10)), cancellationToken);
+                }
             }
 
             return Result<OrderCreationResult>.Conflict("Order creation conflicted with another checkout update. Please retry.");
@@ -59,6 +64,11 @@ public sealed class OrderCreationService(
         {
             dbContext.ChangeTracker.Clear();
             return Result<OrderCreationResult>.Conflict("This checkout session has already created an order.");
+        }
+        catch (InvalidOperationException exception) when (IsTransientFailure(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<OrderCreationResult>.Conflict("Order creation conflicted with another checkout update. Please retry.");
         }
         catch (Exception exception) when (exception is ArgumentException or ArgumentOutOfRangeException or InvalidOperationException)
         {
@@ -141,4 +151,5 @@ public sealed class OrderCreationService(
     }
     private static string Fingerprint<T>(T value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value))));
     private static bool IsRetryable(PostgresException exception) => exception.SqlState is PostgresErrorCodes.SerializationFailure or PostgresErrorCodes.DeadlockDetected;
+    private static bool IsTransientFailure(InvalidOperationException exception) => exception.Message.Contains("transient failure", StringComparison.OrdinalIgnoreCase);
 }
