@@ -4,6 +4,7 @@ using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Common;
 using Kreyora.Domain.Customers;
 using Kreyora.Domain.Inventory;
+using Kreyora.Domain.Notifications;
 using Kreyora.Domain.Orders;
 using Kreyora.Domain.Payments;
 using Kreyora.Domain.Storefront;
@@ -55,6 +56,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
     public DbSet<PaymentProof> PaymentProofs => Set<PaymentProof>();
     public DbSet<StorePaymentConfiguration> StorePaymentConfigurations => Set<StorePaymentConfiguration>();
+    public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
+    public DbSet<NotificationDeliveryAttempt> NotificationDeliveryAttempts => Set<NotificationDeliveryAttempt>();
+    public DbSet<NotificationDeliveryLog> NotificationDeliveryLogs => Set<NotificationDeliveryLog>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -101,6 +105,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<PaymentAttempt>().HasQueryFilter(attempt => attempt.TenantId == CurrentTenantId);
         builder.Entity<PaymentProof>().HasQueryFilter(proof => proof.TenantId == CurrentTenantId);
         builder.Entity<StorePaymentConfiguration>().HasQueryFilter(config => config.TenantId == CurrentTenantId);
+        builder.Entity<NotificationRequest>().HasQueryFilter(request => request.TenantId == CurrentTenantId);
+        builder.Entity<NotificationDeliveryAttempt>().HasQueryFilter(attempt => attempt.TenantId == CurrentTenantId);
+        builder.Entity<NotificationDeliveryLog>().HasQueryFilter(log => log.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -166,6 +173,22 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             if (commandEntry.State is EntityState.Modified or EntityState.Deleted)
             {
                 throw new InvalidOperationException("Order command records are append-only and cannot be changed or deleted.");
+            }
+        }
+
+        foreach (var attemptEntry in ChangeTracker.Entries<NotificationDeliveryAttempt>())
+        {
+            if (attemptEntry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                throw new InvalidOperationException("Notification delivery attempts are append-only and cannot be changed or deleted.");
+            }
+        }
+
+        foreach (var logEntry in ChangeTracker.Entries<NotificationDeliveryLog>())
+        {
+            if (logEntry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                throw new InvalidOperationException("Notification delivery logs are append-only and cannot be changed or deleted.");
             }
         }
 

@@ -3,35 +3,36 @@
 ## Active position
 
 - **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** 03 — Inventory allocation, cancellation, and fulfilment coordination
+- **Step:** 04 — Notification outbox and development provider
 - **Status:** `REVIEW`
-- **Plan state:** Implementation complete. StockMovementType.OrderRestock added, PaymentAttempt.Expire implemented, RestockForOrderAsync implemented in InventoryService with row-level locks, OrderOperationService coordinated with atomic restock on cancellation, payment attempt expiry, and outbox event publishing. Comprehensive PostgreSQL Testcontainers integration test suite (11 tests) and full solution tests (291 tests) verified. Checkpoint created at `artifacts/checkpoints/M06-S03.md`.
+- **Plan state:** Implementation complete. NotificationRequest aggregate root, NotificationDeliveryAttempt entity, NotificationDeliveryLog entity, NotificationRetryPolicy, INotificationService, INotificationDeliveryProvider, INotificationTemplateRegistry, DevelopmentNotificationProvider, OutboxNotificationProcessorJob, NotificationDeliveryJob, NotificationsController, EF Core migration, 33 unit tests, and 10 real PostgreSQL Testcontainers integration tests verified. Full solution test suite passing (334 tests). Checkpoint created at `artifacts/checkpoints/M06-S04.md`.
 - **Active milestone file:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M06-S03.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M06-S02.md` (APPROVED)
-- **Last approved state:** Milestone 06 Step 02 (COD and merchant-QR payment domain) approved.
+- **Current checkpoint:** `artifacts/checkpoints/M06-S04.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M06-S03.md` (APPROVED)
+- **Last approved state:** Milestone 06 Step 03 (Inventory allocation, cancellation, and fulfilment coordination) approved.
 
 ## Current objective
 
-Establish order lifecycle coordination, stock ownership timeline, atomic restock compensation on cancellation, payment verification effects, fulfilment progression, duplicate command safety, and stock reconciliation across all terminal paths.
+Complete the notification lifecycle through outbox message consumption, safe development sink delivery, bounded retries, dead-letter queue, manual replay, customer PII masking, and comprehensive integration testing.
 
 ## Next permitted action
 
-Project-owner review and approval of M06-S03 checkpoint (`artifacts/checkpoints/M06-S03.md`).
+Project-owner review and approval of M06-S04 checkpoint (`artifacts/checkpoints/M06-S04.md`).
 
 ## Next prohibited action
 
-- Starting M06-S04 (notifications) before M06-S03 approval.
+- Starting M06-S05 (seller order workspace integration) before M06-S04 approval.
 - Committing, pushing, deploying, or modifying schema without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-15 | Completed M06-S04 implementation: NotificationRequest aggregate root, NotificationDeliveryAttempt, NotificationDeliveryLog, INotificationService, DevelopmentNotificationProvider dev sink, NotificationTemplateRegistry, OutboxNotificationProcessorJob, NotificationDeliveryJob, NotificationsController, EF Core migration, PiiRedaction, 33 unit tests, 10 PostgreSQL integration tests, full solution green (334 tests). Status -> REVIEW. | Antigravity |
 | 2026-09-15 | Completed M06-S03 implementation: StockMovementType.OrderRestock, PaymentAttempt.Expire, RestockForOrderAsync in InventoryService, OrderOperationService coordination with atomic restock and payment attempt expiration on cancel, OutboxMessage events across transitions, 11 real PostgreSQL integration tests in OrderFulfilmentInventoryCoordinationTests, full solution green (291 tests). Status -> REVIEW. | Antigravity |
 | 2026-09-14 | Project owner approved M06-S02. Commenced Phase 1 (Architect) planning for M06-S03 (Inventory allocation, cancellation, and fulfilment coordination). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-14 | Completed M06-S02 implementation: PaymentAttempt aggregate, PaymentProof entity with magic-byte validation, StorePaymentConfiguration, EF Core migration, IPaymentService, IStorePaymentConfigurationService, controllers, unit tests, and real PostgreSQL integration tests verified. Checkpoint created. Status -> APPROVED. | Antigravity |
