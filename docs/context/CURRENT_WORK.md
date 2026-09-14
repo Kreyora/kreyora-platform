@@ -2,36 +2,42 @@
 
 ## Active position
 
-- **Milestone:** 05 - Storefront, Delivery, Checkout, and Canonical Orders
-- **Step:** M05-S07 - Tampering, Concurrency, Expiry, and Isolation Verification
+- **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
+- **Step:** 01 — State-transition policies and action authorization
 - **Status:** `REVIEW`
-- **Plan state:** Implementation and verification complete; awaiting project-owner review of the invariant matrix.
-- **Active milestone file:** `docs/milestones/05_STOREFRONT_CHECKOUT_ORDERS.md`
+- **Plan state:** Implementation complete. Explicit domain transition policy, aggregate methods, application service, exhaustive table-driven unit tests, and real PostgreSQL integration tests verified. Checkpoint created at `artifacts/checkpoints/M06-S01.md`.
+- **Active milestone file:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M05-S07.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M05-S05.md`
-- **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, and M05-S01 through M05-S05 are approved. Milestone 04 exit gate is approved.
+- **Current checkpoint:** `artifacts/checkpoints/M06-S01.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M05-EXIT.md`
+- **Last approved state:** Milestones 03, 04, and 05 are complete and approved. Milestone 06 Step 01 is in REVIEW.
 
 ## Current objective
 
-Review `artifacts/checkpoints/M05-S07.md` and the completed storefront/checkout invariant matrix. Merchant-QR configuration/proof, public order lookup, seller order UI, and M06 operational transitions remain out of scope.
+Establish explicit, server-authoritative transition policies for `OrderStatus`, `PaymentStatus`, and `FulfilmentStatus`. Expose allowed actions with machine-readable denial reasons for UI use. Enforce strict role authorization, concurrency (`xmin`), idempotency (`OrderCommand`), and audit logging with exhaustive table-driven tests.
 
 ## Next permitted action
 
-Project-owner approval of M05-S07. Graphify was refreshed on explicit project-owner request for the Antigravity transition; this does not approve M05-S07 or permit the next milestone step.
+Project-owner review and approval of M06-S01 checkpoint (`artifacts/checkpoints/M06-S01.md`).
 
 ## Next prohibited action
 
-- Merchant-QR payment configuration/proof, public order lookup, seller UI, or M06 order operations.
-- Committing, pushing, deploying, or using production secrets without explicit authorization.
+- Starting Milestone 06 Step 02 implementation before Step 01 is approved.
+- Advancing to M06-S02 (payment proof upload/verification) or M06-S03 (inventory coordination).
+- Committing, pushing, deploying, or modifying schema without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-14 | Completed M06-S01 implementation: pure domain transition policy engine, Order aggregate methods, OrderOperationService with authorization, xmin concurrency, OrderCommand idempotency, audit events, 45 domain unit tests, and 8 real PostgreSQL integration tests. Checkpoint created. Status -> REVIEW. | Antigravity |
+| 2026-09-14 | Completed Phase 1 (Architect) planning for M06-S01. Created durable plan `docs/plan/M06-S01_ORDER_STATE_TRANSITIONS_PLAN.md` and handoff `task.md`. Status -> PLANNING. | Antigravity |
+| 2026-09-14 | Project owner approved Milestone 05 Exit Gate (`artifacts/checkpoints/M05-EXIT.md`). All 6 exit criteria satisfied; Milestone 05 complete. Status -> APPROVED. | Project owner / Antigravity |
+| 2026-09-14 | Milestone 05 exit-gate verification completed: clean diff confirmation, live Docker Compose walkthrough from fresh seller workspace to public COD order completion, database snapshot inspection, and review checkpoint `artifacts/checkpoints/M05-EXIT.md`. Status -> REVIEW. | Antigravity |
+| 2026-09-14 | Project owner approved M05-S07. All 7 M05 steps approved. Milestone 05 exit-gate planning started (Antigravity). | Project owner / Antigravity |
 | 2026-09-14 | Graphify code graph refreshed explicitly for the Antigravity transition (4,271 nodes, 10,127 edges). M05-S07 remains `REVIEW`; no milestone scope advanced. | Project owner / Codex |
 | 2026-09-14 | M05-S07 implementation completed: public tampering/isolation/idempotency coverage, real expiry-job verification, transient-contention retry fix, full PostgreSQL and frontend regression, scoped Testcontainers cleanup, and review checkpoint. | Codex |
 | 2026-09-14 | Project owner approved M05-S06; M05-S07 commerce invariant verification implementation began. | Project owner / Codex |
