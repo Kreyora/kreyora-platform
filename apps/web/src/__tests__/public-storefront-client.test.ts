@@ -30,4 +30,18 @@ describe("public storefront API adapters", () => {
     expect(call[1].headers["Idempotency-Key"]).toBe("session-key");
     expect(call[1].credentials).toBe("omit");
   });
+
+  it("serializes only customer checkout intent and never browser-owned commerce facts", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ quoteToken: "quote", expiresAt: "2026-09-07T00:00:00Z", delivery: { name: "Delivery", feeNpr: 150, estimatedEtaText: null, codAvailable: true }, totals: { merchandiseSubtotalNpr: 100, discountNpr: 0, deliveryFeeNpr: 150, taxNpr: 0, totalNpr: 250, currency: "NPR" } }), headers: new Headers() });
+
+    await apiPublicCheckoutClient.createQuote({ slug: "demo", lines: [{ variantId: "variant-1", quantity: 2 }], destination: { countryCode: "NP", district: "Kathmandu" } });
+    const quoteBody = JSON.parse((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+    expect(quoteBody).toEqual({ lines: [{ variantId: "variant-1", quantity: 2 }], destination: { countryCode: "NP", district: "Kathmandu" } });
+
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 201, json: () => Promise.resolve({ orderNumber: "NC-001", status: "pendingConfirmation", paymentStatus: "pending", fulfilmentStatus: "unfulfilled", paymentMethod: "cashOnDelivery", totalNpr: 250, currency: "NPR", wasReplayed: false }), headers: new Headers() });
+    await apiPublicCheckoutClient.createCodOrder({ slug: "demo", checkoutSessionId: "session-1", idempotencyKey: "order-key" });
+    const orderBody = JSON.parse((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+    expect(orderBody).toEqual({ checkoutSessionId: "session-1" });
+    expect(JSON.stringify({ quoteBody, orderBody })).not.toMatch(/tenant|store|price|total|delivery|payment|publication/i);
+  });
 });
