@@ -16,13 +16,15 @@ function getBaseUrl(): string {
 
 export interface ApiFetchOptions extends Omit<RequestInit, "body"> {
   body?: BodyInit | unknown;
+  /** Overrides the seller API origin for a bounded public API request. */
+  baseUrl?: string;
 }
 
 export async function apiFetch<T>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<T> {
-  const { body, headers: extraHeaders, ...rest } = options;
+  const { body, headers: extraHeaders, baseUrl, credentials, ...rest } = options;
   const correlationId = generateId();
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
@@ -36,9 +38,9 @@ export async function apiFetch<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(`${getBaseUrl()}${path}`, {
+  const response = await fetch(`${baseUrl ?? getBaseUrl()}${path}`, {
     ...rest,
-    credentials: "include",
+    credentials: credentials ?? "include",
     headers,
     body: body === undefined || isFormData ? body : JSON.stringify(body),
   });
@@ -59,7 +61,11 @@ export async function apiFetch<T>(
       };
     }
 
-    const error = new ApiClientError(problem, responseCorrelationId);
+    const retryAfter = response.headers.get("Retry-After");
+    const retryAfterSeconds = retryAfter && /^\d+$/.test(retryAfter)
+      ? Number(retryAfter)
+      : undefined;
+    const error = new ApiClientError(problem, responseCorrelationId, retryAfterSeconds);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("kreyora:api-error", {
         detail: { status: error.status, detail: error.detail, path },
@@ -68,7 +74,7 @@ export async function apiFetch<T>(
     throw error;
   }
 
-  if (response.status === 201 || response.status === 204) {
+  if (response.status === 204) {
     return undefined as T;
   }
 

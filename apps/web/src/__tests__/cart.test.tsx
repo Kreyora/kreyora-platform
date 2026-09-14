@@ -41,7 +41,7 @@ describe("Cart hook — implementation verification", () => {
 
   it("calculates subtotal from price * quantity", () => {
     expect(content).toContain("subtotal");
-    expect(content).toContain("unitPrice.amount");
+    expect(content).toContain("unitPriceNpr");
   });
 
   it("merges quantities when adding duplicate variantId", () => {

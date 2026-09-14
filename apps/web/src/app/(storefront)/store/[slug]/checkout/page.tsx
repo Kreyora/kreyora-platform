@@ -1,371 +1,85 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useClients } from "@/lib/providers/client-provider";
-import { useCart } from "@/hooks/use-cart";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { DeliveryRule, Address, PaymentMethodType } from "@/lib/types";
-import type { PaymentMethod } from "@/lib/types/payments";
+import { Input } from "@/components/ui/input";
+import { useCart } from "@/hooks/use-cart";
+import { usePublicCheckoutClient } from "@/lib/providers/client-provider";
+import { ApiClientError } from "@/lib/api/errors";
+import type { PublicDeliveryQuote } from "@/lib/types/public-storefront";
 
-const DEMO_TENANT_ID = "tenant-namaste-crafts";
+function idempotencyKey(): string {
+  return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
-  const { storefront, checkout } = useClients();
-  const { items, subtotal, clearCart } = useCart();
+  const checkout = usePublicCheckoutClient();
+  const { items, clearCart } = useCart();
+  const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [email, setEmail] = useState("");
+  const [line1, setLine1] = useState(""); const [line2, setLine2] = useState(""); const [district, setDistrict] = useState(""); const [municipality, setMunicipality] = useState(""); const [locality, setLocality] = useState("");
+  const [privacy, setPrivacy] = useState(false);
+  const [quote, setQuote] = useState<PublicDeliveryQuote | null>(null);
+  const [isQuoting, setIsQuoting] = useState(false); const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string>();
+  const [sessionKey, setSessionKey] = useState<string>(); const [orderKey, setOrderKey] = useState<string>();
 
-  const [deliveryRules, setDeliveryRules] = useState<DeliveryRule[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const canQuote = items.length > 0 && district.trim().length > 0;
+  const canSubmit = Boolean(quote?.delivery.codAvailable && name.trim() && phone.trim() && line1.trim() && privacy);
+  const lines = useMemo(() => items.map((item) => ({ variantId: item.variantId, quantity: item.quantity })), [items]);
+  const destination = () => ({ countryCode: "NP", district: district.trim(), municipality: municipality.trim() || undefined, locality: locality.trim() || undefined });
+  const address = () => ({ addressLine1: line1.trim(), addressLine2: line2.trim() || undefined, district: district.trim(), municipality: municipality.trim() || undefined, locality: locality.trim() || undefined });
+  const invalidateQuote = () => { setQuote(null); setSessionKey(undefined); setOrderKey(undefined); };
 
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [line1, setLine1] = useState("");
-  const [line2, setLine2] = useState("");
-  const [city, setCity] = useState("");
-  const [district, setDistrict] = useState("");
-  const [selectedRuleId, setSelectedRuleId] = useState("");
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType>("cod");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([
-      storefront.getDeliveryRules(DEMO_TENANT_ID),
-      storefront.getPaymentMethods(DEMO_TENANT_ID),
-    ]).then(([rules, methods]) => {
-      if (!cancelled) {
-        setDeliveryRules(rules.filter((r) => r.isActive));
-        setPaymentMethods(methods.filter((m) => m.isEnabled));
-        if (rules.length > 0) setSelectedRuleId(rules[0].id);
-        setIsLoading(false);
-      }
-    });
-    return () => { cancelled = true; };
-  }, [storefront]);
-
-  const selectedRule = deliveryRules.find((r) => r.id === selectedRuleId);
-  const deliveryFee =
-    selectedRule?.feeType === "threshold" &&
-    selectedRule.freeAbove &&
-    subtotal >= selectedRule.freeAbove.amount
-      ? 0
-      : selectedRule?.flatFee?.amount ?? 0;
-  const total = subtotal + deliveryFee;
-
-  const isFormValid = name && phone && line1 && city && district && selectedRuleId;
-
-  const handleSubmit = useCallback(async () => {
-    if (!isFormValid || submitting || submitted) return;
-    setSubmitting(true);
-
-    const address: Address = {
-      line1,
-      line2: line2 || undefined,
-      city,
-      district,
-      country: "NP",
-      contactName: name,
-      contactPhone: phone,
-    };
-
-    try {
-      const quote = await checkout.createQuote(slug, {
-        items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
-        deliveryAddress: address,
-        deliveryRuleId: selectedRuleId,
-      });
-
-      const order = await checkout.submitOrder(slug, {
-        quoteReservationId: quote.reservationId,
-        paymentMethod: selectedPayment,
-        customerName: name,
-        customerPhone: phone,
-        customerEmail: email || undefined,
-        deliveryAddress: address,
-      });
-
-      setSubmitted(true);
-      clearCart();
-      router.push(`/store/${slug}/confirmation/${order.id}`);
-    } catch {
-      setSubmitting(false);
+  const explain = (error: unknown) => {
+    if (error instanceof ApiClientError) {
+      if (error.status === 409) return "Price, stock, or delivery changed. Please calculate delivery again.";
+      if (error.status === 429) return error.retryAfterSeconds ? `Please try again in ${error.retryAfterSeconds} seconds.` : "Too many requests. Please wait and try again.";
+      return error.detail || "Please check your details and try again.";
     }
-  }, [
-    isFormValid, submitting, submitted, name, phone, email,
-    line1, line2, city, district, selectedRuleId, selectedPayment,
-    items, slug, checkout, clearCart, router,
-  ]);
+    return "We could not reach the store. Your cart is still saved; please try again.";
+  };
 
-  if (items.length === 0 && !submitted) {
-    return (
-      <div className="flex flex-col items-center py-16 text-center">
-        <h1 className="text-lg font-semibold text-[var(--color-ink-primary)]">
-          Nothing to check out
-        </h1>
-        <p className="mt-1 text-sm text-[var(--color-ink-secondary)]">
-          Add items to your cart first.
-        </p>
-        <Link
-          href={`/store/${slug}`}
-          className="mt-4 inline-flex min-h-11 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-[var(--space-4)] text-sm font-medium text-[var(--color-ink-primary)] hover:bg-[var(--color-canvas-subtle)]"
-        >
-          Browse products
-        </Link>
-      </div>
-    );
+  async function calculateQuote() {
+    if (!canQuote || isQuoting) return;
+    setIsQuoting(true); setMessage(undefined);
+    try { setQuote(await checkout.createQuote({ slug, lines, destination: destination() })); setSessionKey(undefined); setOrderKey(undefined); }
+    catch (error) { setMessage(explain(error)); }
+    finally { setIsQuoting(false); }
   }
 
-  if (isLoading) {
-    return (
-      <div>
-        <Skeleton className="mb-6 h-8 w-40" />
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-11 w-full" />
-          ))}
-        </div>
-      </div>
-    );
+  async function placeOrder() {
+    if (!quote || !canSubmit || isSubmitting) return;
+    setIsSubmitting(true); setMessage(undefined);
+    const currentSessionKey = sessionKey ?? idempotencyKey();
+    const currentOrderKey = orderKey ?? idempotencyKey();
+    setSessionKey(currentSessionKey); setOrderKey(currentOrderKey);
+    try {
+      const session = await checkout.createSession({ slug, quoteToken: quote.quoteToken, idempotencyKey: currentSessionKey, customer: { displayName: name.trim(), phone: phone.trim(), email: email.trim() || undefined, saveContact: false, privacyAcknowledged: privacy }, address: address() });
+      const confirmation = await checkout.createCodOrder({ slug, checkoutSessionId: session.id, idempotencyKey: currentOrderKey });
+      sessionStorage.setItem(`kreyora:public-confirmation:v1:${slug}:${confirmation.orderNumber}`, JSON.stringify(confirmation));
+      clearCart(); router.push(`/store/${slug}/confirmation/${confirmation.orderNumber}`);
+    } catch (error) {
+      const text = explain(error); setMessage(text);
+      if (error instanceof ApiClientError && error.status === 409) invalidateQuote();
+      setIsSubmitting(false);
+    }
   }
 
-  return (
-    <div>
-      <h1 className="text-xl font-bold text-[var(--color-ink-primary)]">Checkout</h1>
+  if (items.length === 0) return <div className="py-16 text-center"><h1 className="text-lg font-semibold">Nothing to check out</h1><p className="mt-1 text-sm text-[var(--color-ink-secondary)]">Add items to your cart first.</p><Link href={`/store/${slug}`} className="mt-4 inline-block text-sm underline">Browse products</Link></div>;
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-3">
-        {/* Form */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Contact */}
-          <section>
-            <h2 className="mb-3 text-base font-semibold text-[var(--color-ink-primary)]">
-              Contact Information
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input
-                label="Full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                placeholder="e.g. Sita Shrestha"
-              />
-              <Input
-                label="Phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                placeholder="+977-98..."
-              />
-              <Input
-                label="Email (optional)"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-              />
-            </div>
-          </section>
-
-          {/* Address */}
-          <section>
-            <h2 className="mb-3 text-base font-semibold text-[var(--color-ink-primary)]">
-              Delivery Address
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input
-                label="Address line 1"
-                value={line1}
-                onChange={(e) => setLine1(e.target.value)}
-                required
-                placeholder="Street address, ward"
-              />
-              <Input
-                label="Address line 2"
-                value={line2}
-                onChange={(e) => setLine2(e.target.value)}
-                placeholder="Landmark, area"
-              />
-              <Input
-                label="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                required
-                placeholder="e.g. Kathmandu"
-              />
-              <Input
-                label="District"
-                value={district}
-                onChange={(e) => setDistrict(e.target.value)}
-                required
-                placeholder="e.g. Kathmandu"
-              />
-            </div>
-          </section>
-
-          {/* Delivery rule */}
-          <section>
-            <h2 className="mb-3 text-base font-semibold text-[var(--color-ink-primary)]">
-              Delivery Method
-            </h2>
-            <div className="flex flex-col gap-2">
-              {deliveryRules.map((rule) => {
-                const fee =
-                  rule.feeType === "threshold" &&
-                  rule.freeAbove &&
-                  subtotal >= rule.freeAbove.amount
-                    ? 0
-                    : rule.flatFee?.amount ?? 0;
-                return (
-                  <label
-                    key={rule.id}
-                    className={[
-                      "flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] border p-4 transition-colors",
-                      rule.id === selectedRuleId
-                        ? "border-[var(--color-surface-dark)] bg-[var(--color-canvas-subtle)]"
-                        : "border-[var(--color-border)] hover:bg-[var(--color-canvas-subtle)]",
-                    ].join(" ")}
-                  >
-                    <input
-                      type="radio"
-                      name="delivery"
-                      checked={rule.id === selectedRuleId}
-                      onChange={() => setSelectedRuleId(rule.id)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-[var(--color-ink-primary)]">
-                        {rule.name}
-                      </p>
-                      <p className="text-xs text-[var(--color-ink-secondary)]">
-                        {rule.zones.join(", ")}
-                        {rule.estimatedDays && ` · ${rule.estimatedDays}`}
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-[var(--color-ink-primary)]">
-                        {fee === 0 ? "Free" : `Rs. ${fee.toLocaleString("en-IN")}`}
-                      </p>
-                      {rule.freeAbove && fee > 0 && (
-                        <p className="text-[11px] text-[var(--color-ink-secondary)]">
-                          Free above Rs. {rule.freeAbove.amount.toLocaleString("en-IN")}
-                        </p>
-                      )}
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Payment */}
-          <section>
-            <h2 className="mb-3 text-base font-semibold text-[var(--color-ink-primary)]">
-              Payment Method
-            </h2>
-            <div className="flex flex-col gap-2">
-              {paymentMethods.map((pm) => (
-                <label
-                  key={pm.id}
-                  className={[
-                    "flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] border p-4 transition-colors",
-                    pm.type === selectedPayment
-                      ? "border-[var(--color-surface-dark)] bg-[var(--color-canvas-subtle)]"
-                      : "border-[var(--color-border)] hover:bg-[var(--color-canvas-subtle)]",
-                  ].join(" ")}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={pm.type === selectedPayment}
-                    onChange={() => setSelectedPayment(pm.type)}
-                    className="mt-1"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-[var(--color-ink-primary)]">
-                      {pm.label}
-                    </p>
-                    {pm.instructions && (
-                      <p className="mt-1 text-xs text-[var(--color-ink-secondary)]">
-                        {pm.instructions}
-                      </p>
-                    )}
-                    {pm.qrImageUrl && pm.type === selectedPayment && (
-                      <div className="mt-3 flex h-32 w-32 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-canvas)]">
-                        <span className="text-[10px] text-[var(--color-ink-secondary)]">
-                          QR placeholder
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </label>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* Order summary sidebar */}
-        <div className="lg:self-start">
-          <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-            <h2 className="text-base font-semibold text-[var(--color-ink-primary)]">
-              Order Summary
-            </h2>
-            <div className="mt-4 flex flex-col divide-y divide-[var(--color-border)]">
-              {items.map((item) => (
-                <div key={item.variantId} className="flex justify-between py-2 text-sm">
-                  <span className="text-[var(--color-ink-secondary)]">
-                    {item.productTitle} × {item.quantity}
-                  </span>
-                  <span className="text-[var(--color-ink-primary)]">
-                    Rs. {(item.unitPrice.amount * item.quantity).toLocaleString("en-IN")}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 space-y-1 border-t border-[var(--color-border)] pt-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[var(--color-ink-secondary)]">Subtotal</span>
-                <span className="text-[var(--color-ink-primary)]">
-                  Rs. {subtotal.toLocaleString("en-IN")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--color-ink-secondary)]">Delivery</span>
-                <span className="text-[var(--color-ink-primary)]">
-                  {deliveryFee === 0 ? "Free" : `Rs. ${deliveryFee.toLocaleString("en-IN")}`}
-                </span>
-              </div>
-            </div>
-            <div className="mt-3 border-t border-[var(--color-border)] pt-3">
-              <div className="flex justify-between">
-                <span className="text-sm font-semibold text-[var(--color-ink-primary)]">
-                  Total
-                </span>
-                <span className="text-lg font-bold text-[var(--color-ink-primary)]">
-                  Rs. {total.toLocaleString("en-IN")}
-                </span>
-              </div>
-            </div>
-
-            <Button
-              className="mt-4 w-full"
-              onClick={handleSubmit}
-              loading={submitting}
-              disabled={!isFormValid || submitted}
-            >
-              {submitted ? "Order placed" : "Place order (simulated)"}
-            </Button>
-
-            <p className="mt-3 text-center text-[10px] text-[var(--color-ink-secondary)]">
-              This is a demo checkout. No real payment or order is processed.
-            </p>
-          </div>
-        </div>
-      </div>
+  const total = quote?.totals;
+  return <div><h1 className="text-xl font-bold">Checkout</h1><p className="mt-1 text-sm text-[var(--color-ink-secondary)]">Delivery and final totals are confirmed by the store before you place a COD order.</p>
+    {message && <div role="alert" className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-danger)] p-3 text-sm text-[var(--color-danger)]">{message}</div>}
+    <div className="mt-6 grid gap-8 lg:grid-cols-3"><div className="space-y-6 lg:col-span-2">
+      <section><h2 className="mb-3 text-base font-semibold">Contact information</h2><div className="grid gap-4 sm:grid-cols-2"><Input label="Full name" value={name} onChange={(event) => setName(event.target.value)} required /><Input label="Phone" value={phone} onChange={(event) => setPhone(event.target.value)} required /><Input label="Email (optional)" type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></div></section>
+      <section><h2 className="mb-3 text-base font-semibold">Delivery address</h2><div className="grid gap-4 sm:grid-cols-2"><Input label="Address line 1" value={line1} onChange={(event) => { setLine1(event.target.value); invalidateQuote(); }} required /><Input label="Address line 2" value={line2} onChange={(event) => { setLine2(event.target.value); invalidateQuote(); }} /><Input label="District" value={district} onChange={(event) => { setDistrict(event.target.value); invalidateQuote(); }} required /><Input label="Municipality" value={municipality} onChange={(event) => { setMunicipality(event.target.value); invalidateQuote(); }} /><Input label="Locality" value={locality} onChange={(event) => { setLocality(event.target.value); invalidateQuote(); }} /></div><Button className="mt-4" variant="outline" onClick={calculateQuote} loading={isQuoting} disabled={!canQuote}>Calculate delivery</Button></section>
+      {quote && <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4"><h2 className="text-base font-semibold">Server quote</h2><p className="mt-1 text-sm text-[var(--color-ink-secondary)]">{quote.delivery.name}{quote.delivery.estimatedEtaText ? ` · ${quote.delivery.estimatedEtaText}` : ""}</p>{!quote.delivery.codAvailable && <p role="alert" className="mt-3 text-sm text-[var(--color-danger)]">Cash on delivery is not available for this destination. Edit the address and calculate again.</p>}<p className="mt-2 text-xs text-[var(--color-ink-secondary)]">Quote expires {new Date(quote.expiresAt).toLocaleTimeString()}</p></section>}
+      <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={privacy} onChange={(event) => setPrivacy(event.target.checked)} className="mt-1" /><span>I acknowledge the store&apos;s privacy policy and allow these details to be used to process this order.</span></label>
     </div>
-  );
+    <aside className="h-fit rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5"><h2 className="text-base font-semibold">Order summary</h2><div className="mt-4 space-y-2 text-sm">{items.map((item) => <div key={item.variantId} className="flex justify-between gap-3"><span>{item.productTitle} × {item.quantity}</span><span>Rs. {(item.unitPriceNpr * item.quantity).toLocaleString("en-IN")}</span></div>)}</div><div className="mt-4 space-y-2 border-t pt-4 text-sm"><div className="flex justify-between"><span>Merchandise</span><span>Rs. {(total?.merchandiseSubtotalNpr ?? 0).toLocaleString("en-IN")}</span></div><div className="flex justify-between"><span>Delivery</span><span>{quote ? `Rs. ${total?.deliveryFeeNpr.toLocaleString("en-IN")}` : "Calculate first"}</span></div><div className="flex justify-between font-bold"><span>Total</span><span>{quote ? `Rs. ${total?.totalNpr.toLocaleString("en-IN")}` : "—"}</span></div></div><Button className="mt-5 w-full" onClick={placeOrder} loading={isSubmitting} disabled={!canSubmit || isSubmitting}>Place cash-on-delivery order</Button></aside>
+    </div></div>;
 }

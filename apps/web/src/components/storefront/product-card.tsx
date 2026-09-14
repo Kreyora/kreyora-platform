@@ -1,14 +1,15 @@
 import Link from "next/link";
-import type { Product } from "@/lib/types";
+import type { PublicCatalogProduct } from "@/lib/types/public-storefront";
+import { usePublicStorefrontClient } from "@/lib/providers/client-provider";
 
 interface ProductCardProps {
-  product: Product;
+  product: PublicCatalogProduct;
   storeSlug: string;
 }
 
-function priceRange(p: Product): string {
+function priceRange(p: PublicCatalogProduct): string {
   if (p.variants.length === 0) return "—";
-  const prices = p.variants.filter((v) => v.isPublished).map((v) => v.price.amount);
+  const prices = p.variants.map((v) => v.priceNpr);
   if (prices.length === 0) return "—";
   const min = Math.min(...prices);
   const max = Math.max(...prices);
@@ -18,33 +19,17 @@ function priceRange(p: Product): string {
 
 export function ProductCard({ product, storeSlug }: ProductCardProps) {
   const firstMedia = product.media[0];
+  const storefront = usePublicStorefrontClient();
 
   return (
     <Link
-      href={`/store/${storeSlug}/product/${product.id}`}
+      href={`/store/${storeSlug}/product/${product.slug}`}
       className="group flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-canvas)] transition-colors duration-[var(--duration-hover)] hover:border-[var(--color-ink-secondary)]"
     >
       {/* Image placeholder */}
       <div className="relative flex aspect-square items-center justify-center bg-[var(--color-canvas-subtle)]">
         {firstMedia ? (
-          <div className="flex flex-col items-center gap-2 text-[var(--color-ink-secondary)]">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <path d="m21 15-5-5L5 21" />
-            </svg>
-            <span className="text-[10px]">{firstMedia.altText || "Product image"}</span>
-          </div>
+          <img src={storefront.getMediaUrl(storeSlug, firstMedia.id)} alt={firstMedia.altText ?? product.title} className="h-full w-full object-cover" />
         ) : (
           <span className="text-xs text-[var(--color-ink-secondary)]">No image</span>
         )}
@@ -60,7 +45,7 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
         </p>
         {product.variants.length > 1 && (
           <p className="mt-0.5 text-[11px] text-[var(--color-ink-secondary)]">
-            {product.variants.filter((v) => v.isPublished).length} options
+            {product.variants.length} options
           </p>
         )}
       </div>

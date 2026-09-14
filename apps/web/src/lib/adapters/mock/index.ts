@@ -4,6 +4,7 @@ export { mockCatalogClient } from "./mock-catalog-client";
 export { mockInventoryClient } from "./mock-inventory-client";
 export { mockStorefrontClient } from "./mock-storefront-client";
 export { mockCheckoutClient } from "./mock-checkout-client";
+export { mockPublicCheckoutClient, mockPublicStorefrontClient } from "./mock-public-storefront-client";
 export { mockOrderClient } from "./mock-order-client";
 export { mockPaymentClient } from "./mock-payment-client";
 export { mockConversationClient } from "./mock-conversation-client";

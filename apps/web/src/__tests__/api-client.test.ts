@@ -89,11 +89,12 @@ describe("apiFetch", () => {
     expect(result).toBeUndefined();
   });
 
-  it("returns undefined for a successful empty 201 response", async () => {
+  it("parses a successful 201 response body", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 201,
-      headers: new Headers({ "Content-Length": "0" }),
+      json: () => Promise.resolve({ id: "new-resource" }),
+      headers: new Headers(),
     });
 
     const result = await apiFetch("/v1/auth/register", {
@@ -101,7 +102,7 @@ describe("apiFetch", () => {
       body: { email: "seller@example.test" },
     });
 
-    expect(result).toBeUndefined();
+    expect(result).toEqual({ id: "new-resource" });
   });
 
   it("throws ApiClientError for RFC 7807 error responses", async () => {
@@ -131,6 +132,21 @@ describe("apiFetch", () => {
       expect(apiErr.correlationId).toBe("test-corr-id");
       expect(apiErr.message).toBe("Not Found");
     }
+  });
+
+  it("captures Retry-After for rate-limited requests", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      json: () => Promise.resolve({ type: "about:blank", title: "Too many requests", status: 429, detail: "Try again later." }),
+      headers: new Headers({ "Retry-After": "12" }),
+    });
+
+    await expect(apiFetch("/public/v1/store/checkout/quotes")).rejects.toMatchObject({
+      status: 429,
+      retryAfterSeconds: 12,
+    });
   });
 
   it("publishes an API error event for seller session recovery", async () => {

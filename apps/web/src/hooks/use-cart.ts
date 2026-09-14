@@ -1,20 +1,14 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import React from "react";
-import type { CartItem } from "@/lib/types";
+import type { PublicCartItem } from "@/lib/types/public-storefront";
 
 interface CartContextValue {
-  items: CartItem[];
+  items: PublicCartItem[];
   itemCount: number;
   subtotal: number;
-  addItem: (item: CartItem) => void;
+  addItem: (item: PublicCartItem) => void;
   removeItem: (variantId: string) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   clearCart: () => void;
@@ -22,16 +16,34 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+export function CartProvider({ children, storeSlug }: { children: ReactNode; storeSlug: string }) {
+  const storageKey = `kreyora:public-cart:v1:${storeSlug}`;
+  const [items, setItems] = useState<PublicCartItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
-  const addItem = useCallback((item: CartItem) => {
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      try {
+        const saved = sessionStorage.getItem(storageKey);
+        setItems(saved ? JSON.parse(saved) as PublicCartItem[] : []);
+      } catch {
+        setItems([]);
+      }
+      setLoaded(true);
+    });
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (loaded) sessionStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, loaded, storageKey]);
+
+  const addItem = useCallback((item: PublicCartItem) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.variantId === item.variantId);
       if (existing) {
         return prev.map((i) =>
           i.variantId === item.variantId
-            ? { ...i, quantity: i.quantity + item.quantity }
+            ? { ...i, quantity: i.quantity + item.quantity, unitPriceNpr: item.unitPriceNpr, imageId: item.imageId, imageAlt: item.imageAlt }
             : i,
         );
       }
@@ -57,7 +69,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce(
-    (sum, i) => sum + i.unitPrice.amount * i.quantity,
+    (sum, i) => sum + i.unitPriceNpr * i.quantity,
     0,
   );
 
