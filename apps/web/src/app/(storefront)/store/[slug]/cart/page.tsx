@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
+import { usePublicStorefrontClient, USING_PUBLIC_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
 
 export default function CartPage() {
   const { slug } = useParams<{ slug: string }>();
+  const storefront = usePublicStorefrontClient();
   const { items, itemCount, subtotal, removeItem, updateQuantity } = useCart();
 
   if (items.length === 0) {
@@ -55,21 +57,8 @@ export default function CartPage() {
           <div className="flex flex-col divide-y divide-[var(--color-border)]">
             {items.map((item) => (
               <div key={item.variantId} className="flex gap-4 py-4 first:pt-0 last:pb-0">
-                {/* Image placeholder */}
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-canvas-subtle)]">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--color-ink-secondary)"
-                    strokeWidth="1.5"
-                    aria-hidden="true"
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="m21 15-5-5L5 21" />
-                  </svg>
+                  {item.imageId ? <img src={storefront.getMediaUrl(slug, item.imageId)} alt={item.imageAlt ?? item.productTitle} className="h-full w-full rounded-[var(--radius-md)] object-cover" /> : <span className="text-xs text-[var(--color-ink-secondary)]">No image</span>}
                 </div>
 
                 {/* Details */}
@@ -81,7 +70,7 @@ export default function CartPage() {
                     {item.variantName}
                   </p>
                   <p className="text-sm text-[var(--color-ink-primary)]">
-                    Rs. {item.unitPrice.amount.toLocaleString("en-IN")}
+                    Rs. {item.unitPriceNpr.toLocaleString("en-IN")}
                   </p>
 
                   <div className="mt-2 flex items-center gap-3">
@@ -121,7 +110,7 @@ export default function CartPage() {
                 {/* Line total */}
                 <div className="text-right">
                   <p className="text-sm font-medium text-[var(--color-ink-primary)]">
-                    Rs. {(item.unitPrice.amount * item.quantity).toLocaleString("en-IN")}
+                    Rs. {(item.unitPriceNpr * item.quantity).toLocaleString("en-IN")}
                   </p>
                 </div>
               </div>
@@ -170,9 +159,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      <p className="mt-8 text-center text-[10px] text-[var(--color-ink-secondary)]">
-        This is a demo cart. No real transactions occur.
-      </p>
+      {USING_PUBLIC_FIXTURE_ADAPTERS && <p className="mt-8 text-center text-[10px] text-[var(--color-ink-secondary)]">Demo cart — no real transactions occur.</p>}
     </div>
   );
 }

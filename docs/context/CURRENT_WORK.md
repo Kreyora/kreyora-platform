@@ -3,34 +3,38 @@
 ## Active position
 
 - **Milestone:** 05 - Storefront, Delivery, Checkout, and Canonical Orders
-- **Step:** M05-S05 - Public APIs, Host/Slug Resolution, and Abuse Controls
+- **Step:** M05-S06 - Frontend Integration and Complete Customer Journey
 - **Status:** `REVIEW`
+- **Plan state:** Implementation complete; awaiting project-owner review.
 - **Active milestone file:** `docs/milestones/05_STOREFRONT_CHECKOUT_ORDERS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M05-S05.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M05-S01.md`
-- **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, and M05-S01 through M05-S03 are approved. Milestone 04 exit gate is approved.
+- **Current checkpoint:** `artifacts/checkpoints/M05-S06.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M05-S05.md`
+- **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, and M05-S01 through M05-S05 are approved. Milestone 04 exit gate is approved.
 
 ## Current objective
 
-Review M05-S05: the bounded anonymous storefront API, public projection boundary, rate/cache/request controls, live OpenAPI/TypeScript contract, and PostgreSQL-backed verification are complete. Frontend customer-journey integration, merchant-QR configuration/proof, seller order UI, and M06 operational transitions remain out of scope.
+Review and approve `docs/plan/M05-S06_PUBLIC_STOREFRONT_FRONTEND_PLAN.md` before implementation. The planned work replaces the public storefront's fixture-only data path with typed generated public API adapters and a server-authoritative COD customer journey. Merchant-QR configuration/proof, public order lookup, seller order UI, and M06 operational transitions remain out of scope.
 
 ## Next permitted action
 
-Project-owner review and approval of `artifacts/checkpoints/M05-S05.md`. Only after approval may Graphify be refreshed and M05-S06 planning begin.
+Project-owner review and approval of `artifacts/checkpoints/M05-S06.md`. Only after approval may Graphify be refreshed and M05-S07 planning begin.
 
 ## Next prohibited action
 
-- Implementing public storefront APIs, payment configuration/proof, seller UI, or M06 order operations before M05-S05 plan approval.
+- Implementing M05-S07, merchant-QR payment configuration/proof, public order lookup, seller UI, or M06 order operations before M05-S06 approval.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-07 | M05-S06 implementation completed: typed anonymous public adapters, server-authoritative COD checkout, safe cart/confirmation behavior, frontend regression/build, PostgreSQL/Testcontainers regression and scoped cleanup. | Codex |
+| 2026-09-07 | Project owner approved the M05-S06 plan; implementation started. | Project owner / Codex |
+| 2026-09-07 | Project owner approved M05-S05. Graphify was refreshed and the M05-S06 public-storefront frontend/COD-journey plan was drafted; no M05-S06 code started. | Project owner / Codex |
 | 2026-09-05 | M05-S05 implementation completed: public host/dev-slug boundary, safe catalog/media projections, anonymous COD flow, OpenAPI/TypeScript refresh, PostgreSQL-backed regression, frontend CI, scoped Docker cleanup, and review checkpoint. | Codex |
 | 2026-09-05 | Project owner approved M05-S05 plan and ADR-009; implementation started. | Project owner / Codex |
 | 2026-09-05 | Project owner approved M05-S04. Graphify refreshed; M05-S05 public-storefront boundary plan drafted. | Project owner / Codex |

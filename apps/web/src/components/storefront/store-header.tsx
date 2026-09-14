@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useCart } from "@/hooks/use-cart";
-import type { Store } from "@/lib/types";
+import type { PublicStorefront } from "@/lib/types/public-storefront";
 
 interface StoreHeaderProps {
-  store: Store;
+  store: PublicStorefront;
 }
 
 export function StoreHeader({ store }: StoreHeaderProps) {
   const { itemCount } = useCart();
-  const slug = store.slug;
+  const slug = store.platformSlug;
 
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-canvas)]">
@@ -19,7 +19,7 @@ export function StoreHeader({ store }: StoreHeaderProps) {
           href={`/store/${slug}`}
           className="text-base font-bold text-[var(--color-ink-primary)] hover:opacity-80 transition-opacity duration-[var(--duration-hover)]"
         >
-          {store.profile.name}
+          {store.displayName}
         </Link>
 
         <nav className="flex items-center gap-4">
