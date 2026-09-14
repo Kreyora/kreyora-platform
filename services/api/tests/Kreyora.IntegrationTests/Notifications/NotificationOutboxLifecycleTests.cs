@@ -281,6 +281,7 @@ public sealed class NotificationOutboxLifecycleTests : IClassFixture<PostgresFix
 
         // Advance clock past 5 minutes -> Attempt 3 -> Max attempts reached -> DeadLettered!
         clock.UtcNow = clock.UtcNow.AddMinutes(6);
+        db.ChangeTracker.Clear();
         await deliveryJob.DeliverTenantAsync(services, tenant.Id);
         db.ChangeTracker.Clear();
         var n3 = await db.NotificationRequests.Include(n => n.DeliveryAttempts).SingleAsync(n => n.Id == notification.Id);
