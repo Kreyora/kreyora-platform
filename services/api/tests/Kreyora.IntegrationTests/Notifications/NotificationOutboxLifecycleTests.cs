@@ -256,7 +256,8 @@ public sealed class NotificationOutboxLifecycleTests : IClassFixture<PostgresFix
             NullLogger<NotificationDeliveryJob>.Instance);
 
         // Attempt 1 -> Failed, backoff 1 minute
-        await deliveryJob.DeliverTenantAsync(services, tenant.Id);
+        var d1 = await deliveryJob.DeliverTenantAsync(services, tenant.Id);
+        Assert.Equal(1, d1);
         db.ChangeTracker.Clear();
         var n1 = await db.NotificationRequests.SingleAsync(n => n.Id == notification.Id);
         Assert.Equal(NotificationStatus.Failed, n1.Status);
@@ -265,14 +266,18 @@ public sealed class NotificationOutboxLifecycleTests : IClassFixture<PostgresFix
 
         // Advance clock by 30 seconds -> NextRetryAt not reached -> not delivered
         clock.UtcNow = clock.UtcNow.AddSeconds(30);
-        await deliveryJob.DeliverTenantAsync(services, tenant.Id);
+        db.ChangeTracker.Clear();
+        var d1_skip = await deliveryJob.DeliverTenantAsync(services, tenant.Id);
+        Assert.Equal(0, d1_skip);
         db.ChangeTracker.Clear();
         var n1_nochange = await db.NotificationRequests.SingleAsync(n => n.Id == notification.Id);
         Assert.Equal(1, n1_nochange.AttemptCount);
 
         // Advance clock past 1 minute -> Attempt 2 -> Failed, backoff 5 minutes
         clock.UtcNow = clock.UtcNow.AddSeconds(31);
-        await deliveryJob.DeliverTenantAsync(services, tenant.Id);
+        db.ChangeTracker.Clear();
+        var d2 = await deliveryJob.DeliverTenantAsync(services, tenant.Id);
+        Assert.Equal(1, d2);
         db.ChangeTracker.Clear();
         var n2 = await db.NotificationRequests.SingleAsync(n => n.Id == notification.Id);
         Assert.Equal(NotificationStatus.Failed, n2.Status);
@@ -282,7 +287,8 @@ public sealed class NotificationOutboxLifecycleTests : IClassFixture<PostgresFix
         // Advance clock past 5 minutes -> Attempt 3 -> Max attempts reached -> DeadLettered!
         clock.UtcNow = clock.UtcNow.AddMinutes(6);
         db.ChangeTracker.Clear();
-        await deliveryJob.DeliverTenantAsync(services, tenant.Id);
+        var d3 = await deliveryJob.DeliverTenantAsync(services, tenant.Id);
+        Assert.Equal(1, d3);
         db.ChangeTracker.Clear();
         var n3 = await db.NotificationRequests.Include(n => n.DeliveryAttempts).SingleAsync(n => n.Id == notification.Id);
         Assert.Equal(NotificationStatus.DeadLettered, n3.Status);

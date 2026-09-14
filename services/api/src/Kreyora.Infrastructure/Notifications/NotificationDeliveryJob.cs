@@ -71,6 +71,11 @@ public sealed partial class NotificationDeliveryJob(
 
         foreach (var notification in notifications)
         {
+            if (notification.NextRetryAt.HasValue && notification.NextRetryAt.Value > now)
+            {
+                continue;
+            }
+
             try
             {
                 notification.MarkDelivering(now);
