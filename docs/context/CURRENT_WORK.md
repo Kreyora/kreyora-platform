@@ -3,30 +3,30 @@
 ## Active position
 
 - **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** 01 — State-transition policies and action authorization
+- **Step:** 02 — COD and merchant-QR payment domain
 - **Status:** `REVIEW`
-- **Plan state:** Implementation complete. Explicit domain transition policy, aggregate methods, application service, exhaustive table-driven unit tests, and real PostgreSQL integration tests verified. Checkpoint created at `artifacts/checkpoints/M06-S01.md`.
+- **Plan state:** Implementation complete. PaymentAttempt aggregate, PaymentProof entity, StorePaymentConfiguration, EF Core migration, IPaymentService, IStorePaymentConfigurationService, controllers, unit tests, and real PostgreSQL integration tests verified. Checkpoint created at `artifacts/checkpoints/M06-S02.md`.
 - **Active milestone file:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M06-S01.md`
-- **Previous checkpoint:** `artifacts/checkpoints/M05-EXIT.md`
-- **Last approved state:** Milestones 03, 04, and 05 are complete and approved. Milestone 06 Step 01 is in REVIEW.
+- **Current checkpoint:** `artifacts/checkpoints/M06-S02.md`
+- **Previous checkpoint:** `artifacts/checkpoints/M06-S01.md`
+- **Last approved state:** Milestones 03, 04, 05 complete and approved. Milestone 06 Step 01 approved.
 
 ## Current objective
 
-Establish explicit, server-authoritative transition policies for `OrderStatus`, `PaymentStatus`, and `FulfilmentStatus`. Expose allowed actions with machine-readable denial reasons for UI use. Enforce strict role authorization, concurrency (`xmin`), idempotency (`OrderCommand`), and audit logging with exhaustive table-driven tests.
+Establish COD and merchant-QR payment domain, store payment configuration, PaymentAttempt aggregate, manual payment proof upload via existing private object storage, verification decision, COD collection record, and provider-neutral transaction references.
 
 ## Next permitted action
 
-Project-owner review and approval of M06-S01 checkpoint (`artifacts/checkpoints/M06-S01.md`).
+Project-owner review and approval of M06-S02 checkpoint (`artifacts/checkpoints/M06-S02.md`).
 
 ## Next prohibited action
 
-- Starting Milestone 06 Step 02 implementation before Step 01 is approved.
-- Advancing to M06-S02 (payment proof upload/verification) or M06-S03 (inventory coordination).
+- Starting M06-S02 implementation before the plan is approved.
+- Advancing to M06-S03 (inventory coordination) or later steps.
 - Committing, pushing, deploying, or modifying schema without authorization.
 
 ## Update history

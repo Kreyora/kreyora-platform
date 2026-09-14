@@ -20,8 +20,8 @@ Cancellation, reservation release, stock allocation/commitment, and notification
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | State-transition policies and action authorization | `REVIEW` |
-| 02 | COD and merchant-QR payment domain | `NOT STARTED` |
+| 01 | State-transition policies and action authorization | `APPROVED` |
+| 02 | COD and merchant-QR payment domain | `REVIEW` |
 | 03 | Inventory allocation, cancellation, and fulfilment coordination | `NOT STARTED` |
 | 04 | Notification outbox and development provider | `NOT STARTED` |
 | 05 | Seller order workspace integration | `NOT STARTED` |

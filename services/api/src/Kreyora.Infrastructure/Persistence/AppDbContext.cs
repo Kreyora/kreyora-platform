@@ -5,6 +5,7 @@ using Kreyora.Domain.Common;
 using Kreyora.Domain.Customers;
 using Kreyora.Domain.Inventory;
 using Kreyora.Domain.Orders;
+using Kreyora.Domain.Payments;
 using Kreyora.Domain.Storefront;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Identity;
@@ -51,6 +52,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<OrderCommand> OrderCommands => Set<OrderCommand>();
+    public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
+    public DbSet<PaymentProof> PaymentProofs => Set<PaymentProof>();
+    public DbSet<StorePaymentConfiguration> StorePaymentConfigurations => Set<StorePaymentConfiguration>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -94,6 +98,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<Order>().HasQueryFilter(order => order.TenantId == CurrentTenantId);
         builder.Entity<OrderItem>().HasQueryFilter(item => item.TenantId == CurrentTenantId);
         builder.Entity<OrderCommand>().HasQueryFilter(command => command.TenantId == CurrentTenantId);
+        builder.Entity<PaymentAttempt>().HasQueryFilter(attempt => attempt.TenantId == CurrentTenantId);
+        builder.Entity<PaymentProof>().HasQueryFilter(proof => proof.TenantId == CurrentTenantId);
+        builder.Entity<StorePaymentConfiguration>().HasQueryFilter(config => config.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
