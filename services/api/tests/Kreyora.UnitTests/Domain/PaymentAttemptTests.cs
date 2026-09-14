@@ -147,5 +147,49 @@ public class PaymentAttemptTests
 
         Assert.Throws<InvalidOperationException>(() => attempt.MarkCollected(UserId, Now));
     }
+
+    [Theory]
+    [InlineData(OrderPaymentMethod.CashOnDelivery)]
+    [InlineData(OrderPaymentMethod.MerchantQr)]
+    public void Expire_PendingOrAwaitingProofAttempt_TransitionsToExpired(OrderPaymentMethod method)
+    {
+        var attempt = PaymentAttempt.Create(TenantId, OrderId, method, 1200m);
+        var now = DateTimeOffset.UtcNow;
+
+        attempt.Expire(now);
+
+        Assert.Equal(PaymentAttemptStatus.Expired, attempt.Status);
+        Assert.Equal(now, attempt.ModifiedAt);
+    }
+
+    [Fact]
+    public void Expire_VerifiedAttempt_ThrowsInvalidOperationException()
+    {
+        var attempt = PaymentAttempt.Create(TenantId, OrderId, OrderPaymentMethod.MerchantQr, 1200m);
+        attempt.Verify(UserId, Now);
+
+        Assert.Throws<InvalidOperationException>(() => attempt.Expire(Now));
+    }
+
+    [Fact]
+    public void Expire_CollectedAttempt_ThrowsInvalidOperationException()
+    {
+        var attempt = PaymentAttempt.Create(TenantId, OrderId, OrderPaymentMethod.CashOnDelivery, 1200m);
+        attempt.MarkCollected(UserId, Now);
+
+        Assert.Throws<InvalidOperationException>(() => attempt.Expire(Now));
+    }
+
+    [Fact]
+    public void Expire_AlreadyExpiredAttempt_IsIdempotent()
+    {
+        var attempt = PaymentAttempt.Create(TenantId, OrderId, OrderPaymentMethod.CashOnDelivery, 1200m);
+        attempt.Expire(Now);
+        var later = Now.AddMinutes(5);
+
+        attempt.Expire(later);
+
+        Assert.Equal(PaymentAttemptStatus.Expired, attempt.Status);
+    }
 }
 

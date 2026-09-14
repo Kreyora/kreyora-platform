@@ -7,5 +7,6 @@ public enum StockMovementType
     CorrectionIncrease,
     CorrectionDecrease,
     Damage,
-    ReservationCommitted
+    ReservationCommitted,
+    OrderRestock
 }
