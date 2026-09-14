@@ -25,8 +25,8 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 | 03 | Customer/contact, cart intent, and checkout reservation | `APPROVED` |
 | 04 | Canonical order aggregate and transactional creation | `APPROVED` |
 | 05 | Public APIs, host/slug resolution, and abuse controls | `APPROVED` |
-| 06 | Frontend integration and complete customer journey | `REVIEW` |
-| 07 | Tampering, concurrency, expiry, and isolation verification | `NOT STARTED` |
+| 06 | Frontend integration and complete customer journey | `APPROVED` |
+| 07 | Tampering, concurrency, expiry, and isolation verification | `REVIEW` |
 
 ## Prompt 01 — Store entity, readiness, settings, and publication
 
@@ -73,7 +73,7 @@ The browser may hold cart intent, but the API creates an expiring quote/reservat
 ## Milestone exit gate
 
 - A fresh authorized seller configures and publishes a ready platform-subdomain store.
-- A customer completes real COD and merchant-QR-awaiting-verification checkout paths.
+- A customer completes the real COD checkout path. Merchant-QR configuration, proof handling, and merchant-QR verification are M06 work under ADR-009.
 - The server recalculates and owns every commerce fact.
 - Order financial, customer, delivery, and item snapshots are immutable.
 - Checkout reservation commit/release/expiry is safe under concurrency and retry.

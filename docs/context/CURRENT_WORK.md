@@ -3,35 +3,37 @@
 ## Active position
 
 - **Milestone:** 05 - Storefront, Delivery, Checkout, and Canonical Orders
-- **Step:** M05-S06 - Frontend Integration and Complete Customer Journey
+- **Step:** M05-S07 - Tampering, Concurrency, Expiry, and Isolation Verification
 - **Status:** `REVIEW`
-- **Plan state:** Implementation complete; awaiting project-owner review.
+- **Plan state:** Implementation and verification complete; awaiting project-owner review of the invariant matrix.
 - **Active milestone file:** `docs/milestones/05_STOREFRONT_CHECKOUT_ORDERS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M05-S06.md`
+- **Current checkpoint:** `artifacts/checkpoints/M05-S07.md`
 - **Previous checkpoint:** `artifacts/checkpoints/M05-S05.md`
 - **Last approved state:** M03-S01 through M03-S06, M04-S01 through M04-S06, and M05-S01 through M05-S05 are approved. Milestone 04 exit gate is approved.
 
 ## Current objective
 
-Review and approve `docs/plan/M05-S06_PUBLIC_STOREFRONT_FRONTEND_PLAN.md` before implementation. The planned work replaces the public storefront's fixture-only data path with typed generated public API adapters and a server-authoritative COD customer journey. Merchant-QR configuration/proof, public order lookup, seller order UI, and M06 operational transitions remain out of scope.
+Review `artifacts/checkpoints/M05-S07.md` and the completed storefront/checkout invariant matrix. Merchant-QR configuration/proof, public order lookup, seller order UI, and M06 operational transitions remain out of scope.
 
 ## Next permitted action
 
-Project-owner review and approval of `artifacts/checkpoints/M05-S06.md`. Only after approval may Graphify be refreshed and M05-S07 planning begin.
+Project-owner approval of M05-S07. Graphify refresh remains deferred until approval.
 
 ## Next prohibited action
 
-- Implementing M05-S07, merchant-QR payment configuration/proof, public order lookup, seller UI, or M06 order operations before M05-S06 approval.
+- Merchant-QR payment configuration/proof, public order lookup, seller UI, or M06 order operations.
 - Committing, pushing, deploying, or using production secrets without explicit authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-14 | M05-S07 implementation completed: public tampering/isolation/idempotency coverage, real expiry-job verification, transient-contention retry fix, full PostgreSQL and frontend regression, scoped Testcontainers cleanup, and review checkpoint. | Codex |
+| 2026-09-14 | Project owner approved M05-S06; M05-S07 commerce invariant verification implementation began. | Project owner / Codex |
 | 2026-09-07 | M05-S06 implementation completed: typed anonymous public adapters, server-authoritative COD checkout, safe cart/confirmation behavior, frontend regression/build, PostgreSQL/Testcontainers regression and scoped cleanup. | Codex |
 | 2026-09-07 | Project owner approved the M05-S06 plan; implementation started. | Project owner / Codex |
 | 2026-09-07 | Project owner approved M05-S05. Graphify was refreshed and the M05-S06 public-storefront frontend/COD-journey plan was drafted; no M05-S06 code started. | Project owner / Codex |
