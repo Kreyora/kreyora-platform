@@ -3,35 +3,37 @@
 ## Active position
 
 - **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** 04 — Notification outbox and development provider
+- **Step:** 05 — Seller order workspace integration
 - **Status:** `REVIEW`
-- **Plan state:** Implementation complete. NotificationRequest aggregate root, NotificationDeliveryAttempt entity, NotificationDeliveryLog entity, NotificationRetryPolicy, INotificationService, INotificationDeliveryProvider, INotificationTemplateRegistry, DevelopmentNotificationProvider, OutboxNotificationProcessorJob, NotificationDeliveryJob, NotificationsController, EF Core migration, 33 unit tests, and 10 real PostgreSQL Testcontainers integration tests verified. Full solution test suite passing (334 tests). Checkpoint created at `artifacts/checkpoints/M06-S04.md`.
+- **Plan state:** Completed Phase 2 (Builder) implementation. Awaiting review/approval.
 - **Active milestone file:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M06-S04.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M06-S03.md` (APPROVED)
-- **Last approved state:** Milestone 06 Step 03 (Inventory allocation, cancellation, and fulfilment coordination) approved.
+- **Current checkpoint:** `artifacts/checkpoints/M06-S05.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M06-S04.md` (APPROVED)
+- **Last approved state:** Milestone 06 Step 04 (Notification outbox and development provider) approved.
 
 ## Current objective
 
-Complete the notification lifecycle through outbox message consumption, safe development sink delivery, bounded retries, dead-letter queue, manual replay, customer PII masking, and comprehensive integration testing.
+Replace seller order, payment, fulfilment, activity, and notification fixtures with generated real clients. Preserve approved screens, connect server-authoritative actions, handle concurrency conflicts, enable QR proof review and COD collection, and verify end-to-end seller workflows.
 
 ## Next permitted action
 
-Project-owner review and approval of M06-S04 checkpoint (`artifacts/checkpoints/M06-S04.md`).
+Awaiting human review and approval of M06-S05 checkpoint (`artifacts/checkpoints/M06-S05.md`).
 
 ## Next prohibited action
 
-- Starting M06-S05 (seller order workspace integration) before M06-S04 approval.
-- Committing, pushing, deploying, or modifying schema without authorization.
+- Starting Milestone 06 Step 06 before M06-S05 approval.
+- Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-15 | Completed M06-S05 implementation: IOrderQueryService, OrdersController, real typed OrderClient/PaymentClient adapters, seller order list and detail screens, server-evaluated allowed actions, optimistic concurrency 409 conflict banner & recovery CTA, QR payment proof review modal, real notification delivery tracking, activity timeline, 8 Testcontainers integration tests, full backend (342) and frontend (451) regression passing. Checkpoint created. Status -> REVIEW. | Antigravity |
+| 2026-09-15 | Project owner approved M06-S04. Commenced Phase 1 (Architect) planning for M06-S05 (Seller order workspace integration). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-15 | Completed M06-S04 implementation: NotificationRequest aggregate root, NotificationDeliveryAttempt, NotificationDeliveryLog, INotificationService, DevelopmentNotificationProvider dev sink, NotificationTemplateRegistry, OutboxNotificationProcessorJob, NotificationDeliveryJob, NotificationsController, EF Core migration, PiiRedaction, 33 unit tests, 10 PostgreSQL integration tests, full solution green (334 tests). Status -> REVIEW. | Antigravity |
 | 2026-09-15 | Completed M06-S03 implementation: StockMovementType.OrderRestock, PaymentAttempt.Expire, RestockForOrderAsync in InventoryService, OrderOperationService coordination with atomic restock and payment attempt expiration on cancel, OutboxMessage events across transitions, 11 real PostgreSQL integration tests in OrderFulfilmentInventoryCoordinationTests, full solution green (291 tests). Status -> REVIEW. | Antigravity |
 | 2026-09-14 | Project owner approved M06-S02. Commenced Phase 1 (Architect) planning for M06-S03 (Inventory allocation, cancellation, and fulfilment coordination). Status -> PLANNING. | Project owner / Antigravity |

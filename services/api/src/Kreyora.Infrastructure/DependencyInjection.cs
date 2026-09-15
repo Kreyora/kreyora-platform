@@ -150,6 +150,7 @@ public static class DependencyInjection
         services.AddScoped<IOrderInventoryReservationService>(serviceProvider => (InventoryService)serviceProvider.GetRequiredService<IInventoryService>());
         services.AddScoped<IOrderCreationService, OrderCreationService>();
         services.AddScoped<IOrderOperationService, OrderOperationService>();
+        services.AddScoped<IOrderQueryService, OrderQueryService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IStorePaymentConfigurationService, StorePaymentConfigurationService>();
             services.AddScoped<IMediaAssetService, MediaAssetService>();

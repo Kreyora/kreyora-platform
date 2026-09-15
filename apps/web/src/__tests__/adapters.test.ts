@@ -116,10 +116,35 @@ describe("Mock adapters implement port interfaces", () => {
     expect(order.fulfilmentStatus).toBeTruthy();
   });
 
-  it("PaymentClient returns payment methods", async () => {
+  it("OrderClient returns allowed actions, executes action, returns activity, and notifications", async () => {
+    const list = await mockOrderClient.listOrders();
+    const orderId = list.items[0].id;
+
+    const actions = await mockOrderClient.getAllowedActions(orderId);
+    expect(Array.isArray(actions)).toBe(true);
+
+    const activity = await mockOrderClient.getOrderActivity(orderId);
+    expect(Array.isArray(activity)).toBe(true);
+
+    const notifs = await mockOrderClient.getOrderNotifications(orderId);
+    expect(Array.isArray(notifs)).toBe(true);
+
+    const execResult = await mockOrderClient.executeAction(orderId, {
+      action: "confirm",
+      expectedVersion: 1,
+    });
+    expect(execResult.orderId).toBe(orderId);
+    expect(execResult.status).toBeTruthy();
+  });
+
+  it("PaymentClient returns payment methods and proof content URL", async () => {
     const methods = await mockPaymentClient.getPaymentMethods("test");
     expect(Array.isArray(methods)).toBe(true);
     expect(methods.length).toBeGreaterThan(0);
+
+    const url = mockPaymentClient.getProofContentUrl("proof-123");
+    expect(typeof url).toBe("string");
+    expect(url.length).toBeGreaterThan(0);
   });
 
   it("ConversationClient returns conversations", async () => {

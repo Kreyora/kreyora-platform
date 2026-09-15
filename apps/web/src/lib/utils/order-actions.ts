@@ -9,7 +9,8 @@ export type OrderAction =
   | "mark_cod_collected"
   | "prepare"
   | "dispatch"
-  | "deliver";
+  | "deliver"
+  | "mark_delivery_failed";
 
 export interface ActionDef {
   action: OrderAction;
@@ -19,7 +20,7 @@ export interface ActionDef {
   destructive: boolean;
 }
 
-const ACTION_DEFS: Record<OrderAction, ActionDef> = {
+export const ACTION_DEFS: Record<OrderAction, ActionDef> = {
   confirm: { action: "confirm", label: "Confirm Order", variant: "solid", requiresReason: false, destructive: false },
   cancel: { action: "cancel", label: "Cancel Order", variant: "ghost", requiresReason: true, destructive: true },
   verify_payment: { action: "verify_payment", label: "Verify Payment", variant: "solid", requiresReason: false, destructive: false },
@@ -28,6 +29,7 @@ const ACTION_DEFS: Record<OrderAction, ActionDef> = {
   prepare: { action: "prepare", label: "Mark Ready", variant: "outline", requiresReason: false, destructive: false },
   dispatch: { action: "dispatch", label: "Mark Dispatched", variant: "outline", requiresReason: false, destructive: false },
   deliver: { action: "deliver", label: "Mark Delivered", variant: "solid", requiresReason: false, destructive: false },
+  mark_delivery_failed: { action: "mark_delivery_failed", label: "Mark Delivery Failed", variant: "ghost", requiresReason: true, destructive: true },
 };
 
 export function getAllowedActions(
