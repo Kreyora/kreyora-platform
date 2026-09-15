@@ -3,36 +3,44 @@
 ## Active position
 
 - **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** 05 — Seller order workspace integration
-- **Status:** `REVIEW`
-- **Plan state:** Completed Phase 2 (Builder) implementation. Awaiting review/approval.
+- **Step:** Exit Gate — Milestone Completion Review
+- **Status:** `PLANNING`
+- **Plan state:** S01 through S06 approved; preparing Milestone 06 Exit Gate evidence review.
 - **Active milestone file:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M06-S05.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M06-S04.md` (APPROVED)
-- **Last approved state:** Milestone 06 Step 04 (Notification outbox and development provider) approved.
+- **Current checkpoint:** `artifacts/checkpoints/M06-S06.md` (APPROVED)
+- **Previous checkpoint:** `artifacts/checkpoints/M06-S05.md` (APPROVED)
+- **Last approved state:** Milestone 06 Step 06 (End-to-end lifecycle and failure verification) approved.
 
 ## Current objective
 
-Replace seller order, payment, fulfilment, activity, and notification fixtures with generated real clients. Preserve approved screens, connect server-authoritative actions, handle concurrency conflicts, enable QR proof review and COD collection, and verify end-to-end seller workflows.
+Consolidate verification evidence across all 6 steps of Milestone 06 to prove all milestone exit criteria are satisfied:
+1. Authorized sellers can process, cancel, verify, and fulfil orders safely.
+2. COD and merchant QR follow documented manual operating policies.
+3. No client input alone can mark payment paid.
+4. Inventory reconciles across confirmation, cancellation, failure, and fulfilment.
+5. Every transition has actor/reason/time/correlation evidence.
+6. Notifications are durable, retryable, redacted, and visible without using a live provider.
 
 ## Next permitted action
 
-Awaiting human review and approval of M06-S05 checkpoint (`artifacts/checkpoints/M06-S05.md`).
+Compile `artifacts/checkpoints/M06-EXIT.md` consolidating automated test and invariant evidence, and request Project Owner approval.
 
 ## Next prohibited action
 
-- Starting Milestone 06 Step 06 before M06-S05 approval.
+- Starting Milestone 07 before Milestone 06 Exit Gate approval.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
-| 2026-09-15 | Completed M06-S05 implementation: IOrderQueryService, OrdersController, real typed OrderClient/PaymentClient adapters, seller order list and detail screens, server-evaluated allowed actions, optimistic concurrency 409 conflict banner & recovery CTA, QR payment proof review modal, real notification delivery tracking, activity timeline, 8 Testcontainers integration tests, full backend (342) and frontend (451) regression passing. Checkpoint created. Status -> REVIEW. | Antigravity |
+| 2026-09-15 | Completed M06-S06 implementation: Milestone06LifecycleAndFailureTests with 9 end-to-end scenarios covering complete COD and QR lifecycles, proof rejection with restock, optimistic concurrency 409 conflict, concurrent terminal collision (cancel vs dispatch), idempotency replay and fingerprint conflict, notification retries, DLQ and manual replay, multi-tenant isolation, and immutable order snapshots. Full backend (351/351) and frontend (454/454) suites passing, 0 pending migrations, clean git diff. Status -> REVIEW. | Antigravity |
+| 2026-09-15 | Project owner approved M06-S05. Commenced Phase 1 (Architect) planning for M06-S06 (End-to-end lifecycle and failure verification). Status -> PLANNING. | Project owner / Antigravity |
+| 2026-09-15 | Completed M06-S05 implementation: IOrderQueryService, OrdersController, real typed OrderClient/PaymentClient adapters, seller order list and detail screens, server-evaluated allowed actions, optimistic concurrency 409 conflict banner & recovery CTA, QR payment proof review modal, real notification delivery tracking, activity timeline, 8 Testcontainers integration tests, full backend (342) and frontend (451) regression passing. Checkpoint created. Status -> APPROVED. | Antigravity |
 | 2026-09-15 | Project owner approved M06-S04. Commenced Phase 1 (Architect) planning for M06-S05 (Seller order workspace integration). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-15 | Completed M06-S04 implementation: NotificationRequest aggregate root, NotificationDeliveryAttempt, NotificationDeliveryLog, INotificationService, DevelopmentNotificationProvider dev sink, NotificationTemplateRegistry, OutboxNotificationProcessorJob, NotificationDeliveryJob, NotificationsController, EF Core migration, PiiRedaction, 33 unit tests, 10 PostgreSQL integration tests, full solution green (334 tests). Status -> REVIEW. | Antigravity |
 | 2026-09-15 | Completed M06-S03 implementation: StockMovementType.OrderRestock, PaymentAttempt.Expire, RestockForOrderAsync in InventoryService, OrderOperationService coordination with atomic restock and payment attempt expiration on cancel, OutboxMessage events across transitions, 11 real PostgreSQL integration tests in OrderFulfilmentInventoryCoordinationTests, full solution green (291 tests). Status -> REVIEW. | Antigravity |
