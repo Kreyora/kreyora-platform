@@ -29,6 +29,55 @@ export type FulfilmentStatus =
 
 export type OrderSource = "storefront" | "conversation" | "manual";
 
+export type OrderAction =
+  | "confirm"
+  | "cancel"
+  | "prepare"
+  | "dispatch"
+  | "deliver"
+  | "mark_delivery_failed"
+  | "verify_payment"
+  | "reject_payment"
+  | "mark_cod_collected";
+
+export interface OrderActionEvaluation {
+  action: OrderAction;
+  isAllowed: boolean;
+  denialReason?: string;
+  requiresReason: boolean;
+  isDestructive: boolean;
+}
+
+export interface ExecuteOrderActionParams {
+  action: OrderAction;
+  reason?: string;
+  expectedVersion: number;
+  paymentAttemptId?: string;
+  providerReference?: string;
+}
+
+export interface OrderOperationResult {
+  orderId: string;
+  orderNumber: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  fulfilmentStatus: FulfilmentStatus;
+  rowVersion: number;
+  wasReplayed: boolean;
+}
+
+export interface OrderNotification {
+  id: string;
+  templateCode: string;
+  channel: "email" | "sms" | "in_app";
+  status: "pending" | "delivering" | "delivered" | "failed" | "dead_lettered";
+  recipientContactRedacted: string;
+  attemptCount: number;
+  deliveredAt?: Timestamp;
+  deadLetteredAt?: Timestamp;
+  createdAt: Timestamp;
+}
+
 export interface OrderItem {
   id: string;
   variantId: string;
@@ -70,6 +119,7 @@ export interface Order {
   deliveryAddress: Address;
   paymentMethod: "cod" | "merchant_qr";
   activity: OrderActivity[];
+  rowVersion?: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

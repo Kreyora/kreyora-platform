@@ -34,7 +34,7 @@ import {
   mockPublicCheckoutClient,
   mockPublicStorefrontClient,
 } from "@/lib/adapters/mock";
-import { apiAuthClient, apiAuditClient, apiCatalogClient, apiIdentityClient, apiInventoryClient, apiPublicCheckoutClient, apiPublicStorefrontClient } from "@/lib/adapters/api";
+import { apiAuthClient, apiAuditClient, apiCatalogClient, apiIdentityClient, apiInventoryClient, apiOrderClient, apiPaymentClient, apiPublicCheckoutClient, apiPublicStorefrontClient } from "@/lib/adapters/api";
 
 /**
  * Determined at build time from the NEXT_PUBLIC_API_URL env var.
@@ -83,8 +83,8 @@ const defaultClients: ClientSet = {
   inventory: USING_FIXTURE_ADAPTERS ? mockInventoryClient : apiInventoryClient,
   storefront: mockStorefrontClient,
   checkout: mockCheckoutClient,
-  order: mockOrderClient,
-  payment: mockPaymentClient,
+  order: USING_FIXTURE_ADAPTERS ? mockOrderClient : apiOrderClient,
+  payment: USING_FIXTURE_ADAPTERS ? mockPaymentClient : apiPaymentClient,
   conversation: mockConversationClient,
   integration: mockIntegrationClient,
   ai: mockAIClient,

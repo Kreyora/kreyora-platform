@@ -17,4 +17,8 @@ export const mockPaymentClient: PaymentClient = {
     await delay();
     return paymentAttempts.filter((pa) => pa.orderId === orderId);
   },
+
+  getProofContentUrl(_proofId: string): string {
+    return "/images/placeholder-qr.png";
+  },
 };
