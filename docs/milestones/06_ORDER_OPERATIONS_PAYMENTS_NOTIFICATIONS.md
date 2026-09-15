@@ -24,8 +24,8 @@ Cancellation, reservation release, stock allocation/commitment, and notification
 | 02 | COD and merchant-QR payment domain | `APPROVED` |
 | 03 | Inventory allocation, cancellation, and fulfilment coordination | `APPROVED` |
 | 04 | Notification outbox and development provider | `APPROVED` |
-| 05 | Seller order workspace integration | `REVIEW` |
-| 06 | End-to-end lifecycle and failure verification | `NOT STARTED` |
+| 05 | Seller order workspace integration | `APPROVED` |
+| 06 | End-to-end lifecycle and failure verification | `APPROVED` |
 
 ## Prompt 01 — State-transition policies and action authorization
 
