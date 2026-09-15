@@ -1,67 +1,82 @@
-# Handoff: Milestone 06 Step 04 — Notification Outbox and Development Provider
+# Handoff: Milestone 06 Step 05 — Seller Order Workspace Integration
 
 ## 1. Overview
 
 - **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** 04 — Notification outbox and development provider
-- **Phase:** Phase 2 (Builder) Execution
-- **Governing Plan:** `docs/plan/M06-S04_NOTIFICATION_OUTBOX_PLAN.md`
+- **Step:** 05 — Seller order workspace integration
+- **Phase:** Phase 2 (Builder) Implementation — Completed (`REVIEW`)
+- **Governing Plan:** `docs/plan/M06-S05_SELLER_ORDER_WORKSPACE_PLAN.md`
 - **Active Milestone File:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
-- **Prior Checkpoint:** `artifacts/checkpoints/M06-S03.md` (APPROVED)
+- **Current Checkpoint:** `artifacts/checkpoints/M06-S05.md` (REVIEW)
+- **Prior Checkpoint:** `artifacts/checkpoints/M06-S04.md` (APPROVED)
 
 ---
 
 ## 2. Implementation Checklist (Phase 2 Builder)
 
-- [ ] **Task 1: Domain Entities & Invariants (`Kreyora.Domain.Notifications`)**
-  - `NotificationChannel.cs` (Email, Sms, InApp)
-  - `NotificationStatus.cs` (Pending, Delivering, Delivered, Failed, DeadLettered)
-  - `NotificationRetryPolicy.cs` (MaxAttempts, BackoffIntervals)
-  - `NotificationRequest.cs` (Aggregate root with state transitions: MarkDelivering, RecordSuccess, RecordFailure, Replay)
-  - `NotificationDeliveryAttempt.cs` (Child entity tracking attempts, duration, error, provider ref)
-  - Unit tests in `Kreyora.UnitTests` for `NotificationRequest` state machine and `NotificationRetryPolicy`
+- [x] **Task 1: Backend Application Contracts (`Kreyora.Application.Orders`)**
+  - Add `IOrderQueryService` interface
+  - Add query models: `OrderQuery`, `OrderSummaryItem`, `OrderDetailItem`, `OrderItemDetail`, `OrderActivityItem`, `OrderNotificationItem`
 
-- [ ] **Task 2: Application Contracts & DTOs (`Kreyora.Application.Notifications`)**
-  - `NotificationContracts.cs`: `INotificationService`, `INotificationDeliveryProvider`, `INotificationTemplateRegistry`, query/result DTOs (`NotificationSummary`, `NotificationDetail`, `NotificationDeliveryRequest`, `NotificationDeliveryResult`, `RenderedNotification`, `NotificationTemplateMapping`)
-  - `NotificationOptions.cs`: configuration for retry policy and execution settings
-  - `PiiRedaction.cs`: static helpers for redacting email and phone in logs and DTOs
-  - Unit tests in `Kreyora.UnitTests` for `PiiRedaction`
+- [x] **Task 2: Backend Infrastructure Query Service (`Kreyora.Infrastructure.Orders`)**
+  - Implement `OrderQueryService` implementing `IOrderQueryService`
+  - Tenant-scoped order queries with filters (`status`, `paymentStatus`, `fulfilmentStatus`, `source`, `search`, pagination)
+  - Detail mapping including items, delivery addresses, financial breakdown, payment attempts, and row version
+  - Audit event mapping for order activity timeline
+  - Notification mapping for order outbox events
+  - Register `IOrderQueryService` in `DependencyInjection.cs`
 
-- [ ] **Task 3: Infrastructure Templates & Provider (`Kreyora.Infrastructure.Notifications`)**
-  - `NotificationTemplateRegistry.cs`: registry mapping events (`order.created.v1`, `order.confirmed.v1`, `order.cancelled.v1`, `order.dispatched.v1`, `order.delivered.v1`, `order.delivery_failed.v1`, `payment.verified.v1`, `payment.rejected.v1`) to email templates
-  - `DevelopmentNotificationProvider.cs`: dev sink writing to `NotificationDeliveryLog` table without network calls
-  - `NotificationService.cs`: query, detail, and replay service methods with tenant isolation and PII redaction
-  - Unit tests for template rendering
+- [x] **Task 3: Backend WebApi Controller (`Kreyora.WebApi.Controllers.OrdersController`)**
+  - Implement `OrdersController` with `[RequireTenantContext]`, `[ApiVersion("1.0")]`
+  - `GET /v1/orders`: List orders with pagination & filters (`TenantPermissions.OrdersRead`)
+  - `GET /v1/orders/{id}`: Order details with items and payment attempts (`TenantPermissions.OrdersRead`)
+  - `GET /v1/orders/{id}/actions`: Allowed action evaluations (`TenantPermissions.OrdersRead`)
+  - `POST /v1/orders/{id}/actions`: Execute order action with concurrency version check (`ExpectedVersion`), idempotency key, and optional reason (`[ValidateAntiForgeryToken]`, authorization via `IOrderOperationService`)
+  - `GET /v1/orders/{id}/activity`: Order activity timeline (`TenantPermissions.OrdersRead`)
+  - `GET /v1/orders/{id}/notifications`: Order notifications status and attempts (`TenantPermissions.OrdersRead`)
+  - Stale version concurrency rejection: Return `409 Conflict` (ProblemDetails) when version mismatch occurs
 
-- [ ] **Task 4: Persistence, Entities & EF Core Migration**
-  - `NotificationDeliveryLog.cs` entity in `Kreyora.Infrastructure.Persistence.Entities`
-  - EF Core configurations: `NotificationRequestConfiguration`, `NotificationDeliveryAttemptConfiguration`, `NotificationDeliveryLogConfiguration`
-  - Register `DbSet`s in `AppDbContext`, add global tenant query filters, configure tenant ownership and append-only rules
-  - Generate and apply EF Core migration `AddNotificationTables`
-  - Verify with `dotnet ef migrations has-pending-model-changes`
+- [x] **Task 4: Backend Tests (`Kreyora.UnitTests` & `Kreyora.IntegrationTests`)**
+  - Real PostgreSQL Testcontainers integration tests in `Kreyora.IntegrationTests/Orders/SellerOrderWorkspaceIntegrationTests.cs`:
+    - List and filter orders across tenants (verify tenant isolation)
+    - Retrieve order details with items and payment attempts
+    - Retrieve allowed actions per order state
+    - Execute actions through the full order lifecycle (`Confirm`, `Prepare`, `Dispatch`, `Deliver`, `Cancel`)
+    - Execute payment verification (`VerifyPayment`, `RejectPayment`) on merchant QR with proof
+    - Execute COD collection recording (`MarkCodCollected`)
+    - Verify stale version concurrency rejection (`409 Conflict`)
+    - Verify role authorization (Viewer rejected with 403 on mutation endpoints)
+  - Full backend test suite passing (342/342 tests)
 
-- [ ] **Task 5: Hangfire Background Jobs**
-  - `OutboxNotificationProcessorJob`: minutely recurring job picking unprocessed `OutboxMessage`s, extracting customer contact from orders, generating `NotificationRequest`s idempotently, and setting `ProcessedAt`
-  - `NotificationDeliveryJob`: minutely recurring job picking pending/retryable `NotificationRequest`s, rendering templates, delivering via `INotificationDeliveryProvider`, recording attempts, updating status/DLQ
-  - Register services in `DependencyInjection.cs` and recurring jobs in `Program.cs`
+- [x] **Task 5: Frontend Ports & API Adapters (`apps/web`)**
+  - Update `OrderClient` port in `apps/web/src/lib/ports/order-client.ts`
+  - Update `PaymentClient` port in `apps/web/src/lib/ports/payment-client.ts` (add `getProofContentUrl`)
+  - Implement `apiOrderClient` in `apps/web/src/lib/adapters/api/order-client.ts`
+  - Implement `apiPaymentClient` in `apps/web/src/lib/adapters/api/payment-client.ts`
+  - Export adapters in `apps/web/src/lib/adapters/api/index.ts`
+  - Bind `apiOrderClient` and `apiPaymentClient` in `client-provider.tsx` when `USING_FIXTURE_ADAPTERS` is false
+  - Update `mockOrderClient` and `mockPaymentClient` for offline demo fidelity
 
-- [ ] **Task 6: WebApi Controller (`NotificationsController.cs`)**
-  - `GET /api/v1/notifications`: paginated list with redacted PII (Owner/Operator/Admin)
-  - `GET /api/v1/notifications/{id}`: details with delivery attempt history and redacted PII
-  - `GET /api/v1/notifications/dead-letter`: dead-lettered notifications view
-  - `POST /api/v1/notifications/{id}/replay`: replay dead-lettered/failed notification (Owner/Admin only, audited)
+- [x] **Task 6: Frontend Seller Order Workspace UI (`apps/web/src/app/(seller)/orders`)**
+  - Update `orders/page.tsx`:
+    - Connect to `orderClient.listOrders` with server-side pagination, status filters, and search
+    - Loading skeletons, empty states with filter reset, and error retry states
+  - Update `orders/[id]/page.tsx`:
+    - Connect real order details, items, financial totals, customer and address data
+    - Dynamic allowed action buttons with confirmation dialogs and reason capture (min 3 chars)
+    - Merchant QR proof review: thumbnail preview, full-size modal dialog, quick verify/reject controls
+    - COD collection recording button when eligible
+    - Real notification delivery cards with status badges and attempt counts
+    - Chronological audit timeline from `orderClient.getOrderActivity`
+    - Concurrency conflict (409) recovery banner with one-click refresh button
+    - Role-aware UI: hide or disable mutation controls for Viewer with explanatory tooltip/badge; enable for Owner and Operator
 
-- [ ] **Task 7: Comprehensive Testing**
-  - Unit tests in `Kreyora.UnitTests`
-  - Integration tests in `Kreyora.IntegrationTests.Notifications`:
-    - Outbox to notification request generation & idempotency
-    - Delivery lifecycle, success, dev sink logging
-    - Bounded retries and transition to DeadLettered
-    - Manual replay authorization and lifecycle reset
-    - Cross-tenant isolation (cannot see or replay other tenant's notifications)
-    - PII redaction validation in API responses and logs
-  - Run full solution tests (`dotnet test services/api/Kreyora.slnx --configuration Release`)
+- [x] **Task 7: Frontend Tests & Verification**
+  - Component and port tests in `apps/web/src/__tests__/orders.test.tsx`
+  - Role tests for Owner, Operator, Viewer
+  - Concurrency conflict (409) recovery tests
+  - Run full frontend CI gate (`pnpm ci:frontend`) — passed with 0 errors, 451 tests passing
 
-- [ ] **Task 8: Checkpoint & Documentation**
-  - Create `artifacts/checkpoints/M06-S04.md`
+- [x] **Task 8: Checkpoint & Documentation**
+  - Create `artifacts/checkpoints/M06-S05.md` with status `REVIEW`
   - Update `docs/context/CURRENT_WORK.md` and `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`

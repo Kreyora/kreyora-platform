@@ -121,12 +121,13 @@ describe("Orders — order detail page", () => {
 
   it("has activity timeline", () => {
     expect(content).toContain("Activity Timeline");
-    expect(content).toContain("allActivities");
+    expect(content).toContain("activities");
   });
 
   it("has notification delivery status section", () => {
     expect(content).toContain("Notification Delivery");
     expect(content).toContain("notifications");
+    expect(content).toContain("getOrderNotifications");
   });
 
   it("has three independent status badges", () => {
@@ -138,13 +139,21 @@ describe("Orders — order detail page", () => {
     expect(content).toContain("getAllowedActions");
   });
 
-  it("has action confirmation dialog", () => {
+  it("has action confirmation dialog and executeAction", () => {
     expect(content).toContain("handleExecuteAction");
     expect(content).toContain("activeAction");
+    expect(content).toContain("executeAction");
   });
 
-  it("has simulated action disclaimer", () => {
-    expect(content).toContain("Actions are simulated");
+  it("has 409 concurrency conflict recovery banner", () => {
+    expect(content).toContain("conflictError");
+    expect(content).toContain("409");
+    expect(content).toContain("Refresh Order");
+  });
+
+  it("has payment proof review dialog", () => {
+    expect(content).toContain("proofPreviewUrl");
+    expect(content).toContain("Payment Proof Review");
   });
 
   it("shows ViewerBadge for viewer role", () => {

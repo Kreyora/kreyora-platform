@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useClients } from "@/lib/providers/client-provider";
 import { useSession } from "@/hooks/use-session";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -49,60 +50,98 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 export default function OrdersPage() {
-  const { order } = useClients();
+  const { order: orderClient } = useClients();
   const { effectiveRole } = useSession();
+  const isViewer = effectiveRole === "viewer";
+
   const [orders, setOrders] = useState<Order[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
 
-  useEffect(() => {
-    order.listOrders().then((result) => {
+  const loadOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await orderClient.listOrders({
+        search: search.trim() || undefined,
+        status: statusFilter || undefined,
+        source: sourceFilter || undefined,
+        paymentStatus: paymentFilter || undefined,
+        pageSize: 50,
+      });
       setOrders(result.items);
+      setTotalCount(result.totalCount ?? result.items.length);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load orders");
+    } finally {
       setIsLoading(false);
-    });
-  }, [order]);
-
-  const filtered = useMemo(() => {
-    let result = orders;
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (o) =>
-          o.orderNumber.toLowerCase().includes(q) ||
-          o.customerName.toLowerCase().includes(q) ||
-          o.customerPhone.includes(q),
-      );
     }
-    if (statusFilter) result = result.filter((o) => o.status === statusFilter);
-    if (sourceFilter) result = result.filter((o) => o.source === sourceFilter);
-    if (paymentFilter) result = result.filter((o) => o.paymentStatus === paymentFilter);
-    return result;
-  }, [orders, search, statusFilter, sourceFilter, paymentFilter]);
+  }, [orderClient, search, statusFilter, sourceFilter, paymentFilter]);
 
-  if (isLoading) {
-    return (
-      <div>
-        <Skeleton className="mb-2 h-8 w-32" />
-        <Skeleton className="mb-6 h-11 w-full" />
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-[var(--radius-md)]" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    let cancelled = false;
+    orderClient
+      .listOrders({
+        search: search.trim() || undefined,
+        status: statusFilter || undefined,
+        source: sourceFilter || undefined,
+        paymentStatus: paymentFilter || undefined,
+        pageSize: 50,
+      })
+      .then((result) => {
+        if (!cancelled) {
+          setOrders(result.items);
+          setTotalCount(result.totalCount ?? result.items.length);
+          setError(null);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load orders");
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orderClient, search, statusFilter, sourceFilter, paymentFilter]);
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("");
+    setSourceFilter("");
+    setPaymentFilter("");
+  };
+
+  const hasActiveFilters = Boolean(search || statusFilter || sourceFilter || paymentFilter);
 
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-heading-page text-[var(--color-ink-primary)]">Orders</h1>
-        {effectiveRole === "viewer" && <ViewerBadge />}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="text-heading-page text-[var(--color-ink-primary)]">Orders</h1>
+          {isViewer && <ViewerBadge />}
+        </div>
       </div>
+
+      {/* Error state */}
+      {error && (
+        <div className="mt-4 flex items-center justify-between rounded-[var(--radius-md)] border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-300" role="alert">
+          <p>{error}</p>
+          <Button variant="outline" size="sm" onClick={() => loadOrders()}>
+            Retry
+          </Button>
+        </div>
+      )}
 
       {/* Search and filters */}
       <div className="mt-6 flex flex-wrap items-end gap-3">
@@ -150,14 +189,26 @@ export default function OrdersPage() {
           <option value="paid">Paid</option>
           <option value="failed">Failed</option>
         </select>
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear filters
+          </Button>
+        )}
       </div>
 
-      {/* Order list */}
-      {filtered.length === 0 ? (
+      {/* Loading state */}
+      {isLoading ? (
+        <div className="mt-6 space-y-3">
+          <Skeleton className="h-12 w-full rounded-[var(--radius-md)]" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-[var(--radius-md)]" />
+          ))}
+        </div>
+      ) : orders.length === 0 ? (
         <div className="mt-8">
           <EmptyState
             title="No orders found"
-            description={search || statusFilter || sourceFilter || paymentFilter ? "Try adjusting your filters." : "No orders yet."}
+            description={hasActiveFilters ? "Try adjusting your filters." : "No orders have been placed yet."}
           />
         </div>
       ) : (
@@ -178,12 +229,15 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((o) => {
+                {orders.map((o) => {
                   const os = ORDER_STATUS[o.status] ?? { label: o.status, variant: "neutral" as const };
                   const ps = PAYMENT_STATUS[o.paymentStatus] ?? { label: o.paymentStatus, variant: "neutral" as const };
                   const fs = FULFILMENT_STATUS[o.fulfilmentStatus] ?? { label: o.fulfilmentStatus, variant: "neutral" as const };
                   return (
-                    <tr key={o.id} className="border-b border-[var(--color-border)] last:border-b-0 transition-colors hover:bg-[var(--color-canvas-subtle)]">
+                    <tr
+                      key={o.id}
+                      className="border-b border-[var(--color-border)] last:border-b-0 transition-colors hover:bg-[var(--color-canvas-subtle)]"
+                    >
                       <td className="px-4 py-3">
                         <Link href={`/orders/${o.id}`} className="font-medium text-[var(--color-ink-primary)] hover:underline">
                           {o.orderNumber}
@@ -205,7 +259,7 @@ export default function OrdersPage() {
 
           {/* Mobile cards */}
           <div className="mt-6 flex flex-col gap-3 md:hidden">
-            {filtered.map((o) => {
+            {orders.map((o) => {
               const os = ORDER_STATUS[o.status] ?? { label: o.status, variant: "neutral" as const };
               const ps = PAYMENT_STATUS[o.paymentStatus] ?? { label: o.paymentStatus, variant: "neutral" as const };
               return (
@@ -237,8 +291,7 @@ export default function OrdersPage() {
       )}
 
       <p className="mt-6 text-xs text-[var(--color-ink-secondary)]">
-        {orders.length} order{orders.length !== 1 ? "s" : ""} total
-        {filtered.length !== orders.length && `, ${filtered.length} shown`}
+        {totalCount} order{totalCount !== 1 ? "s" : ""} total
       </p>
     </div>
   );
