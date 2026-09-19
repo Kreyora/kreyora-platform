@@ -20,7 +20,7 @@ Webhook processing follows: validate request → durably store immutable raw eve
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | Provider capability model and integration ADRs | `NOT STARTED` |
+| 01 | Provider capability model and integration ADRs | `REVIEW` |
 | 02 | Connection model and encrypted-secret lifecycle | `NOT STARTED` |
 | 03 | Fast, idempotent webhook ingress | `NOT STARTED` |
 | 04 | Normalization, processing jobs, retry, DLQ, and replay | `NOT STARTED` |
