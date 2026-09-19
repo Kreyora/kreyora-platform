@@ -3,6 +3,7 @@ using Kreyora.Domain.Audit;
 using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Common;
 using Kreyora.Domain.Customers;
+using Kreyora.Domain.Integrations;
 using Kreyora.Domain.Inventory;
 using Kreyora.Domain.Notifications;
 using Kreyora.Domain.Orders;
@@ -59,6 +60,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
     public DbSet<NotificationDeliveryAttempt> NotificationDeliveryAttempts => Set<NotificationDeliveryAttempt>();
     public DbSet<NotificationDeliveryLog> NotificationDeliveryLogs => Set<NotificationDeliveryLog>();
+    public DbSet<ChannelConnection> ChannelConnections => Set<ChannelConnection>();
+    public DbSet<WebhookEvent> WebhookEvents => Set<WebhookEvent>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -108,6 +111,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<NotificationRequest>().HasQueryFilter(request => request.TenantId == CurrentTenantId);
         builder.Entity<NotificationDeliveryAttempt>().HasQueryFilter(attempt => attempt.TenantId == CurrentTenantId);
         builder.Entity<NotificationDeliveryLog>().HasQueryFilter(log => log.TenantId == CurrentTenantId);
+        builder.Entity<ChannelConnection>().HasQueryFilter(connection => connection.TenantId == CurrentTenantId);
+        builder.Entity<WebhookEvent>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
