@@ -3,35 +3,37 @@
 ## Active position
 
 - **Milestone:** 07 — Social Integration Runtime and Channel Boundaries
-- **Step:** 03 — Fast, idempotent webhook ingress
+- **Step:** 04 — Normalization, processing jobs, retry, DLQ, and replay
 - **Status:** `REVIEW`
-- **Plan state:** Step implementation complete; ready for human review.
+- **Plan state:** Step 04 implementation complete; ready for human review.
 - **Active milestone file:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M07-S03.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M07-S02.md` (APPROVED)
-- **Last approved state:** Milestone 07 Step 02 approved.
+- **Current checkpoint:** `artifacts/checkpoints/M07-S04.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M07-S03.md` (APPROVED)
+- **Last approved state:** Milestone 07 Step 03 approved.
 
 ## Current objective
 
-Fast, idempotent webhook ingress: provider-routed endpoints under `/v1/webhooks/{channel}` and `/v1/webhooks/{channel}/{connectionId}`, SimulatorChannelProvider signature/replay/challenge validation, immutable WebhookEvent storage with deduplication on `(ConnectionId, ProviderEventId)`, fast acknowledgement (<200ms), and real Testcontainers integration tests.
+Normalization, processing jobs, retry, DLQ, and replay: versioned normalized inbound events, asynchronous Hangfire processing jobs, immutable raw event reference, deduplication of normalized provider messages, failure classification (transient vs permanent), bounded exponential retries with jitter, visible DLQ state, authorized idempotent replay, explicit tenant context per job, poison-event quarantine, and schema-version handling.
 
 ## Next permitted action
 
-Human review and approval of checkpoint `artifacts/checkpoints/M07-S03.md`.
+Human review and approval of checkpoint `artifacts/checkpoints/M07-S04.md`.
 
 ## Next prohibited action
 
-- Starting Step 04 before Step 03 approval.
+- Starting Step 05 before Step 04 approval.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-20 | Completed M07-S04 implementation: WebhookEvent retry/DLQ fields, WebhookFailureClassification enum, WebhookRetryPolicy, InboundEvent aggregate root, InboundEventConfiguration, PostgreSQL migration (20260919194119_AddWebhookEventRetryAndInboundEvents), IWebhookProcessingService, WebhookProcessingService, WebhookProcessingJob (multi-tenant via ITenantJobRunner), IntegrationDiagnosticsController, 26 unit tests, 8 Testcontainers integration tests, full solution tests green (465 tests), frontend CI green. Status -> REVIEW. | Antigravity |
+| 2026-09-20 | Project owner approved M07-S03 (`artifacts/checkpoints/M07-S03.md`). Commenced Phase 1 (Architect) planning for M07-S04 (Normalization, processing jobs, retry, DLQ, and replay). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-20 | Completed M07-S03 implementation: WebhookEvent aggregate root, WebhookProcessingStatus enum, WebhookEventConfiguration, PostgreSQL migration (20260919191338_AddWebhookEvents), IWebhookIngressService, WebhookIngressService, SimulatorChannelProvider, WebhooksController, 18 unit tests, 8 Testcontainers integration tests, full solution tests green (431 tests), frontend CI green. Status -> REVIEW. | Antigravity |
 | 2026-09-20 | Project owner approved M07-S02 (`artifacts/checkpoints/M07-S02.md`). Refreshed Graphify code graph. Commenced Phase 1 (Architect) planning for M07-S03 (Fast, idempotent webhook ingress). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-20 | Completed M07-S02 implementation: ChannelConnection aggregate root, ChannelConnectionConfiguration, PostgreSQL migration (20260919185315_AddChannelConnections), IChannelConnectionService, ChannelConnectionService with AES-256-GCM encryption & key rotation, ChannelConnectionsController, 12 unit tests, 8 Testcontainers integration tests, full solution tests green (393 tests), frontend CI green. Status -> REVIEW. | Antigravity |

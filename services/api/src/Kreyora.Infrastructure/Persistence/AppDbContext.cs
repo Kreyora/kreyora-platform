@@ -62,6 +62,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<NotificationDeliveryLog> NotificationDeliveryLogs => Set<NotificationDeliveryLog>();
     public DbSet<ChannelConnection> ChannelConnections => Set<ChannelConnection>();
     public DbSet<WebhookEvent> WebhookEvents => Set<WebhookEvent>();
+    public DbSet<InboundEvent> InboundEvents => Set<InboundEvent>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -113,6 +114,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<NotificationDeliveryLog>().HasQueryFilter(log => log.TenantId == CurrentTenantId);
         builder.Entity<ChannelConnection>().HasQueryFilter(connection => connection.TenantId == CurrentTenantId);
         builder.Entity<WebhookEvent>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<InboundEvent>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

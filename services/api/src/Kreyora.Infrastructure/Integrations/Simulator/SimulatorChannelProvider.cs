@@ -77,45 +77,128 @@ public sealed class SimulatorChannelProvider : IChannelProvider
         CancellationToken cancellationToken = default)
     {
         var now = DateTimeOffset.UtcNow;
+        var envelopes = new List<NormalizedInboundEnvelope>();
+
+        using var doc = JsonDocument.Parse(rawPayload.RawBody);
+        var root = doc.RootElement;
+
+        // Simulated failure flags for reliability and failure testing
+        if (root.TryGetProperty("throw_transient", out var transProp) && transProp.GetBoolean())
+        {
+            throw new HttpRequestException("Simulated transient network timeout.");
+        }
+
+        if ((root.TryGetProperty("throw_permanent", out var permProp) && permProp.GetBoolean()) ||
+            (root.TryGetProperty("is_poison", out var poisonProp) && poisonProp.GetBoolean()))
+        {
+            throw new System.Text.Json.JsonException("Simulated poison payload with malformed syntax.");
+        }
+
+        var schemaVersion = NormalizedInboundEnvelope.CurrentSchemaVersion;
+        if (root.TryGetProperty("schema_version", out var svProp))
+        {
+            schemaVersion = svProp.GetString() ?? schemaVersion;
+        }
+
+        if (root.TryGetProperty("messages", out var messagesArray) && messagesArray.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in messagesArray.EnumerateArray())
+            {
+                envelopes.Add(ParseEnvelope(item, rawPayload, now, schemaVersion));
+            }
+        }
+        else
+        {
+            envelopes.Add(ParseEnvelope(root, rawPayload, now, schemaVersion));
+        }
+
+        return Task.FromResult<IReadOnlyList<NormalizedInboundEnvelope>>(envelopes);
+    }
+
+    private static NormalizedInboundEnvelope ParseEnvelope(
+        JsonElement element,
+        RawWebhookPayload rawPayload,
+        DateTimeOffset now,
+        string schemaVersion)
+    {
         var text = "Simulator message";
         var messageId = "msg_sim_" + Guid.NewGuid().ToString("N");
         var senderId = "user_sim_1";
+        var type = "text";
 
-        try
+        if (element.TryGetProperty("occurred_at", out var occProp) && occProp.TryGetDateTimeOffset(out var occ))
         {
-            using var doc = JsonDocument.Parse(rawPayload.RawBody);
-            if (doc.RootElement.TryGetProperty("text", out var textProp))
-            {
-                text = textProp.GetString() ?? text;
-            }
-
-            if (doc.RootElement.TryGetProperty("message_id", out var msgProp))
-            {
-                messageId = msgProp.GetString() ?? messageId;
-            }
-
-            if (doc.RootElement.TryGetProperty("sender_id", out var sndProp))
-            {
-                senderId = sndProp.GetString() ?? senderId;
-            }
+            now = occ;
         }
-        catch
+        else if (element.TryGetProperty("timestamp", out var tsProp) && tsProp.TryGetDateTimeOffset(out var ts))
         {
-            // fallback to default values
+            now = ts;
+        }
+        else if (rawPayload.ReceivedAt.HasValue)
+        {
+            now = rawPayload.ReceivedAt.Value;
         }
 
-        var envelopes = new List<NormalizedInboundEnvelope>
+        if (element.TryGetProperty("text", out var textProp))
         {
-            NormalizedInboundEnvelope.Create(
-                eventId: "evt_sim_" + Guid.NewGuid().ToString("N"),
-                tenantId: rawPayload.TenantId,
-                connectionId: rawPayload.ConnectionId,
-                channel: ChannelType.Simulator,
-                occurredAt: now,
-                payload: new TextMessageReceivedPayload(messageId, senderId, "Simulator User", text, now))
+            text = textProp.GetString() ?? text;
+        }
+
+        if (element.TryGetProperty("message_id", out var msgProp))
+        {
+            messageId = msgProp.GetString() ?? messageId;
+        }
+
+        if (element.TryGetProperty("sender_id", out var sndProp))
+        {
+            senderId = sndProp.GetString() ?? senderId;
+        }
+
+        if (element.TryGetProperty("type", out var typeProp))
+        {
+            type = typeProp.GetString() ?? type;
+        }
+
+        NormalizedInboundPayload payload = type.ToLowerInvariant() switch
+        {
+            "media" => new MediaMessageReceivedPayload(
+                messageId,
+                senderId,
+                "Simulator User",
+                element.TryGetProperty("media_url", out var mu) ? mu.GetString() ?? "https://example.com/image.jpg" : "https://example.com/image.jpg",
+                element.TryGetProperty("content_type", out var ct) ? ct.GetString() ?? "image/jpeg" : "image/jpeg",
+                1024,
+                text,
+                now),
+            "status" => new MessageStatusUpdatedPayload(
+                messageId,
+                senderId,
+                MessageDeliveryStatus.Delivered,
+                null,
+                null,
+                now),
+            "reaction" => new ReactionReceivedPayload(
+                messageId,
+                senderId,
+                element.TryGetProperty("emoji", out var em) ? em.GetString() ?? "👍" : "👍",
+                false,
+                now),
+            "profile" => new CustomerProfileUpdatedPayload(
+                senderId,
+                "Simulator User",
+                "https://example.com/avatar.jpg",
+                "+9779800000000"),
+            _ => new TextMessageReceivedPayload(messageId, senderId, "Simulator User", text, now)
         };
 
-        return Task.FromResult<IReadOnlyList<NormalizedInboundEnvelope>>(envelopes);
+        return NormalizedInboundEnvelope.Create(
+            eventId: "evt_sim_" + Guid.NewGuid().ToString("N"),
+            tenantId: rawPayload.TenantId,
+            connectionId: rawPayload.ConnectionId,
+            channel: ChannelType.Simulator,
+            occurredAt: now,
+            payload: payload,
+            schemaVersion: schemaVersion);
     }
 
     public Task<OutboundDeliveryResult> SendMessageAsync(
