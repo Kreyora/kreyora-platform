@@ -27,6 +27,12 @@ public sealed class WebhookEventConfiguration : IEntityTypeConfiguration<Webhook
         builder.Property(e => e.IsPurged).HasDefaultValue(false).IsRequired();
         builder.Property(e => e.PurgedAt);
         builder.Property(e => e.ErrorMessage).HasMaxLength(WebhookEvent.ErrorMessageMaxLength);
+        builder.Property(e => e.AttemptCount).HasDefaultValue(0).IsRequired();
+        builder.Property(e => e.MaxAttempts).HasDefaultValue(5).IsRequired();
+        builder.Property(e => e.NextRetryAt);
+        builder.Property(e => e.DeadLetteredAt);
+        builder.Property(e => e.LastAttemptedAt);
+        builder.Property(e => e.FailureClassification).HasConversion<string>().HasMaxLength(32);
 
         builder.Property<uint>("xmin").HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
 
@@ -35,8 +41,9 @@ public sealed class WebhookEventConfiguration : IEntityTypeConfiguration<Webhook
         // Unique deduplication index per connection
         builder.HasIndex(e => new { e.ConnectionId, e.ProviderEventId }).IsUnique();
 
-        // Background worker query index
+        // Background worker query indexes
         builder.HasIndex(e => new { e.TenantId, e.ProcessingStatus, e.ReceivedAt });
+        builder.HasIndex(e => new { e.TenantId, e.ProcessingStatus, e.NextRetryAt });
 
         // ADR-012 purge maintenance query index
         builder.HasIndex(e => new { e.IsPurged, e.ReceivedAt });

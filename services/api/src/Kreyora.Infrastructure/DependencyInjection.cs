@@ -164,6 +164,8 @@ public static class DependencyInjection
         services.AddScoped<IStorePaymentConfigurationService, StorePaymentConfigurationService>();
         services.AddScoped<IChannelConnectionService, ChannelConnectionService>();
         services.AddScoped<IWebhookIngressService, WebhookIngressService>();
+        services.AddScoped<IWebhookProcessingService, WebhookProcessingService>();
+        services.AddTransient<WebhookProcessingJob>();
             services.AddScoped<IMediaAssetService, MediaAssetService>();
             services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>
                 serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>().Value.Provider == "R2"
