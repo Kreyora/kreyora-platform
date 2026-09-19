@@ -26,6 +26,12 @@ public sealed class WebhookEvent : BaseEntity, ITenantOwned
     public bool IsPurged { get; private set; }
     public DateTimeOffset? PurgedAt { get; private set; }
     public string? ErrorMessage { get; private set; }
+    public int AttemptCount { get; private set; }
+    public int MaxAttempts { get; private set; } = WebhookRetryPolicy.DefaultMaxAttempts;
+    public DateTimeOffset? NextRetryAt { get; private set; }
+    public DateTimeOffset? DeadLetteredAt { get; private set; }
+    public DateTimeOffset? LastAttemptedAt { get; private set; }
+    public WebhookFailureClassification? FailureClassification { get; private set; }
 
     private WebhookEvent() { }
 
@@ -39,7 +45,8 @@ public sealed class WebhookEvent : BaseEntity, ITenantOwned
         DateTimeOffset receivedAt,
         string correlationId,
         string headers,
-        string rawPayload)
+        string rawPayload,
+        int maxAttempts = WebhookRetryPolicy.DefaultMaxAttempts)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
@@ -47,6 +54,11 @@ public sealed class WebhookEvent : BaseEntity, ITenantOwned
         ArgumentException.ThrowIfNullOrWhiteSpace(correlationId);
         ArgumentException.ThrowIfNullOrWhiteSpace(headers);
         ArgumentException.ThrowIfNullOrWhiteSpace(rawPayload);
+
+        if (maxAttempts < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxAttempts), "MaxAttempts must be at least 1.");
+        }
 
         if (providerEventId.Length > ProviderEventIdMaxLength)
         {
@@ -78,6 +90,8 @@ public sealed class WebhookEvent : BaseEntity, ITenantOwned
             Headers = headers,
             RawPayload = rawPayload,
             IsPurged = false,
+            AttemptCount = 0,
+            MaxAttempts = maxAttempts,
             CreatedAt = now,
             ModifiedAt = now
         };
@@ -94,8 +108,11 @@ public sealed class WebhookEvent : BaseEntity, ITenantOwned
         ProcessingStatus = WebhookProcessingStatus.Processed;
         ProcessedAt = processedAt;
         ErrorMessage = null;
+        NextRetryAt = null;
         ModifiedAt = DateTimeOffset.UtcNow;
     }
+
+    public void RecordSuccess(DateTimeOffset processedAt) => MarkProcessed(processedAt);
 
     public void MarkFailed(string errorMessage, bool deadLetter = false)
     {
@@ -106,6 +123,62 @@ public sealed class WebhookEvent : BaseEntity, ITenantOwned
             ? errorMessage[..ErrorMessageMaxLength]
             : errorMessage;
         ModifiedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void RecordFailure(
+        string errorMessage,
+        WebhookFailureClassification classification,
+        DateTimeOffset now,
+        WebhookRetryPolicy policy)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(errorMessage);
+        ArgumentNullException.ThrowIfNull(policy);
+
+        LastAttemptedAt = now;
+        AttemptCount++;
+        ErrorMessage = errorMessage.Length > ErrorMessageMaxLength
+            ? errorMessage[..ErrorMessageMaxLength]
+            : errorMessage;
+
+        if (classification == WebhookFailureClassification.Permanent || AttemptCount >= MaxAttempts)
+        {
+            ProcessingStatus = WebhookProcessingStatus.DeadLetter;
+            FailureClassification = classification == WebhookFailureClassification.Permanent
+                ? WebhookFailureClassification.Permanent
+                : WebhookFailureClassification.Exhausted;
+            DeadLetteredAt = now;
+            NextRetryAt = null;
+        }
+        else
+        {
+            ProcessingStatus = WebhookProcessingStatus.Failed;
+            FailureClassification = WebhookFailureClassification.Transient;
+            NextRetryAt = now.Add(policy.GetBackoffForAttempt(AttemptCount));
+        }
+
+        ModifiedAt = now;
+    }
+
+    public void Replay(DateTimeOffset now)
+    {
+        if (ProcessingStatus != WebhookProcessingStatus.DeadLetter && ProcessingStatus != WebhookProcessingStatus.Failed)
+        {
+            throw new InvalidOperationException($"Cannot replay webhook event with status '{ProcessingStatus}'. Only DeadLetter or Failed events can be replayed.");
+        }
+
+        ProcessingStatus = WebhookProcessingStatus.Received;
+        AttemptCount = 0;
+        NextRetryAt = null;
+        DeadLetteredAt = null;
+        ProcessedAt = null;
+        ErrorMessage = null;
+        FailureClassification = null;
+        ModifiedAt = now;
+    }
+
+    public void QuarantinePoison(string reason, DateTimeOffset now)
+    {
+        RecordFailure(reason, WebhookFailureClassification.Permanent, now, new WebhookRetryPolicy());
     }
 
     public void PurgePayload(DateTimeOffset purgedAt)

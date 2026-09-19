@@ -22,8 +22,8 @@ Webhook processing follows: validate request → durably store immutable raw eve
 |---:|---|---|
 | 01 | Provider capability model and integration ADRs | `APPROVED` |
 | 02 | Connection model and encrypted-secret lifecycle | `APPROVED` |
-| 03 | Fast, idempotent webhook ingress | `REVIEW` |
-| 04 | Normalization, processing jobs, retry, DLQ, and replay | `NOT STARTED` |
+| 03 | Fast, idempotent webhook ingress | `APPROVED` |
+| 04 | Normalization, processing jobs, retry, DLQ, and replay | `REVIEW` |
 | 05 | Outbound outbox and delivery attempts | `NOT STARTED` |
 | 06 | Diagnostics API/UI and provider simulator | `NOT STARTED` |
 | 07 | Reliability, isolation, and failure campaign | `NOT STARTED` |
