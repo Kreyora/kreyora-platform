@@ -2,42 +2,39 @@
 
 ## Active position
 
-- **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** Exit Gate — Milestone Completion Review
-- **Status:** `PLANNING`
-- **Plan state:** S01 through S06 approved; preparing Milestone 06 Exit Gate evidence review.
-- **Active milestone file:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
+- **Milestone:** 07 — Social Integration Runtime and Channel Boundaries
+- **Step:** 01 — Provider-neutral social runtime contracts and integration ADRs
+- **Status:** `REVIEW`
+- **Plan state:** Step implementation complete; ready for human review.
+- **Active milestone file:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M06-S06.md` (APPROVED)
-- **Previous checkpoint:** `artifacts/checkpoints/M06-S05.md` (APPROVED)
-- **Last approved state:** Milestone 06 Step 06 (End-to-end lifecycle and failure verification) approved.
+- **Current checkpoint:** `artifacts/checkpoints/M07-S01.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M06-EXIT.md` (APPROVED)
+- **Last approved state:** Milestone 06 Exit Gate approved. Milestone 06 complete.
 
 ## Current objective
 
-Consolidate verification evidence across all 6 steps of Milestone 06 to prove all milestone exit criteria are satisfied:
-1. Authorized sellers can process, cancel, verify, and fulfil orders safely.
-2. COD and merchant QR follow documented manual operating policies.
-3. No client input alone can mark payment paid.
-4. Inventory reconciles across confirmation, cancellation, failure, and fulfilment.
-5. Every transition has actor/reason/time/correlation evidence.
-6. Notifications are durable, retryable, redacted, and visible without using a live provider.
+Provider capability model, capability matrix, integration ADRs (ADR-010 through ADR-013), domain models, application contracts, and AES-256-GCM encryption service with contract tests implemented and verified.
 
 ## Next permitted action
 
-Compile `artifacts/checkpoints/M06-EXIT.md` consolidating automated test and invariant evidence, and request Project Owner approval.
+Human review and approval of checkpoint `artifacts/checkpoints/M07-S01.md`.
 
 ## Next prohibited action
 
-- Starting Milestone 07 before Milestone 06 Exit Gate approval.
+- Starting Step 02 before Step 01 approval.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-20 | Completed M07-S01 implementation: capability matrix across 6 channels, 4 accepted ADRs (ADR-010 to ADR-013), domain models (ChannelType, ChannelConnectionStatus, EncryptedSecret, ChannelCapabilities, NormalizedInboundEnvelope/payloads), application contracts (ISecretEncryptionService, IntegrationContracts, IChannelProvider, IChannelProviderRegistry), infrastructure (SecretEncryptionOptions, AesGcmSecretEncryptionService, ChannelProviderRegistry), unit & contract tests (FakeSimulatorChannelProvider), full backend (248 tests) and frontend (454 tests) green, 0 pending migrations. Status -> REVIEW. | Antigravity |
+| 2026-09-20 | Project owner approved Milestone 06 Exit Gate. Commenced Phase 1 (Architect) planning for M07-S01 (Provider-neutral social runtime contracts and event schema). Status -> PLANNING. | Project owner / Antigravity |
+| 2026-09-19 | Graphify knowledge graph refreshed on explicit user request (5,475 nodes, 14,711 edges, 270 communities). M06-S06 approved; position remains Milestone 06 Exit Gate. | Project owner / Antigravity |
 | 2026-09-15 | Completed M06-S06 implementation: Milestone06LifecycleAndFailureTests with 9 end-to-end scenarios covering complete COD and QR lifecycles, proof rejection with restock, optimistic concurrency 409 conflict, concurrent terminal collision (cancel vs dispatch), idempotency replay and fingerprint conflict, notification retries, DLQ and manual replay, multi-tenant isolation, and immutable order snapshots. Full backend (351/351) and frontend (454/454) suites passing, 0 pending migrations, clean git diff. Status -> REVIEW. | Antigravity |
 | 2026-09-15 | Project owner approved M06-S05. Commenced Phase 1 (Architect) planning for M06-S06 (End-to-end lifecycle and failure verification). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-15 | Completed M06-S05 implementation: IOrderQueryService, OrdersController, real typed OrderClient/PaymentClient adapters, seller order list and detail screens, server-evaluated allowed actions, optimistic concurrency 409 conflict banner & recovery CTA, QR payment proof review modal, real notification delivery tracking, activity timeline, 8 Testcontainers integration tests, full backend (342) and frontend (451) regression passing. Checkpoint created. Status -> APPROVED. | Antigravity |
