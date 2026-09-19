@@ -1,75 +1,58 @@
-# Handoff: Milestone 06 Step 06 — End-to-End Lifecycle and Failure Verification
+# Handoff: Milestone 07 Step 01 — Provider-Neutral Social Runtime Contracts and Integration ADRs
 
 ## 1. Overview
 
-- **Milestone:** 06 — Order Operations, Manual Payments, Fulfilment, and Notifications
-- **Step:** 06 — End-to-end lifecycle and failure verification
+- **Milestone:** 07 — Provider-Neutral Social Integration Runtime
+- **Step:** 01 — Provider capability model and integration ADRs
 - **Phase:** Phase 2 (Builder) Implementation — Completed
-- **Governing Plan:** `docs/plan/M06-S06_LIFECYCLE_AND_FAILURE_VERIFICATION_PLAN.md`
-- **Active Milestone File:** `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`
-- **Prior Checkpoint:** `artifacts/checkpoints/M06-S05.md` (APPROVED)
-- **Current Checkpoint:** `artifacts/checkpoints/M06-S06.md` (REVIEW)
+- **Governing Plan:** `docs/plan/M07-S01_SOCIAL_RUNTIME_CONTRACTS_PLAN.md`
+- **Active Milestone File:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
+- **Current Checkpoint:** `artifacts/checkpoints/M07-S01.md` (REVIEW)
+- **Prior Checkpoint:** `artifacts/checkpoints/M06-EXIT.md` (APPROVED)
 - **Status:** `REVIEW`
 
 ---
 
 ## 2. Implementation Checklist (Phase 2 Builder)
 
-- [x] **Task 1: Test Suite Scaffolding (`services/api/tests/Kreyora.IntegrationTests`)**
-  - Create `services/api/tests/Kreyora.IntegrationTests/Orders/Milestone06LifecycleAndFailureTests.cs` using `PostgresFixture`.
-  - Wire helpers for seed store, stock ledger, checkout sessions, orders, payment configurations, and mutable clock.
+- [x] **Task 1: Author and Record 4 Integration ADRs (`docs/decisions/`)**
+  - Create `ADR-010-social-connection-ownership.md` (Tenant-level ownership with optional Store binding).
+  - Create `ADR-011-normalized-social-event-versioning.md` (Strongly-typed polymorphic envelope with `schemaVersion: "v1"`).
+  - Create `ADR-012-raw-webhook-payload-retention.md` (30-day raw retention for replay/debugging with automated purge/redaction).
+  - Create `ADR-013-secrets-encryption-and-key-management.md` (AES-256-GCM envelope encryption with key versioning).
+  - Update `docs/decisions/ADR_INDEX.md` with ADR-010 through ADR-013.
 
-- [x] **Task 2: Scenario 1 — Complete COD Order Lifecycle**
-  - Checkout -> PendingConfirmation -> Confirm -> Prepare -> Dispatch -> Deliver + MarkCodCollected.
-  - Verify stock ledger commitment, reconciled balances (`OnHand - Reserved == Available`), outbox notifications, and actor/reason audit trail.
+- [x] **Task 2: Domain Layer Value Objects & Models (`services/api/src/Kreyora.Domain`)**
+  - Create `Kreyora.Domain/Integrations/ChannelType.cs` (WhatsApp, Instagram, Messenger, Viber, Telegram, Simulator).
+  - Create `Kreyora.Domain/Integrations/ChannelCapabilities.cs` (Immutable value object covering 11 capability domains).
+  - Create `Kreyora.Domain/Integrations/ChannelConnectionStatus.cs` (Pending, Active, Degraded, Expired, Revoked, Disabled).
+  - Create `Kreyora.Domain/Integrations/EncryptedSecret.cs` (CiphertextBase64, IvBase64, AuthTagBase64, KeyVersion).
+  - Create `Kreyora.Domain/Integrations/NormalizedInboundEvents.cs` (Polymorphic `NormalizedInboundEnvelope` and typed payloads).
 
-- [x] **Task 3: Scenario 2 — Complete Merchant-QR Order Lifecycle with Proof Verification**
-  - Checkout -> AwaitingVerification -> Upload JPEG proof -> VerifyPayment -> Confirm -> Dispatch -> Deliver.
-  - Verify proof upload validation (magic bytes), payment attempt status transition to `Verified`, order transition to `Paid`, and notifications.
+- [x] **Task 3: Application Layer Contracts (`services/api/src/Kreyora.Application`)**
+  - Create `Kreyora.Application/Integrations/ISecretEncryptionService.cs` (Encrypt/Decrypt with key versioning).
+  - Create `Kreyora.Application/Integrations/IChannelProvider.cs` (ValidateWebhook, NormalizeInbound, SendMessage, Capabilities, ValidateOrRefreshConnection).
+  - Create `Kreyora.Application/Integrations/IChannelProviderRegistry.cs` (Provider resolution by channel type).
+  - Create `Kreyora.Application/Integrations/IntegrationContracts.cs` (DTOs, requests, and results).
 
-- [x] **Task 4: Scenario 3 — Merchant-QR Rejected Proof & Order Cancellation with Restock**
-  - Order placed -> Customer uploads proof -> Operator rejects proof with reason -> Operator cancels order with reason.
-  - Verify automated restock (`StockMovementType.OrderRestock`), inventory balances fully restored, payment attempt expired, and cancellation audit record.
+- [x] **Task 4: Infrastructure Encryption Service (`services/api/src/Kreyora.Infrastructure`)**
+  - Implement `AesGcmSecretEncryptionService` in `Kreyora.Infrastructure/Integrations/AesGcmSecretEncryptionService.cs`.
+  - Implement `ChannelProviderRegistry` in `Kreyora.Infrastructure/Integrations/ChannelProviderRegistry.cs`.
+  - Register services in `DependencyInjection.cs`.
 
-- [x] **Task 5: Scenario 4 — Stale Version Concurrency Rejection (409 Conflict)**
-  - Operator A and Operator B read Version $V_1$.
-  - Operator A executes action -> Version advances to $V_2$.
-  - Operator B executes action with expectedVersion $V_1$ -> Rejected with HTTP `409 Conflict`.
-  - Verify database integrity and refresh behavior.
+- [x] **Task 5: Unit & Contract Tests (`services/api/tests/`)**
+  - Add `AesGcmSecretEncryptionServiceTests` in `Kreyora.UnitTests/Integrations/`.
+  - Add `NormalizedInboundEventTests` in `Kreyora.UnitTests/Integrations/`.
+  - Add `ChannelCapabilitiesTests` in `Kreyora.UnitTests/Integrations/`.
+  - Add `ChannelProviderContractTests` with `FakeSimulatorChannelProvider` in `Kreyora.ContractTests/Integrations/`.
 
-- [x] **Task 6: Scenario 5 — Concurrent Terminal Collision (Cancel vs Dispatch)**
-  - Parallel execution of conflicting terminal actions on same order.
-  - Verify exactly one operation wins; second receives concurrency conflict.
-  - Verify stock ledger consistency (no double restock or orphaned reservation).
+- [x] **Task 6: Quality Gates & Verification**
+  - Run full backend solution test suite: `dotnet test services/api/Kreyora.slnx --configuration Release`.
+  - Run EF Core model changes check: `dotnet ef migrations has-pending-model-changes ...`.
+  - Run full frontend CI gate: `pnpm ci:frontend`.
+  - Run git diff check: `git diff --check`.
 
-- [x] **Task 7: Scenario 6 — Idempotency & Key Reuse Conflicts**
-  - Replay identical action with same `Idempotency-Key` -> Returns cached result (`WasReplayed: true`), 0 duplicate side-effects.
-  - Replay different action with same `Idempotency-Key` -> Rejected with conflict/validation error.
-
-- [x] **Task 8: Scenario 7 — Notification Delivery Retries, DLQ & Manual Replay**
-  - Deliver with failing provider -> Attempt 1 recorded with failure reason -> 30s backoff -> Verify retry skipped when `NextRetryAt > Now`.
-  - Advance clock -> Attempt 2 fails -> Advance clock -> Attempt 3 fails -> Transition to `DeadLettered` with dead-letter timestamp.
-  - Authorize manual replay -> Reset status to `Pending` -> Delivery succeeds.
-  - Verify PII redaction on recipient contact info throughout logs.
-
-- [x] **Task 9: Scenario 8 — Multi-Tenant Isolation Verification**
-  - Tenant A creates orders, payments, proofs, notifications.
-  - Tenant B attempts read, action execution, and proof download -> All return `404 Not Found` or `403 Forbidden`.
-  - Verify zero data leakage across tenant boundaries.
-
-- [x] **Task 10: Scenario 9 — Immutable Order Snapshot Invariant**
-  - Order placed at price $P_1$, delivery fee $F_1$.
-  - Seller updates catalog price to $P_2$, product title, and delivery rule fee to $F_2$.
-  - Verify order detail retains original $P_1$, $F_1$, and historical line item titles.
-
-- [x] **Task 11: Defect Remediation & Full Quality Gates**
-  - Fix any milestone-scoped defects discovered during test execution.
-  - Run full backend solution test suite: `dotnet test services/api/Kreyora.slnx --configuration Release` (351/351 passed).
-  - Run EF Core model changes check: `dotnet ef migrations has-pending-model-changes ...` (0 pending).
-  - Run full frontend CI gate: `pnpm ci:frontend` (0 lint errors, 0 type errors, 454/454 passed, build clean).
-  - Run git diff check: `git diff --check` (clean).
-
-- [x] **Task 12: Checkpoint & Documentation**
-  - Compile Lifecycle Evidence Table in checkpoint report `artifacts/checkpoints/M06-S06.md` (`REVIEW`).
-  - Update `docs/context/CURRENT_WORK.md` and `docs/milestones/06_ORDER_OPERATIONS_PAYMENTS_NOTIFICATIONS.md`.
+- [x] **Task 7: Checkpoint & Documentation**
+  - Create checkpoint report `artifacts/checkpoints/M07-S01.md` (`REVIEW`).
+  - Update `docs/context/CURRENT_WORK.md` and `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`.
   - Wait for project owner review and approval.

@@ -4,6 +4,7 @@ using Kreyora.Application.Authentication;
 using Kreyora.Application.Authorization;
 using Kreyora.Application.Catalog;
 using Kreyora.Application.Customers;
+using Kreyora.Application.Integrations;
 using Kreyora.Application.Inventory;
 using Kreyora.Application.Orders;
 using Kreyora.Application.Payments;
@@ -20,6 +21,7 @@ using Kreyora.Infrastructure.Correlation;
 using Kreyora.Infrastructure.Customers;
 using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
+using Kreyora.Infrastructure.Integrations;
 using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Notifications;
 using Kreyora.Infrastructure.Orders;
@@ -76,6 +78,11 @@ public static class DependencyInjection
         services.AddScoped<ICorrelationContext, CorrelationContext>();
         services.AddScoped<ITenantContextAccessor, TenantContextAccessor>();
         services.AddSingleton<Domain.Abstractions.ITimeProvider, SystemTimeProvider>();
+
+        services.AddOptions<SecretEncryptionOptions>()
+            .BindConfiguration(SecretEncryptionOptions.SectionName);
+        services.AddSingleton<ISecretEncryptionService, AesGcmSecretEncryptionService>();
+        services.AddScoped<IChannelProviderRegistry, ChannelProviderRegistry>();
 
         var connectionString = configuration.GetValue<string>("Database:ConnectionString");
         if (string.IsNullOrWhiteSpace(connectionString))

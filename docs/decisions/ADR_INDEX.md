@@ -20,9 +20,12 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-013 | Secrets encryption and key management for social credentials | `Accepted` | 2026-09-20 | — |
+| ADR-012 | Raw provider webhook payload retention and privacy policy | `Accepted` | 2026-09-20 | — |
+| ADR-011 | Normalized social event versioning | `Accepted` | 2026-09-20 | — |
+| ADR-010 | Social connection ownership and multi-tenant routing | `Accepted` | 2026-09-20 | — |
 | ADR-009 | Public storefront resolution boundary | `Accepted` | 2026-09-05 | — |
 | ADR-008 | Commerce-system provenance | `Accepted` | 2026-09-05 | — |
-| ADR-009 | Public storefront resolution boundary | `Accepted` | 2026-09-05 | — |
 | ADR-007 | Checkout-session reservation orchestration | `Accepted` | 2026-09-05 | — |
 | ADR-006 | Inventory reservation consistency and Hangfire expiry | `Accepted` | 2026-09-04 | — |
 | ADR-005 | Owner-issued read-only PlatformSupport audit access | `Accepted` | 2026-08-02 | — |
@@ -35,6 +38,11 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-013 | Secrets encryption and key management for social credentials | `Accepted` | 2026-09-20 | — |
+| ADR-012 | Raw provider webhook payload retention and privacy policy | `Accepted` | 2026-09-20 | — |
+| ADR-011 | Normalized social event versioning | `Accepted` | 2026-09-20 | — |
+| ADR-010 | Social connection ownership and multi-tenant routing | `Accepted` | 2026-09-20 | — |
+| ADR-009 | Public storefront resolution boundary | `Accepted` | 2026-09-05 | — |
 | ADR-008 | Commerce-system provenance | `Accepted` | 2026-09-05 | — |
 | ADR-007 | Checkout-session reservation orchestration | `Accepted` | 2026-09-05 | — |
 | ADR-006 | Inventory reservation consistency and Hangfire expiry | `Accepted` | 2026-09-04 | — |
