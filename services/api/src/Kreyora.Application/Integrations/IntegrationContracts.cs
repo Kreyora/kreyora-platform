@@ -30,12 +30,27 @@ public sealed record WebhookValidationRequest(
 public sealed record WebhookValidationResult(
     bool IsValid,
     string? ChallengeResponse = null,
-    string? ErrorReason = null)
+    string? ErrorReason = null,
+    string? ProviderEventId = null,
+    string? ExternalAccountId = null)
 {
-    public static WebhookValidationResult Valid(string? challengeResponse = null) => new(true, challengeResponse);
-    public static WebhookValidationResult Invalid(string errorReason) => new(false, null, errorReason);
-    public static WebhookValidationResult Success(string? challengeResponse = null) => Valid(challengeResponse);
-    public static WebhookValidationResult Failed(string errorReason) => Invalid(errorReason);
+    public static WebhookValidationResult Valid(
+        string? challengeResponse = null,
+        string? providerEventId = null,
+        string? externalAccountId = null) =>
+        new(true, challengeResponse, null, providerEventId, externalAccountId);
+
+    public static WebhookValidationResult Invalid(string errorReason) =>
+        new(false, null, errorReason);
+
+    public static WebhookValidationResult Success(
+        string? challengeResponse = null,
+        string? providerEventId = null,
+        string? externalAccountId = null) =>
+        Valid(challengeResponse, providerEventId, externalAccountId);
+
+    public static WebhookValidationResult Failed(string errorReason) =>
+        Invalid(errorReason);
 
     public string? FailureReason => ErrorReason;
 }
