@@ -3,6 +3,7 @@ using System;
 using Kreyora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kreyora.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260919185315_AddChannelConnections")]
+    partial class AddChannelConnections
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -578,127 +581,6 @@ namespace Kreyora.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_channel_connections_tenant_id_channel_external_account_id");
 
                     b.ToTable("channel_connections", (string)null);
-                });
-
-            modelBuilder.Entity("Kreyora.Domain.Integrations.WebhookEvent", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasMaxLength(26)
-                        .HasColumnType("character varying(26)")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Channel")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("channel");
-
-                    b.Property<string>("ConnectionId")
-                        .IsRequired()
-                        .HasMaxLength(26)
-                        .HasColumnType("character varying(26)")
-                        .HasColumnName("connection_id");
-
-                    b.Property<string>("CorrelationId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("correlation_id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("ErrorMessage")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)")
-                        .HasColumnName("error_message");
-
-                    b.Property<string>("EventType")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("event_type");
-
-                    b.Property<string>("Headers")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("headers");
-
-                    b.Property<bool>("IsPurged")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_purged");
-
-                    b.Property<DateTimeOffset>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modified_at");
-
-                    b.Property<DateTimeOffset>("OccurredAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("occurred_at");
-
-                    b.Property<DateTimeOffset?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("processed_at");
-
-                    b.Property<string>("ProcessingStatus")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("processing_status");
-
-                    b.Property<string>("ProviderEventId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("provider_event_id");
-
-                    b.Property<DateTimeOffset?>("PurgedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("purged_at");
-
-                    b.Property<string>("RawPayload")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("raw_payload");
-
-                    b.Property<DateTimeOffset>("ReceivedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("received_at");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(26)
-                        .HasColumnType("character varying(26)")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Id")
-                        .HasName("pk_webhook_events");
-
-                    b.HasAlternateKey("TenantId", "Id")
-                        .HasName("ak_webhook_events_tenant_id_id");
-
-                    b.HasIndex("ConnectionId", "ProviderEventId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_webhook_events_connection_id_provider_event_id");
-
-                    b.HasIndex("IsPurged", "ReceivedAt")
-                        .HasDatabaseName("ix_webhook_events_is_purged_received_at");
-
-                    b.HasIndex("TenantId", "ConnectionId")
-                        .HasDatabaseName("ix_webhook_events_tenant_id_connection_id");
-
-                    b.HasIndex("TenantId", "ProcessingStatus", "ReceivedAt")
-                        .HasDatabaseName("ix_webhook_events_tenant_id_processing_status_received_at");
-
-                    b.ToTable("webhook_events", (string)null);
                 });
 
             modelBuilder.Entity("Kreyora.Domain.Inventory.InventoryItem", b =>
@@ -3356,17 +3238,6 @@ namespace Kreyora.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("EncryptedCredentials");
-                });
-
-            modelBuilder.Entity("Kreyora.Domain.Integrations.WebhookEvent", b =>
-                {
-                    b.HasOne("Kreyora.Domain.Integrations.ChannelConnection", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId", "ConnectionId")
-                        .HasPrincipalKey("TenantId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_webhook_events_channel_connections_tenant_id_connection_id");
                 });
 
             modelBuilder.Entity("Kreyora.Domain.Inventory.InventoryItem", b =>

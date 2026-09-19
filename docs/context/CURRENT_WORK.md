@@ -3,7 +3,7 @@
 ## Active position
 
 - **Milestone:** 07 — Social Integration Runtime and Channel Boundaries
-- **Step:** 01 — Provider-neutral social runtime contracts and integration ADRs
+- **Step:** 03 — Fast, idempotent webhook ingress
 - **Status:** `REVIEW`
 - **Plan state:** Step implementation complete; ready for human review.
 - **Active milestone file:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
@@ -11,27 +11,31 @@
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M07-S01.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M06-EXIT.md` (APPROVED)
-- **Last approved state:** Milestone 06 Exit Gate approved. Milestone 06 complete.
+- **Current checkpoint:** `artifacts/checkpoints/M07-S03.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M07-S02.md` (APPROVED)
+- **Last approved state:** Milestone 07 Step 02 approved.
 
 ## Current objective
 
-Provider capability model, capability matrix, integration ADRs (ADR-010 through ADR-013), domain models, application contracts, and AES-256-GCM encryption service with contract tests implemented and verified.
+Fast, idempotent webhook ingress: provider-routed endpoints under `/v1/webhooks/{channel}` and `/v1/webhooks/{channel}/{connectionId}`, SimulatorChannelProvider signature/replay/challenge validation, immutable WebhookEvent storage with deduplication on `(ConnectionId, ProviderEventId)`, fast acknowledgement (<200ms), and real Testcontainers integration tests.
 
 ## Next permitted action
 
-Human review and approval of checkpoint `artifacts/checkpoints/M07-S01.md`.
+Human review and approval of checkpoint `artifacts/checkpoints/M07-S03.md`.
 
 ## Next prohibited action
 
-- Starting Step 02 before Step 01 approval.
+- Starting Step 04 before Step 03 approval.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-20 | Completed M07-S03 implementation: WebhookEvent aggregate root, WebhookProcessingStatus enum, WebhookEventConfiguration, PostgreSQL migration (20260919191338_AddWebhookEvents), IWebhookIngressService, WebhookIngressService, SimulatorChannelProvider, WebhooksController, 18 unit tests, 8 Testcontainers integration tests, full solution tests green (431 tests), frontend CI green. Status -> REVIEW. | Antigravity |
+| 2026-09-20 | Project owner approved M07-S02 (`artifacts/checkpoints/M07-S02.md`). Refreshed Graphify code graph. Commenced Phase 1 (Architect) planning for M07-S03 (Fast, idempotent webhook ingress). Status -> PLANNING. | Project owner / Antigravity |
+| 2026-09-20 | Completed M07-S02 implementation: ChannelConnection aggregate root, ChannelConnectionConfiguration, PostgreSQL migration (20260919185315_AddChannelConnections), IChannelConnectionService, ChannelConnectionService with AES-256-GCM encryption & key rotation, ChannelConnectionsController, 12 unit tests, 8 Testcontainers integration tests, full solution tests green (393 tests), frontend CI green. Status -> REVIEW. | Antigravity |
+| 2026-09-20 | Project owner approved M07-S01 (`artifacts/checkpoints/M07-S01.md`). Commenced Phase 1 (Architect) planning for M07-S02 (Connection model and encrypted-secret lifecycle). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-20 | Completed M07-S01 implementation: capability matrix across 6 channels, 4 accepted ADRs (ADR-010 to ADR-013), domain models (ChannelType, ChannelConnectionStatus, EncryptedSecret, ChannelCapabilities, NormalizedInboundEnvelope/payloads), application contracts (ISecretEncryptionService, IntegrationContracts, IChannelProvider, IChannelProviderRegistry), infrastructure (SecretEncryptionOptions, AesGcmSecretEncryptionService, ChannelProviderRegistry), unit & contract tests (FakeSimulatorChannelProvider), full backend (248 tests) and frontend (454 tests) green, 0 pending migrations. Status -> REVIEW. | Antigravity |
 | 2026-09-20 | Project owner approved Milestone 06 Exit Gate. Commenced Phase 1 (Architect) planning for M07-S01 (Provider-neutral social runtime contracts and event schema). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-19 | Graphify knowledge graph refreshed on explicit user request (5,475 nodes, 14,711 edges, 270 communities). M06-S06 approved; position remains Milestone 06 Exit Gate. | Project owner / Antigravity |

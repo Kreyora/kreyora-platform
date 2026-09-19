@@ -22,6 +22,7 @@ using Kreyora.Infrastructure.Customers;
 using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Integrations;
+using Kreyora.Infrastructure.Integrations.Simulator;
 using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Notifications;
 using Kreyora.Infrastructure.Orders;
@@ -82,6 +83,7 @@ public static class DependencyInjection
         services.AddOptions<SecretEncryptionOptions>()
             .BindConfiguration(SecretEncryptionOptions.SectionName);
         services.AddSingleton<ISecretEncryptionService, AesGcmSecretEncryptionService>();
+        services.AddSingleton<IChannelProvider, SimulatorChannelProvider>();
         services.AddScoped<IChannelProviderRegistry, ChannelProviderRegistry>();
 
         var connectionString = configuration.GetValue<string>("Database:ConnectionString");
@@ -160,6 +162,8 @@ public static class DependencyInjection
         services.AddScoped<IOrderQueryService, OrderQueryService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IStorePaymentConfigurationService, StorePaymentConfigurationService>();
+        services.AddScoped<IChannelConnectionService, ChannelConnectionService>();
+        services.AddScoped<IWebhookIngressService, WebhookIngressService>();
             services.AddScoped<IMediaAssetService, MediaAssetService>();
             services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>
                 serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>().Value.Provider == "R2"
