@@ -3,35 +3,37 @@
 ## Active position
 
 - **Milestone:** 07 — Social Integration Runtime and Channel Boundaries
-- **Step:** 05 — Outbound outbox and delivery attempts
+- **Step:** 06 — Diagnostics API/UI and provider simulator
 - **Status:** `REVIEW`
-- **Plan state:** Step 05 implementation complete; ready for human review.
+- **Plan state:** Step 06 implementation complete; ready for human review.
 - **Active milestone file:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M07-S05.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M07-S04.md` (APPROVED)
-- **Last approved state:** Milestone 07 Step 04 approved.
+- **Current checkpoint:** `artifacts/checkpoints/M07-S06.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M07-S05.md` (APPROVED)
+- **Last approved state:** Milestone 07 Step 05 approved.
 
 ## Current objective
 
-Outbound outbox and delivery attempts: provider-neutral OutboundMessage aggregate with delivery lifecycle (Queued, Sending, Sent, Delivered, Read, Failed, DeadLetter, Cancelled), append-only OutboundDeliveryAttempt entity, multi-tenant Hangfire OutboundDeliveryJob, provider reference tracking, bounded retries with exponential backoff and jitter, dead-letter queue, cancellation and idempotent replay, capability checks, conversation gate placeholder, rate-limit feedback handling, status receipt correlation from inbound webhooks, and simulator transport.
+Diagnostics API/UI and provider simulator: deterministic provider simulator with signed inbound events, duplicate/out-of-order delivery, configurable latency, rate limits, transient/permanent errors, token expiry, delivery receipts, and reconnect behavior. Authorized connection health, webhook events, delivery attempts, DLQ, and replay APIs. Connect M01 integration diagnostics UI to real runtime data while retaining demo mode. Role-based payload visibility/redaction. End-to-end diagnostic and replay tests.
 
 ## Next permitted action
 
-Human review and approval of checkpoint `artifacts/checkpoints/M07-S05.md`.
+Human review and approval of checkpoint `artifacts/checkpoints/M07-S06.md`.
 
 ## Next prohibited action
 
-- Starting Step 06 before Step 05 review and approval.
+- Starting Step 07 before Step 06 review and approval.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-21 | Completed M07-S06 implementation: deterministic provider simulator enhancements (HMAC signature generator, configurable latency, simulated expiry/degraded/reconnect), IIntegrationDiagnosticsService, IntegrationDiagnosticsService with ADR-012 role-based payload redaction and scenario runner, expanded IntegrationDiagnosticsController with overview, connection diagnostics, webhooks history, and scenario execution endpoints, real apiIntegrationClient in apps/web connected via client-provider, wired live replay and reconnect actions in UI, 10 unit tests, 9 Testcontainers integration tests (523/523 backend tests passing), 4 frontend vitest tests (458/458 frontend tests passing), full frontend CI passing, 0 pending migrations. Status -> REVIEW. | Antigravity |
+| 2026-09-21 | Project owner approved M07-S05 (`artifacts/checkpoints/M07-S05.md`). Commenced Phase 1 (Architect) planning for M07-S06 (Diagnostics API/UI and provider simulator). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-21 | Completed M07-S05 implementation: OutboundMessage aggregate root (8 lifecycle states), OutboundDeliveryAttempt (append-only), OutboundMessageConfiguration & OutboundDeliveryAttemptConfiguration, EF Core migration (20260921155143_AddOutboundMessagesAndDeliveryAttempts), IOutboundMessageService, OutboundMessageService, OutboundDeliveryJob (multi-tenant via ITenantJobRunner), IConversationGate placeholder, OutboundMessagesController, SimulatorChannelProvider send simulation, WebhookProcessingService status-receipt hook, 27 unit tests, 12 Testcontainers integration tests, full solution tests green (504 tests), frontend CI green. Status -> REVIEW. | Antigravity |
 | 2026-09-21 | Project owner approved M07-S04 (`artifacts/checkpoints/M07-S04.md`) and M07-S05 plan (`docs/plan/M07-S05_OUTBOUND_OUTBOX_PLAN.md`). Commenced Phase 2 (Builder) implementation for M07-S05 (Outbound outbox and delivery attempts). Status -> IN PROGRESS. | Project owner / Antigravity |
 | 2026-09-20 | Completed M07-S04 implementation: WebhookEvent retry/DLQ fields, WebhookFailureClassification enum, WebhookRetryPolicy, InboundEvent aggregate root, InboundEventConfiguration, PostgreSQL migration (20260919194119_AddWebhookEventRetryAndInboundEvents), IWebhookProcessingService, WebhookProcessingService, WebhookProcessingJob (multi-tenant via ITenantJobRunner), IntegrationDiagnosticsController, 26 unit tests, 8 Testcontainers integration tests, full solution tests green (465 tests), frontend CI green. Status -> REVIEW. | Antigravity |

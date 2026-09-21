@@ -1,7 +1,13 @@
 import type { TenantId, Timestamp } from "./common";
 
 export type ConnectionStatus = "connected" | "disconnected" | "error" | "pending_reauth";
-export type ProviderType = "facebook" | "instagram" | "whatsapp" | "tiktok";
+export type ProviderType = "facebook" | "instagram" | "whatsapp" | "tiktok" | "simulator" | "messenger" | "telegram" | "viber";
+
+export interface WebhookReplayResult {
+  success: boolean;
+  message?: string;
+  resumedAt?: Timestamp;
+}
 
 export interface ProviderCapability {
   canReceiveMessages: boolean;

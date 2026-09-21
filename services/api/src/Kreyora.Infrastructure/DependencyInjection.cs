@@ -169,6 +169,7 @@ public static class DependencyInjection
         services.AddScoped<IConversationGate, AlwaysAllowConversationGate>();
         services.AddScoped<IOutboundMessageService, OutboundMessageService>();
         services.AddTransient<OutboundDeliveryJob>();
+        services.AddScoped<IIntegrationDiagnosticsService, IntegrationDiagnosticsService>();
             services.AddScoped<IMediaAssetService, MediaAssetService>();
             services.AddSingleton<IPrivateObjectStorage>(serviceProvider =>
                 serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<MediaStorageOptions>>().Value.Provider == "R2"
