@@ -206,8 +206,39 @@ public sealed class SimulatorChannelProvider : IChannelProvider
         OutboundMessageRequest message,
         CancellationToken cancellationToken = default)
     {
+        // 1. Simulated failure triggers via metadata or text content
+        if (message.Metadata?.TryGetValue("throw_transient", out var trans) == true && trans.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+            message.Text?.Contains("[SIMULATE_TRANSIENT]", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            throw new HttpRequestException("Simulated transient network timeout during send.");
+        }
+
+        if (message.Metadata?.TryGetValue("throw_rate_limit", out var rateLimit) == true && rateLimit.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+            message.Text?.Contains("[SIMULATE_RATE_LIMIT]", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            throw new HttpRequestException("Provider returned 429 Too Many Requests.");
+        }
+
+        if (message.Metadata?.TryGetValue("throw_permanent", out var perm) == true && perm.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+            message.Text?.Contains("[SIMULATE_PERMANENT]", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            throw new InvalidOperationException("Permanent failure: recipient account does not exist or has blocked the sender.");
+        }
+
+        if (message.Metadata?.TryGetValue("fail_delivery", out var fail) == true && fail.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+            message.Text?.Contains("[SIMULATE_FAILED_DELIVERY]", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return Task.FromResult(OutboundDeliveryResult.Failure(
+                "DELIVERY_REJECTED",
+                "Provider rejected delivery to recipient."));
+        }
+
+        var providerMessageId = message.Metadata?.TryGetValue("provider_message_id", out var customId) == true
+            ? customId
+            : "out_sim_" + Guid.NewGuid().ToString("N");
+
         return Task.FromResult(OutboundDeliveryResult.Delivered(
-            providerMessageId: "out_sim_" + Guid.NewGuid().ToString("N"),
+            providerMessageId: providerMessageId,
             deliveredAt: DateTimeOffset.UtcNow));
     }
 

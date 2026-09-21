@@ -63,6 +63,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<ChannelConnection> ChannelConnections => Set<ChannelConnection>();
     public DbSet<WebhookEvent> WebhookEvents => Set<WebhookEvent>();
     public DbSet<InboundEvent> InboundEvents => Set<InboundEvent>();
+    public DbSet<OutboundMessage> OutboundMessages => Set<OutboundMessage>();
+    public DbSet<OutboundDeliveryAttempt> OutboundDeliveryAttempts => Set<OutboundDeliveryAttempt>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -115,6 +117,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<ChannelConnection>().HasQueryFilter(connection => connection.TenantId == CurrentTenantId);
         builder.Entity<WebhookEvent>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<InboundEvent>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<OutboundMessage>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<OutboundDeliveryAttempt>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -196,6 +200,14 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
             if (logEntry.State is EntityState.Modified or EntityState.Deleted)
             {
                 throw new InvalidOperationException("Notification delivery logs are append-only and cannot be changed or deleted.");
+            }
+        }
+
+        foreach (var attemptEntry in ChangeTracker.Entries<OutboundDeliveryAttempt>())
+        {
+            if (attemptEntry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                throw new InvalidOperationException("Outbound delivery attempts are append-only and cannot be changed or deleted.");
             }
         }
 

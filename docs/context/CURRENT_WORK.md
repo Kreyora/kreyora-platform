@@ -3,35 +3,37 @@
 ## Active position
 
 - **Milestone:** 07 — Social Integration Runtime and Channel Boundaries
-- **Step:** 04 — Normalization, processing jobs, retry, DLQ, and replay
+- **Step:** 05 — Outbound outbox and delivery attempts
 - **Status:** `REVIEW`
-- **Plan state:** Step 04 implementation complete; ready for human review.
+- **Plan state:** Step 05 implementation complete; ready for human review.
 - **Active milestone file:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M07-S04.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M07-S03.md` (APPROVED)
-- **Last approved state:** Milestone 07 Step 03 approved.
+- **Current checkpoint:** `artifacts/checkpoints/M07-S05.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M07-S04.md` (APPROVED)
+- **Last approved state:** Milestone 07 Step 04 approved.
 
 ## Current objective
 
-Normalization, processing jobs, retry, DLQ, and replay: versioned normalized inbound events, asynchronous Hangfire processing jobs, immutable raw event reference, deduplication of normalized provider messages, failure classification (transient vs permanent), bounded exponential retries with jitter, visible DLQ state, authorized idempotent replay, explicit tenant context per job, poison-event quarantine, and schema-version handling.
+Outbound outbox and delivery attempts: provider-neutral OutboundMessage aggregate with delivery lifecycle (Queued, Sending, Sent, Delivered, Read, Failed, DeadLetter, Cancelled), append-only OutboundDeliveryAttempt entity, multi-tenant Hangfire OutboundDeliveryJob, provider reference tracking, bounded retries with exponential backoff and jitter, dead-letter queue, cancellation and idempotent replay, capability checks, conversation gate placeholder, rate-limit feedback handling, status receipt correlation from inbound webhooks, and simulator transport.
 
 ## Next permitted action
 
-Human review and approval of checkpoint `artifacts/checkpoints/M07-S04.md`.
+Human review and approval of checkpoint `artifacts/checkpoints/M07-S05.md`.
 
 ## Next prohibited action
 
-- Starting Step 05 before Step 04 approval.
+- Starting Step 06 before Step 05 review and approval.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-21 | Completed M07-S05 implementation: OutboundMessage aggregate root (8 lifecycle states), OutboundDeliveryAttempt (append-only), OutboundMessageConfiguration & OutboundDeliveryAttemptConfiguration, EF Core migration (20260921155143_AddOutboundMessagesAndDeliveryAttempts), IOutboundMessageService, OutboundMessageService, OutboundDeliveryJob (multi-tenant via ITenantJobRunner), IConversationGate placeholder, OutboundMessagesController, SimulatorChannelProvider send simulation, WebhookProcessingService status-receipt hook, 27 unit tests, 12 Testcontainers integration tests, full solution tests green (504 tests), frontend CI green. Status -> REVIEW. | Antigravity |
+| 2026-09-21 | Project owner approved M07-S04 (`artifacts/checkpoints/M07-S04.md`) and M07-S05 plan (`docs/plan/M07-S05_OUTBOUND_OUTBOX_PLAN.md`). Commenced Phase 2 (Builder) implementation for M07-S05 (Outbound outbox and delivery attempts). Status -> IN PROGRESS. | Project owner / Antigravity |
 | 2026-09-20 | Completed M07-S04 implementation: WebhookEvent retry/DLQ fields, WebhookFailureClassification enum, WebhookRetryPolicy, InboundEvent aggregate root, InboundEventConfiguration, PostgreSQL migration (20260919194119_AddWebhookEventRetryAndInboundEvents), IWebhookProcessingService, WebhookProcessingService, WebhookProcessingJob (multi-tenant via ITenantJobRunner), IntegrationDiagnosticsController, 26 unit tests, 8 Testcontainers integration tests, full solution tests green (465 tests), frontend CI green. Status -> REVIEW. | Antigravity |
 | 2026-09-20 | Project owner approved M07-S03 (`artifacts/checkpoints/M07-S03.md`). Commenced Phase 1 (Architect) planning for M07-S04 (Normalization, processing jobs, retry, DLQ, and replay). Status -> PLANNING. | Project owner / Antigravity |
 | 2026-09-20 | Completed M07-S03 implementation: WebhookEvent aggregate root, WebhookProcessingStatus enum, WebhookEventConfiguration, PostgreSQL migration (20260919191338_AddWebhookEvents), IWebhookIngressService, WebhookIngressService, SimulatorChannelProvider, WebhooksController, 18 unit tests, 8 Testcontainers integration tests, full solution tests green (431 tests), frontend CI green. Status -> REVIEW. | Antigravity |
