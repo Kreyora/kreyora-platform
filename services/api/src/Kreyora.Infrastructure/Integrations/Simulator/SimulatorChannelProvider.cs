@@ -15,14 +15,72 @@ public sealed class SimulatorChannelProvider : IChannelProvider
     public ChannelType Channel => ChannelType.Simulator;
     public ChannelCapabilities Capabilities => ChannelCapabilities.FullSimulator();
 
-    public Task<WebhookValidationResult> ValidateWebhookAsync(
+    public static string GenerateValidSignature(byte[] body, string? secret)
+    {
+        if (string.IsNullOrEmpty(secret))
+        {
+            return DefaultValidSignature;
+        }
+
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+        var hash = hmac.ComputeHash(body);
+        return "sha256=" + Convert.ToHexStringLower(hash);
+    }
+
+    public static WebhookValidationRequest CreateSignedWebhookRequest(
+        string rawBody,
+        string? secret = null,
+        string? eventId = null,
+        string? accountId = null,
+        DateTimeOffset? timestamp = null,
+        int? latencyMs = null)
+    {
+        var bodyBytes = Encoding.UTF8.GetBytes(rawBody);
+        var signature = GenerateValidSignature(bodyBytes, secret);
+        var ts = timestamp ?? DateTimeOffset.UtcNow;
+        var evId = eventId ?? "evt_sim_" + Guid.NewGuid().ToString("N");
+
+        var headers = new Dictionary<string, string>
+        {
+            ["X-Hub-Signature-256"] = signature,
+            ["X-Provider-Event-Id"] = evId,
+            ["X-Timestamp"] = ts.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["Content-Type"] = "application/json"
+        };
+
+        if (!string.IsNullOrEmpty(accountId))
+        {
+            headers["X-External-Account-Id"] = accountId;
+        }
+
+        if (latencyMs.HasValue && latencyMs.Value > 0)
+        {
+            headers["X-Simulate-Latency-Ms"] = latencyMs.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        return new WebhookValidationRequest(
+            Method: "POST",
+            Path: "/v1/webhooks/simulator",
+            Headers: headers,
+            QueryParameters: new Dictionary<string, string>(),
+            RawBody: bodyBytes,
+            Secret: secret);
+    }
+
+    public async Task<WebhookValidationResult> ValidateWebhookAsync(
         WebhookValidationRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (request.Headers.TryGetValue("X-Simulate-Latency-Ms", out var latencyStr) &&
+            int.TryParse(latencyStr, System.Globalization.CultureInfo.InvariantCulture, out var latencyMs) && latencyMs > 0)
+        {
+            await Task.Delay(Math.Min(latencyMs, 10000), cancellationToken);
+        }
+
         // 1. Handle GET verification challenge (e.g. Meta hub.challenge pattern)
         if (request.Method.Equals("GET", StringComparison.OrdinalIgnoreCase))
         {
-            return Task.FromResult(HandleVerificationChallenge(request));
+            return HandleVerificationChallenge(request);
         }
 
         // 2. Replay window validation (if timestamp header provided)
@@ -31,7 +89,7 @@ public sealed class SimulatorChannelProvider : IChannelProvider
             var delta = Math.Abs((DateTimeOffset.UtcNow - timestamp).TotalSeconds);
             if (delta > DefaultReplayWindowSeconds)
             {
-                return Task.FromResult(WebhookValidationResult.Failed("Timestamp outside replay window"));
+                return WebhookValidationResult.Failed("Timestamp outside replay window");
             }
         }
 
@@ -39,7 +97,7 @@ public sealed class SimulatorChannelProvider : IChannelProvider
         if (!request.Headers.TryGetValue("X-Hub-Signature-256", out var signature) &&
             !request.Headers.TryGetValue("X-Signature", out signature))
         {
-            return Task.FromResult(WebhookValidationResult.Failed("Missing signature header"));
+            return WebhookValidationResult.Failed("Missing signature header");
         }
 
         var isSignatureValid = false;
@@ -59,17 +117,17 @@ public sealed class SimulatorChannelProvider : IChannelProvider
 
         if (!isSignatureValid)
         {
-            return Task.FromResult(WebhookValidationResult.Failed("Invalid signature header"));
+            return WebhookValidationResult.Failed("Invalid signature header");
         }
 
         // 4. Extract ProviderEventId and ExternalAccountId
         var providerEventId = ExtractProviderEventId(request);
         var externalAccountId = ExtractExternalAccountId(request);
 
-        return Task.FromResult(WebhookValidationResult.Success(
+        return WebhookValidationResult.Success(
             challengeResponse: null,
             providerEventId: providerEventId,
-            externalAccountId: externalAccountId));
+            externalAccountId: externalAccountId);
     }
 
     public Task<IReadOnlyList<NormalizedInboundEnvelope>> NormalizeInboundAsync(
@@ -201,11 +259,17 @@ public sealed class SimulatorChannelProvider : IChannelProvider
             schemaVersion: schemaVersion);
     }
 
-    public Task<OutboundDeliveryResult> SendMessageAsync(
+    public async Task<OutboundDeliveryResult> SendMessageAsync(
         ChannelConnectionSnapshot connection,
         OutboundMessageRequest message,
         CancellationToken cancellationToken = default)
     {
+        if (message.Metadata?.TryGetValue("simulate_latency_ms", out var latencyStr) == true &&
+            int.TryParse(latencyStr, out var latencyMs) && latencyMs > 0)
+        {
+            await Task.Delay(Math.Min(latencyMs, 10000), cancellationToken);
+        }
+
         // 1. Simulated failure triggers via metadata or text content
         if (message.Metadata?.TryGetValue("throw_transient", out var trans) == true && trans.Equals("true", StringComparison.OrdinalIgnoreCase) ||
             message.Text?.Contains("[SIMULATE_TRANSIENT]", StringComparison.OrdinalIgnoreCase) == true)
@@ -228,25 +292,51 @@ public sealed class SimulatorChannelProvider : IChannelProvider
         if (message.Metadata?.TryGetValue("fail_delivery", out var fail) == true && fail.Equals("true", StringComparison.OrdinalIgnoreCase) ||
             message.Text?.Contains("[SIMULATE_FAILED_DELIVERY]", StringComparison.OrdinalIgnoreCase) == true)
         {
-            return Task.FromResult(OutboundDeliveryResult.Failure(
+            return OutboundDeliveryResult.Failure(
                 "DELIVERY_REJECTED",
-                "Provider rejected delivery to recipient."));
+                "Provider rejected delivery to recipient.");
         }
 
         var providerMessageId = message.Metadata?.TryGetValue("provider_message_id", out var customId) == true
             ? customId
             : "out_sim_" + Guid.NewGuid().ToString("N");
 
-        return Task.FromResult(OutboundDeliveryResult.Delivered(
+        return OutboundDeliveryResult.Delivered(
             providerMessageId: providerMessageId,
-            deliveredAt: DateTimeOffset.UtcNow));
+            deliveredAt: DateTimeOffset.UtcNow);
     }
 
-    public Task<ConnectionHealthResult> ValidateOrRefreshConnectionAsync(
+    public async Task<ConnectionHealthResult> ValidateOrRefreshConnectionAsync(
         ChannelConnectionSnapshot connection,
         CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(ConnectionHealthResult.Healthy());
+        if (connection.ExternalAccountId?.Contains("simulate_latency", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            await Task.Delay(50, cancellationToken);
+        }
+
+        if (connection.Status == ChannelConnectionStatus.Expired ||
+            connection.ExternalAccountId?.Contains("simulate_expired", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return ConnectionHealthResult.Failed(
+                ChannelConnectionStatus.Expired,
+                "Simulated token expiration. Access token has expired.");
+        }
+
+        if (connection.ExternalAccountId?.Contains("simulate_degraded", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return ConnectionHealthResult.Degraded(
+                "Simulated degraded connection. Intermittent provider API errors.");
+        }
+
+        if (connection.ExternalAccountId?.Contains("simulate_revoked", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return ConnectionHealthResult.Failed(
+                ChannelConnectionStatus.Revoked,
+                "Simulated revocation. Account permissions have been revoked by provider.");
+        }
+
+        return ConnectionHealthResult.Healthy("Connection is healthy and operational.");
     }
 
     private static WebhookValidationResult HandleVerificationChallenge(WebhookValidationRequest request)

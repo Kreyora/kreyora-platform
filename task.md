@@ -1,110 +1,86 @@
-# Handoff: Milestone 07 Step 05 — Outbound Outbox and Delivery Attempts
+# Handoff: Milestone 07 Step 06 — Diagnostics API/UI and Provider Simulator
 
 ## 1. Overview
 
 - **Milestone:** 07 — Provider-Neutral Social Integration Runtime
-- **Step:** 05 — Outbound outbox and delivery attempts
-- **Phase:** Phase 2 (Builder) Execution — Complete; Awaiting Human Approval
-- **Governing Plan:** `docs/plan/M07-S05_OUTBOUND_OUTBOX_PLAN.md`
+- **Step:** 06 — Diagnostics API/UI and provider simulator
+- **Phase:** Phase 2 (Builder) Execution Complete — Awaiting Review
+- **Governing Plan:** `docs/plan/M07-S06_DIAGNOSTICS_SIMULATOR_PLAN.md`
 - **Active Milestone File:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
-- **Previous Checkpoint:** `artifacts/checkpoints/M07-S04.md` (APPROVED)
-- **Current Checkpoint:** `artifacts/checkpoints/M07-S05.md` (REVIEW)
+- **Previous Checkpoint:** `artifacts/checkpoints/M07-S05.md` (APPROVED)
+- **Current Checkpoint:** `artifacts/checkpoints/M07-S06.md` (REVIEW)
 - **Status:** `REVIEW`
 
 ---
 
 ## 2. Implementation Checklist (Phase 2 Builder)
 
-- [x] **Task 1: Domain Models, Lifecycle & Invariants (`services/api/src/Kreyora.Domain/Integrations/`)**
-  - Implement `OutboundMessageStatus` enum (`Queued = 0`, `Sending = 1`, `Sent = 2`, `Delivered = 3`, `Read = 4`, `Failed = 5`, `DeadLetter = 6`, `Cancelled = 7`).
-  - Implement `OutboundMessageType` enum (`Text = 1`, `Media = 2`, `LinkPreview = 3`, `Template = 4`).
-  - Implement `OutboundMessage` aggregate root (`BaseEntity, ITenantOwned`):
-    - Identity: `TenantId`, `ConnectionId`, `Channel`, `IdempotencyKey`.
-    - Routing: `ConversationId` (nullable placeholder), `RecipientChannelId`.
-    - Content: `MessageType`, `TextContent`, `MediaUrl`, `MediaContentType`, `Caption`, `TemplateCode`, `TemplateParametersJson`, `MetadataJson`.
-    - Status & Provider: `Status`, `ProviderMessageId`.
-    - Retry & Error: `AttemptCount`, `MaxAttempts`, `NextRetryAt`, `FailureClassification`, `LastErrorMessage`.
-    - Timestamps: `QueuedAt`, `SentAt`, `DeliveredAt`, `ReadAt`, `FailedAt`, `DeadLetteredAt`, `CancelledAt`.
-    - Methods: `Create(...)`, `MarkSending()`, `RecordDeliverySuccess(...)`, `RecordDeliveryFailure(...)`, `UpdateProviderStatus(...)`, `Cancel()`, `Replay(...)`.
-    - Invariants: status transition checks, monotonic status progression (Sent -> Delivered -> Read), content length bounds.
-  - Implement `OutboundDeliveryAttempt` append-only entity (`BaseEntity, ITenantOwned`):
-    - Properties: `TenantId`, `OutboundMessageId`, `AttemptNumber`, `Channel`, `ConnectionId`, `StartedAt`, `CompletedAt`, `Succeeded`, `ProviderMessageId`, `ProviderErrorCode`, `ProviderErrorMessage`.
-    - Methods: `Create(...)`, `CompleteSuccess(...)`, `CompleteFailure(...)`.
-  - Add domain unit tests in `Kreyora.UnitTests/Integrations/`.
+- [x] **Task 1: Simulator Channel Provider Enhancements (`services/api/src/Kreyora.Infrastructure/Integrations/Simulator/`)**
+  - Add signature generation helper `GenerateValidSignature(byte[] body, string? secret)` using HMAC-SHA256.
+  - Support configurable latency delay via metadata/header `X-Simulate-Latency-Ms`.
+  - Update `ValidateOrRefreshConnectionAsync` to evaluate simulated token expiry:
+    - If connection status is `Expired` or account ID has `simulate_expired`, return `ConnectionHealthResult.Failed(ChannelConnectionStatus.Expired, "Token has expired.")`.
+    - If connection has `simulate_degraded`, return `ConnectionHealthResult.Degraded("Intermittent provider errors detected.")`.
+    - Otherwise return `ConnectionHealthResult.Healthy()`.
+  - Add helper to create synthetic webhook events for scenarios (signed inbound, duplicate provider ID, out-of-order timestamps, poison).
 
-- [x] **Task 2: Persistence & EF Core Migration (`services/api/src/Kreyora.Infrastructure/`)**
-  - Implement `OutboundMessageConfiguration.cs`:
-    - Table `outbound_messages`.
-    - Primary key `Id`, alternate key `(TenantId, Id)`.
-    - Unique index on `(TenantId, ConnectionId, IdempotencyKey)`.
-    - Filtered index on `(TenantId, Status, NextRetryAt)` for active/due queue items (`status IN (0, 5)`).
-    - Query index on `(TenantId, Status, QueuedAt)`.
-    - Filtered lookup index on `(ConnectionId, ProviderMessageId) WHERE provider_message_id IS NOT NULL` for receipt matching.
-    - Concurrency token `xmin`.
-  - Implement `OutboundDeliveryAttemptConfiguration.cs`:
-    - Table `outbound_delivery_attempts`.
-    - FK to `OutboundMessage` (`Restrict`).
-    - Index on `(OutboundMessageId, AttemptNumber)`.
-  - Update `AppDbContext.cs`:
-    - Add `DbSet<OutboundMessage> OutboundMessages` and `DbSet<OutboundDeliveryAttempt> OutboundDeliveryAttempts`.
-    - Add global tenant query filters.
-    - Add append-only enforcement for `OutboundDeliveryAttempt` in `EnforceTenantOwnership()`.
-  - Generate EF Core migration `AddOutboundMessagesAndDeliveryAttempts`.
-  - Verify zero pending model changes.
+- [x] **Task 2: Application Contracts & Service Interface (`services/api/src/Kreyora.Application/Integrations/`)**
+  - Add `IIntegrationDiagnosticsService.cs`.
+  - Add DTOs in `IntegrationDiagnosticsContracts.cs`:
+    - `IntegrationOverviewDto`
+    - `ConnectionDiagnosticsDto`
+    - `WebhookEventDto`
+    - `WebhookEventDetailDto`
+    - `SimulatorScenarioRequest`
+    - `SimulatorScenarioResult`
+    - `SimulatorScenarioType` enum
 
-- [x] **Task 3: Application Contracts & DTOs (`services/api/src/Kreyora.Application/Integrations/`)**
-  - Define `IOutboundMessageService.cs`.
-  - Define `IConversationGate.cs` and `ConversationGateResult` (placeholder).
-  - Define `OutboundMessageContracts.cs` (DTOs, commands, queries, results).
+- [x] **Task 3: Infrastructure Diagnostics Service (`services/api/src/Kreyora.Infrastructure/Integrations/`)**
+  - Implement `IntegrationDiagnosticsService.cs`:
+    - `GetOverviewAsync`: Count connections, 24h event stats, DLQ counts.
+    - `GetConnectionDiagnosticsAsync`: Compute connection-specific metrics.
+    - `GetConnectionWebhooksAsync`: Paginated query on `WebhookEvents` filtered by `connectionId`.
+    - `GetWebhookDetailAsync`: Fetch single event; inspect caller role via `ITenantContextAccessor` and redact `RawPayload` to `"[REDACTED]"` if not `Owner` or `PlatformSupport`.
+    - `ExecuteSimulatorScenarioAsync`: Dispatch scenario via `IWebhookIngressService`, `IWebhookProcessingService`, or `IChannelConnectionService`.
+  - Register `IIntegrationDiagnosticsService` in `DependencyInjection.cs`.
 
-- [x] **Task 4: Infrastructure Services, Background Job & Simulator (`services/api/src/Kreyora.Infrastructure/Integrations/`)**
-  - Implement `AlwaysAllowConversationGate.cs` (placeholder).
-  - Implement `OutboundMessageService.cs`:
-    - `QueueMessageAsync`: validate connection (Active), capabilities, gate, idempotency, create & persist message.
-    - `ProcessDeliveryAsync`: load message, transition to `Sending`, create attempt, invoke `IChannelProvider.SendMessageAsync`, handle success (`Sent`) or failure (`Failed`/`DeadLetter` via `WebhookFailureClassifier` & `WebhookRetryPolicy`).
-    - `ProcessStatusReceiptAsync`: look up message by `(ConnectionId, ProviderMessageId)` and update status monotonically.
-    - `CancelMessageAsync` and `ReplayMessageAsync`.
-    - Query methods: `GetMessageAsync`, `GetMessagesAsync`, `GetDeadLetterMessagesAsync`.
-  - Implement `OutboundDeliveryJob.cs`:
-    - Hangfire recurring job running multi-tenant via `ITenantJobRunner`.
-    - Dispatches due messages via `ProcessDeliveryAsync`.
-    - `[DisableConcurrentExecution(timeoutInSeconds: 55)]`.
-  - Enhance `SimulatorChannelProvider.SendMessageAsync`:
-    - Support simulation flags via metadata/text (`throw_transient`, `throw_rate_limit`, `throw_permanent`).
-  - Hook status receipts in `WebhookProcessingService.cs`:
-    - On `MessageStatusUpdatedPayload`, notify `IOutboundMessageService.ProcessStatusReceiptAsync`.
-  - Register services and jobs in `DependencyInjection.cs`.
+- [x] **Task 4: Web API Controller (`services/api/src/Kreyora.WebApi/Controllers/`)**
+  - Expand `IntegrationDiagnosticsController.cs` with the new diagnostic and scenario endpoints:
+    - `GET /v1/integrations/diagnostics/overview` (`IntegrationsRead`)
+    - `GET /v1/integrations/connections/{id}/diagnostics` (`IntegrationsRead`)
+    - `GET /v1/integrations/connections/{id}/webhooks` (`IntegrationsRead`)
+    - `GET /v1/integrations/webhooks/{id}` (`IntegrationsRead`)
+    - `POST /v1/integrations/simulator/scenarios` (`IntegrationsWrite`, anti-forgery, requires `Idempotency-Key`)
+    - Preserve existing `dead-letter` and `replay` endpoints.
+  - Enforce `[RequireTenantContext]`, RFC 7807 problem details, audit logging.
 
-- [x] **Task 5: Web API Controller (`services/api/src/Kreyora.WebApi/Controllers/`)**
-  - Implement `OutboundMessagesController.cs`:
-    - `POST /v1/integrations/messages` (`IntegrationsWrite`).
-    - `GET /v1/integrations/messages/{id}` (`IntegrationsRead`).
-    - `GET /v1/integrations/messages` (`IntegrationsRead`).
-    - `POST /v1/integrations/messages/{id}/cancel` (`IntegrationsWrite`).
-    - `POST /v1/integrations/messages/{id}/replay` (`IntegrationsWrite`, requires `Idempotency-Key`).
-    - `GET /v1/integrations/messages/dead-letter` (`IntegrationsRead`).
+- [x] **Task 5: Frontend API Adapter & UI Integration (`apps/web/`)**
+  - Update `apps/web/src/lib/ports/integration-client.ts` with `replayWebhook` and `reconnect`.
+  - Update `apps/web/src/lib/adapters/mock/mock-integration-client.ts` to implement new methods.
+  - Create `apps/web/src/lib/adapters/api/integration-client.ts` calling real backend endpoints via `fetchWithAuth`.
+  - Export `apiIntegrationClient` from `apps/web/src/lib/adapters/api/index.ts`.
+  - Update `apps/web/src/lib/providers/client-provider.tsx` to toggle `integration: USING_FIXTURE_ADAPTERS ? mockIntegrationClient : apiIntegrationClient`.
+  - Update `apps/web/src/app/(seller)/integrations/[id]/page.tsx` to handle real replay, reconnect, loading states, and Viewer role guards.
 
-- [x] **Task 6: Unit & Real Testcontainers Integration Tests**
-  - Unit tests:
-    - `OutboundMessageTests.cs`: state machine, invariants, monotonicity, bounds, replay, cancellation.
-    - `OutboundDeliveryAttemptTests.cs`: attempt creation, completion, immutability.
-  - Integration tests in `OutboundMessageIntegrationTests.cs` (PostgreSQL Testcontainers):
-    - Queue and deliver successfully.
-    - Idempotency key deduplication.
-    - Capability check (reject media when not supported).
-    - Transient error -> retry backoff -> success.
-    - Rate limit (429) -> transient retry.
-    - Permanent error -> immediate DLQ.
-    - Retry exhaustion -> DLQ.
-    - Cancel queued message vs cannot cancel sent message.
-    - Replay dead-lettered message.
-    - Status receipt hook updates outbound message.
-    - Cross-tenant isolation.
+- [x] **Task 6: Unit & Real PostgreSQL Integration Tests**
+  - Unit tests in `Kreyora.UnitTests/Integrations/`:
+    - Simulator signature generation, latency, scenarios (10 tests).
+  - Real Testcontainers integration tests in `IntegrationDiagnosticsIntegrationTests.cs`:
+    - Scenario 1: Healthy connection & webhook processing updates metrics.
+    - Scenario 2: Degraded connection simulation returns degraded diagnostic status.
+    - Scenario 3: Token expiry simulation returns `Expired`; reconnect restores `Active`.
+    - Scenario 4: Rate-limited simulation triggers 429 backoff.
+    - Scenario 5: Poison payload simulation immediately enters DLQ.
+    - Scenario 6: Replay of dead-lettered event succeeds with audit trail.
+    - Scenario 7: Non-Owner role receives redacted payload.
+    - Scenario 8: Cross-tenant isolation verification.
+    - Scenario 9: Duplicate delivery deduplication verification.
+  - Frontend Vitest tests in `api-integration-client.test.ts` (4 tests).
 
 - [x] **Task 7: Quality Gates & Verification**
-  - Solution build and all backend tests pass.
-  - Verify EF migration model state (`has-pending-model-changes`).
-  - Frontend CI passes.
-  - Git diff check clean.
-  - Create checkpoint `artifacts/checkpoints/M07-S05.md`.
-  - Update `CURRENT_WORK.md` and `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`.
+  - Solution build Release clean (`0 Warning(s), 0 Error(s)`).
+  - All backend tests passing (`dotnet test`: 523 passed).
+  - Zero pending EF migrations (`has-pending-model-changes`).
+  - Frontend CI passes (`pnpm ci:frontend`: 458 passed, build succeeded).
+  - Git diff clean (`git diff --check`).
+  - Create checkpoint `artifacts/checkpoints/M07-S06.md`.

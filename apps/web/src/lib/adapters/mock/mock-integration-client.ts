@@ -41,4 +41,26 @@ export const mockIntegrationClient: IntegrationClient = {
     const events = webhookEvents.filter((e) => e.connectionId === connectionId);
     return toPaginated<WebhookEvent>(events);
   },
+
+  async replayWebhook(id: string) {
+    await delay();
+    const ev = webhookEvents.find((e) => e.id === id);
+    if (!ev) {
+      return { success: false, message: `Event not found: ${id}` };
+    }
+    return { success: true, message: "Simulated replay successful", resumedAt: new Date().toISOString() };
+  },
+
+  async reconnect(connectionId: string) {
+    await delay();
+    const connection = channelConnections.find((c) => c.id === connectionId);
+    if (!connection) {
+      throw new Error(`Connection not found: ${connectionId}`);
+    }
+    return {
+      ...connection.health,
+      status: "connected",
+      lastErrorMessage: undefined,
+    };
+  },
 };
