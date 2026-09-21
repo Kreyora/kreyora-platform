@@ -30,6 +30,8 @@ public static class WebhookFailureClassifier
              inv.Message.Contains("poison", StringComparison.OrdinalIgnoreCase) ||
              inv.Message.Contains("disabled", StringComparison.OrdinalIgnoreCase) ||
              inv.Message.Contains("revoked", StringComparison.OrdinalIgnoreCase) ||
+             inv.Message.Contains("permanent", StringComparison.OrdinalIgnoreCase) ||
+             inv.Message.Contains("blocked", StringComparison.OrdinalIgnoreCase) ||
              inv.Message.Contains("not supported", StringComparison.OrdinalIgnoreCase)))
         {
             return WebhookFailureClassification.Permanent;
