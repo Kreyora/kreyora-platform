@@ -4,6 +4,8 @@ public sealed class WebhookRetryPolicy
 {
     public const int DefaultMaxAttempts = 5;
 
+    public static readonly WebhookRetryPolicy Default = new();
+
     public static readonly IReadOnlyList<TimeSpan> DefaultBackoffIntervals =
     [
         TimeSpan.FromSeconds(15),

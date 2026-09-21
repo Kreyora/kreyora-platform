@@ -8,6 +8,7 @@ using Kreyora.Domain.Integrations;
 using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Kreyora.Infrastructure.Integrations;
@@ -18,10 +19,14 @@ public sealed partial class WebhookProcessingService(
     ITenantPermissionAuthorizer permissionAuthorizer,
     IAuditEventService auditEvents,
     IChannelProviderRegistry providerRegistry,
-    ILogger<WebhookProcessingService> logger) : IWebhookProcessingService
+    ILogger<WebhookProcessingService> logger,
+    IServiceProvider? serviceProvider = null) : IWebhookProcessingService
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "Successfully normalized and processed webhook event {EventId} with {Count} inbound events for tenant {TenantId}")]
     private static partial void LogProcessingSuccess(ILogger logger, string eventId, int count, string tenantId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to update outbound message status receipt for MessageId {MessageId}")]
+    private static partial void LogStatusReceiptHookFailed(ILogger logger, Exception ex, string messageId);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Skipped duplicate inbound message {MessageId} for connection {ConnectionId} in webhook event {EventId}")]
     private static partial void LogDuplicateMessageSkipped(ILogger logger, string messageId, string connectionId, string eventId);
@@ -144,6 +149,27 @@ public sealed partial class WebhookProcessingService(
 
                 dbContext.InboundEvents.Add(inbound);
                 normalizedCount++;
+
+                if (envelope.Payload is MessageStatusUpdatedPayload statusPayload)
+                {
+                    try
+                    {
+                        var outboundService = serviceProvider?.GetService<IOutboundMessageService>();
+                        if (outboundService is not null)
+                        {
+                            await outboundService.ProcessStatusReceiptAsync(
+                                ev.ConnectionId,
+                                statusPayload.MessageId,
+                                statusPayload.Status,
+                                statusPayload.Timestamp,
+                                cancellationToken);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogStatusReceiptHookFailed(logger, ex, statusPayload.MessageId);
+                    }
+                }
             }
 
             ev.RecordSuccess(DateTimeOffset.UtcNow);
