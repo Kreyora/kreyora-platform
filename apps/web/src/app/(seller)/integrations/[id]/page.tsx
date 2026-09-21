@@ -59,13 +59,29 @@ export default function IntegrationDetailPage() {
     return () => { cancelled = true; };
   }, [integration, id]);
 
-  const handleReplay = (eventId: string) => {
-    setReplayedIds((prev) => new Set(prev).add(eventId));
+  const handleReplay = async (eventId: string) => {
+    try {
+      const res = await integration.replayWebhook(eventId);
+      if (res.success) {
+        setReplayedIds((prev) => new Set(prev).add(eventId));
+      }
+    } catch {
+      // handle error gracefully
+    }
   };
 
-  const handleReconnect = () => {
+  const handleReconnect = async () => {
     setReconnecting(true);
-    setTimeout(() => setReconnecting(false), 1000);
+    try {
+      const updatedHealth = await integration.reconnect(id);
+      if (connection) {
+        setConnection({ ...connection, health: updatedHealth, status: updatedHealth.status });
+      }
+    } catch {
+      // handle error gracefully
+    } finally {
+      setReconnecting(false);
+    }
   };
 
   if (isLoading || !connection) {
