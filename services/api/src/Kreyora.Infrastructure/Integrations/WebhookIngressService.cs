@@ -219,10 +219,29 @@ public sealed partial class WebhookIngressService(
             headers: headersJson,
             rawPayload: rawBodyString);
 
-        using (tenantContext.BeginScope(new TenantContext(connection.TenantId, null, null, null)))
+        try
         {
-            dbContext.WebhookEvents.Add(webhookEvent);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            using (tenantContext.BeginScope(new TenantContext(connection.TenantId, null, null, null)))
+            {
+                dbContext.WebhookEvents.Add(webhookEvent);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
+        catch (DbUpdateException)
+        {
+            // Concurrent insert race condition: re-query existing event to return idempotent duplicate success
+            var duplicateEvent = await dbContext.WebhookEvents
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(e => e.ConnectionId == connection.Id && e.ProviderEventId == providerEventId, cancellationToken);
+
+            if (duplicateEvent != null)
+            {
+                sw.Stop();
+                LogDuplicateDetected(logger, providerEventId, connection.Id, sw.ElapsedMilliseconds);
+                return WebhookIngressResult.Success(duplicateEvent.Id, isDuplicate: true);
+            }
+
+            throw;
         }
 
         sw.Stop();
