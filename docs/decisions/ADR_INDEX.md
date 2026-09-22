@@ -20,7 +20,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
-| ADR-014 | First social channel: Instagram Messaging | `Proposed` | 2026-09-22 | — |
+| ADR-014 | First social channel: Instagram Messaging | `Accepted` | 2026-09-22 | — |
 | ADR-013 | Secrets encryption and key management for social credentials | `Accepted` | 2026-09-20 | — |
 | ADR-012 | Raw provider webhook payload retention and privacy policy | `Accepted` | 2026-09-20 | — |
 | ADR-011 | Normalized social event versioning | `Accepted` | 2026-09-20 | — |
@@ -39,7 +39,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
-| ADR-014 | First social channel: Instagram Messaging | `Proposed` | 2026-09-22 | — |
+| ADR-014 | First social channel: Instagram Messaging | `Accepted` | 2026-09-22 | — |
 | ADR-013 | Secrets encryption and key management for social credentials | `Accepted` | 2026-09-20 | — |
 | ADR-012 | Raw provider webhook payload retention and privacy policy | `Accepted` | 2026-09-20 | — |
 | ADR-011 | Normalized social event versioning | `Accepted` | 2026-09-20 | — |

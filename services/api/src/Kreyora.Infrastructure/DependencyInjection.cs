@@ -5,6 +5,7 @@ using Kreyora.Application.Authorization;
 using Kreyora.Application.Catalog;
 using Kreyora.Application.Customers;
 using Kreyora.Application.Integrations;
+using Kreyora.Application.Integrations.Instagram;
 using Kreyora.Application.Inventory;
 using Kreyora.Application.Orders;
 using Kreyora.Application.Payments;
@@ -22,6 +23,7 @@ using Kreyora.Infrastructure.Customers;
 using Kreyora.Infrastructure.Email;
 using Kreyora.Infrastructure.Identity;
 using Kreyora.Infrastructure.Integrations;
+using Kreyora.Infrastructure.Integrations.Instagram;
 using Kreyora.Infrastructure.Integrations.Simulator;
 using Kreyora.Infrastructure.Inventory;
 using Kreyora.Infrastructure.Notifications;
@@ -85,6 +87,18 @@ public static class DependencyInjection
         services.AddSingleton<ISecretEncryptionService, AesGcmSecretEncryptionService>();
         services.AddSingleton<IChannelProvider, SimulatorChannelProvider>();
         services.AddScoped<IChannelProviderRegistry, ChannelProviderRegistry>();
+
+        services.AddOptions<InstagramGraphOptions>()
+            .BindConfiguration(InstagramGraphOptions.SectionName);
+        services.AddHttpClient<IInstagramGraphClient, InstagramGraphClient>(
+            (serviceProvider, httpClient) =>
+            {
+                var graphOptions = serviceProvider
+                    .GetRequiredService<Microsoft.Extensions.Options.IOptions<InstagramGraphOptions>>().Value;
+                httpClient.BaseAddress = new Uri(graphOptions.BaseAddress.TrimEnd('/') + "/");
+                httpClient.Timeout = TimeSpan.FromSeconds(
+                    graphOptions.TimeoutSeconds <= 0 ? 15 : graphOptions.TimeoutSeconds);
+            });
 
         var connectionString = configuration.GetValue<string>("Database:ConnectionString");
         if (string.IsNullOrWhiteSpace(connectionString))

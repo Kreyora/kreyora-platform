@@ -3,35 +3,37 @@
 ## Active position
 
 - **Milestone:** 08 — First Validated Social Channel and Unified Inbox
-- **Step:** S01 — Provider readiness evidence and adapter contract plan
+- **Step:** S02 — Connection/OAuth or credential lifecycle
 - **Status:** `REVIEW`
-- **Plan state:** Milestone 07 complete and APPROVED (exit gate approved 2026-09-22). M08-S01 implementation complete; checkpoint `artifacts/checkpoints/M08-S01.md` awaiting project-owner review (outcome (a): recommendation + ADR-014 Proposed).
+- **Plan state:** M08-S01 APPROVED 2026-09-22; ADR-014 ACCEPTED 2026-09-22. M08-S02 implementation complete; checkpoint `artifacts/checkpoints/M08-S02.md` awaiting project-owner review + manual sandbox checklist.
 - **Active milestone file:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M08-S01.md` (REVIEW 2026-09-22)
-- **Previous checkpoint:** `artifacts/checkpoints/M07-EXIT.md` (APPROVED 2026-09-22)
+- **Current checkpoint:** `artifacts/checkpoints/M08-S02.md` (REVIEW 2026-09-22)
+- **Previous checkpoint:** `artifacts/checkpoints/M08-S01.md` (APPROVED 2026-09-22)
 - **Last approved state:** Milestone 07 Exit Gate approved; Milestone 07 complete.
 
 ## Current objective
 
-M08-S01 implementation complete (outcome (a): recommendation + ADR-014 Proposed, checkpoint REVIEW). Awaiting project-owner review. No M08-S02 work until S01 is approved.
+M08-S02 implementation complete (checkpoint REVIEW). Awaiting project-owner review + manual Dev-mode sandbox checklist. No M08-S03 work until S02 is approved.
 
 ## Next permitted action
 
-Project-owner review of `artifacts/checkpoints/M08-S01.md`.
+Project-owner review of `artifacts/checkpoints/M08-S02.md` + manual sandbox run.
 
 ## Next prohibited action
 
-- Starting Milestone 08 Step 02 before M08-S01 approval.
+- Starting Milestone 08 Step 03 before M08-S02 approval.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-22 | Completed M08-S02 implementation: Instagram Graph client (Bearer auth, v21.0, error mapping), validate-before-persist connect, live-validated reauthorize + audit, health routing with decrypt-failure degradation, 20 unit + 5 integration tests, full suite 575/575, EF clean, frontend green. Checkpoint `artifacts/checkpoints/M08-S02.md` REVIEW. | Muse Spark |
+| 2026-09-22 | Project owner approved M08-S01 (`artifacts/checkpoints/M08-S01.md`). Position set to M08-S02 PLANNING (plan only; implementation requires plan approval + ADR-014 acceptance). | Project owner / Muse Spark |
 | 2026-09-22 | Completed M08-S01 implementation (outcome (a)): cited 17-dimension evaluation across WhatsApp/Messenger/Instagram, ADR-014 Proposed, InstagramContracts, 10 unit + 4 contract tests, gates green except Docker-blocked integration suite. Checkpoint `artifacts/checkpoints/M08-S01.md` REVIEW. | Muse Spark |
 | 2026-09-22 | Project owner approved M07 Exit Gate (`artifacts/checkpoints/M07-EXIT.md`). Milestone 07 marked complete/APPROVED. Position set to M08-S01 PLANNING (plan only; implementation requires plan approval). | Project owner / Muse Spark |
 | 2026-09-21 | Project owner approved M07-S07 (`artifacts/checkpoints/M07-S07.md`). All seven M07 steps approved. Commenced Milestone 07 Exit Gate review. Status -> REVIEW. | Project owner / Antigravity |
