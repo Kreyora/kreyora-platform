@@ -22,8 +22,8 @@ Human takeover is a transactional conversation-state change checked by outbound 
 
 | Step | Description | Status |
 |---:|---|---|
-| 01 | Provider readiness evidence and adapter contract plan | `REVIEW` |
-| 02 | Connection/OAuth or credential lifecycle | `NOT STARTED` |
+| 01 | Provider readiness evidence and adapter contract plan | `APPROVED` |
+| 02 | Connection/OAuth or credential lifecycle | `REVIEW` |
 | 03 | Real webhook validation and inbound normalization | `NOT STARTED` |
 | 04 | Customer identities, conversations, and messages | `NOT STARTED` |
 | 05 | Staff reply, assignment, and human takeover | `NOT STARTED` |

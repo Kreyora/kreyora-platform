@@ -341,7 +341,7 @@ public sealed class ChannelConnectionIntegrationTests : IClassFixture<PostgresFi
         var audit = new AuditEventService(db, accessor, new Correlation("conn-test"), authorizer);
         var enc = encryptionService ?? CreateEncryptionService();
         var registry = new ChannelProviderRegistry(Array.Empty<IChannelProvider>());
-        return new ChannelConnectionService(db, accessor, authorizer, enc, audit, registry);
+        return new ChannelConnectionService(db, accessor, authorizer, enc, audit, registry, new RefusingInstagramGraphClient());
     }
 
     private static AesGcmSecretEncryptionService CreateEncryptionService(

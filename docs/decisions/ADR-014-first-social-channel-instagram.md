@@ -1,12 +1,12 @@
-# ADR-014 — First Social Channel: Instagram Messaging (Proposed)
+# ADR-014 — First Social Channel: Instagram Messaging
 
-- **Status:** `Proposed`
+- **Status:** `Accepted`
 - **Date:** 2026-09-22
 - **Owner:** Platform Architect
 - **Reviewers:** Project Owner
 - **Affected milestones:** Milestone 08
 
-> This ADR is a **proposal only**. It must not be marked `Accepted`, and no adapter code may be written, until the project owner confirms provider access and makes the final choice (M08-S01 owner constraints, 2026-09-22).
+> Accepted by the project owner on 2026-09-22 alongside M08-S02 plan approval, on the basis of the owner-verified Dev-mode sandbox (Meta app + Page + linked IG professional account, token + thread queries working). Production claims still require App Review + business verification.
 
 ## Context
 
