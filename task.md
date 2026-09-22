@@ -1,51 +1,45 @@
-# Handoff: Milestone 07 Step 07 — Reliability, Isolation, and Failure Campaign
+# Handoff: Milestone 08 Step 01 — Provider Readiness Evidence and Adapter Contract Plan
 
 ## 1. Overview
 
-- **Milestone:** 07 — Provider-Neutral Social Integration Runtime
-- **Step:** 07 — Reliability, isolation, and failure campaign
-- **Phase:** Phase 2 (Builder) Execution Complete
-- **Governing Plan:** `docs/plan/M07-S07_RELIABILITY_CAMPAIGN_PLAN.md`
-- **Active Milestone File:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
-- **Previous Checkpoint:** `artifacts/checkpoints/M07-S06.md` (APPROVED)
-- **Status:** `REVIEW`
+- **Milestone:** 08 — First Validated Social Channel and Unified Inbox
+- **Step:** 01 — Provider readiness evidence and adapter contract plan
+- **Phase:** Phase 2 (Builder) Complete — REVIEW
+- **Governing Plan:** `docs/plan/M08-S01_PROVIDER_READINESS_PLAN.md`
+- **Active Milestone File:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
+- **Previous Checkpoint:** `artifacts/checkpoints/M07-EXIT.md` (APPROVED)
+- **Status:** `PLANNING`
 
 ---
 
 ## 2. Implementation Checklist (Phase 2 Builder)
 
-- [x] **Task 1: Create Sustained Reliability & Failure Test Suite (`services/api/tests/Kreyora.IntegrationTests/Integrations/`)**
-  - Implement `Milestone07ReliabilityAndFailureTests.cs` using `PostgresFixture`.
-  - Add test methods for 13 reliability scenarios:
-    1. Fast decoupled webhook ingress acknowledgement.
-    2. Duplicate delivery storm with concurrent requests.
-    3. Monotonic status progression (`Sent -> Delivered -> Read`) and out-of-order event handling.
-    4. Configurable latency and slow provider simulation.
-    5. Background worker crash and restart recovery without message loss or duplication.
-    6. Concurrency collision on simultaneous mutations (`xmin` concurrency token).
-    7. Transient network timeouts with exponential backoff and jitter.
-    8. Rate limit (429 feedback) handling and outbox retry scheduling.
-    9. Token expiry and reconnect lifecycle.
-    10. Poison payload quarantine to DeadLetter without burning retry attempts.
-    11. Idempotent replay of dead-lettered inbound and outbound items.
-    12. Two-tenant high-concurrency isolation across ingress, jobs, and diagnostics.
-    13. Redacted observability and zero secret leakage (ADR-012 / ADR-013).
+- [x] **Task 1: Create ADR-014 (First Social Channel Adapter Selection)**
+  - Create `docs/decisions/ADR-014-*.md` as `Proposed` only (never `Accepted` in this step), pending owner access confirmation and final choice.
+  - Update `docs/decisions/ADR_INDEX.md` registering ADR-014 as `Proposed`.
+  - If public docs are insufficient for a safe recommendation, skip ADR-014 and classify the milestone `BLOCKED` with enumerated gaps instead.
 
-- [x] **Task 2: Fix Any Milestone-Scoped Defects Discovered**
-  - Handled database unique index concurrency race collision in `WebhookIngressService.cs` during duplicate delivery storms.
-  - Verified cancellation token handling and transient failure classification during slow provider latency.
-  - Verified backoff calculation progression and front-door expired connection queue rejection.
+- [x] **Task 2: Produce Provider Readiness Evaluation Matrix Document**
+  - Create `docs/architecture/PROVIDER_READINESS_EVALUATION.md` documenting the evidence matrix for the 3 priority candidates (WhatsApp, Messenger, Instagram).
+  - Every cell must be `verified` (official doc URL + version/access date), `unsupported` (official source), or `unknown` (`[UNRESOLVED]` gap). No uncited provider facts.
 
-- [x] **Task 3: Produce Definitive Integration Reliability Matrix**
-  - Documented all 13 failure modes in `docs/architecture/INTEGRATION_RELIABILITY_MATRIX.md` and in checkpoint report `artifacts/checkpoints/M07-S07.md`.
+- [x] **Task 3: Refine Domain Capability Models & Preset**
+  - Verify `ChannelCapabilities` presets in `Kreyora.Domain.Integrations` against cited evidence; correct only where evidence contradicts.
+  - No behavior change beyond evidence.
 
-- [x] **Task 4: Run Full Quality Gates**
-  - Solution build Release clean (`0 Warning(s), 0 Error(s)`).
-  - All backend tests passing: 536/536 (`dotnet test services/api/Kreyora.slnx`).
-  - Zero pending EF Core model changes (`dotnet ef migrations has-pending-model-changes`).
-  - Frontend CI passes: 458/458 vitest tests, Next.js build succeeds (`pnpm ci:frontend`).
-  - Git diff check clean (`git diff --check`).
+- [x] **Task 4: Implement Application Contracts & Fallback UX (outcome (a) only)**
+  - Create `InstagramContracts.cs` in `Kreyora.Application.Integrations.Instagram` with credential models (no secrets), window status, and fallback UX rules — only if the evidence supports a recommendation.
+  - Each fallback-UX rule needs a citation or `[UNRESOLVED]` marker.
 
-- [x] **Task 5: Checkpoint & Exit Gate Review**
-  - Created checkpoint report `artifacts/checkpoints/M07-S07.md` with status `REVIEW`.
-  - Updated `docs/context/CURRENT_WORK.md` and `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`.
+- [x] **Task 5: Implement Unit and Contract Tests (outcome (a) only)**
+  - Add `InstagramCapabilityTests.cs` in `Kreyora.UnitTests`.
+  - Add `InstagramProviderContractTests.cs` in `Kreyora.ContractTests`.
+  - Tests assert only cited evidence; no live network, no secrets or personal payloads in snapshots.
+
+- [x] **Task 6: Quality Gates & Review Checkpoint**
+  - Run full backend build and test suite (`536+` tests passing).
+  - Check 0 pending EF model changes.
+  - Run frontend CI (`pnpm ci:frontend`).
+  - `git diff --check` clean.
+  - Create review checkpoint `artifacts/checkpoints/M08-S01.md` with status `REVIEW`, declaring outcome (a) recommendation or (b) `BLOCKED`.
+  - Update `docs/context/CURRENT_WORK.md` and `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`.

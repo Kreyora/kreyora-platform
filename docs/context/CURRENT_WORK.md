@@ -2,36 +2,38 @@
 
 ## Active position
 
-- **Milestone:** 07 — Social Integration Runtime and Channel Boundaries
-- **Step:** Exit Gate — Milestone Completion Review
+- **Milestone:** 08 — First Validated Social Channel and Unified Inbox
+- **Step:** S01 — Provider readiness evidence and adapter contract plan
 - **Status:** `REVIEW`
-- **Plan state:** All 7 steps approved. Proceeding to Milestone 07 Exit Gate evaluation.
-- **Active milestone file:** `docs/milestones/07_SOCIAL_INTEGRATION_RUNTIME.md`
+- **Plan state:** Milestone 07 complete and APPROVED (exit gate approved 2026-09-22). M08-S01 implementation complete; checkpoint `artifacts/checkpoints/M08-S01.md` awaiting project-owner review (outcome (a): recommendation + ADR-014 Proposed).
+- **Active milestone file:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M07-S07.md` (APPROVED)
-- **Previous checkpoint:** `artifacts/checkpoints/M07-S06.md` (APPROVED)
-- **Last approved state:** Milestone 07 Step 07 approved.
+- **Current checkpoint:** `artifacts/checkpoints/M08-S01.md` (REVIEW 2026-09-22)
+- **Previous checkpoint:** `artifacts/checkpoints/M07-EXIT.md` (APPROVED 2026-09-22)
+- **Last approved state:** Milestone 07 Exit Gate approved; Milestone 07 complete.
 
 ## Current objective
 
-Milestone 07 Exit Gate review: consolidate evidence that all six exit gate criteria are satisfied across provider-neutral runtime contract and failure tests, idempotent webhook validation and persistence, bounded observable failure handling, encrypted secrets, tenant isolation, and absence of unverified provider behavior.
+M08-S01 implementation complete (outcome (a): recommendation + ADR-014 Proposed, checkpoint REVIEW). Awaiting project-owner review. No M08-S02 work until S01 is approved.
 
 ## Next permitted action
 
-Creation and review of Milestone 07 Exit Gate checkpoint (`artifacts/checkpoints/M07-EXIT.md`).
+Project-owner review of `artifacts/checkpoints/M08-S01.md`.
 
 ## Next prohibited action
 
-- Starting Milestone 08 implementation before Milestone 07 Exit Gate approval.
+- Starting Milestone 08 Step 02 before M08-S01 approval.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
 ## Update history
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-22 | Completed M08-S01 implementation (outcome (a)): cited 17-dimension evaluation across WhatsApp/Messenger/Instagram, ADR-014 Proposed, InstagramContracts, 10 unit + 4 contract tests, gates green except Docker-blocked integration suite. Checkpoint `artifacts/checkpoints/M08-S01.md` REVIEW. | Muse Spark |
+| 2026-09-22 | Project owner approved M07 Exit Gate (`artifacts/checkpoints/M07-EXIT.md`). Milestone 07 marked complete/APPROVED. Position set to M08-S01 PLANNING (plan only; implementation requires plan approval). | Project owner / Muse Spark |
 | 2026-09-21 | Project owner approved M07-S07 (`artifacts/checkpoints/M07-S07.md`). All seven M07 steps approved. Commenced Milestone 07 Exit Gate review. Status -> REVIEW. | Project owner / Antigravity |
 | 2026-09-21 | Completed M07-S06 implementation: deterministic provider simulator enhancements (HMAC signature generator, configurable latency, simulated expiry/degraded/reconnect), IIntegrationDiagnosticsService, IntegrationDiagnosticsService with ADR-012 role-based payload redaction and scenario runner, expanded IntegrationDiagnosticsController with overview, connection diagnostics, webhooks history, and scenario execution endpoints, real apiIntegrationClient in apps/web connected via client-provider, wired live replay and reconnect actions in UI, 10 unit tests, 9 Testcontainers integration tests (523/523 backend tests passing), 4 frontend vitest tests (458/458 frontend tests passing), full frontend CI passing, 0 pending migrations. Status -> REVIEW. | Antigravity |
 | 2026-09-21 | Project owner approved M07-S05 (`artifacts/checkpoints/M07-S05.md`). Commenced Phase 1 (Architect) planning for M07-S06 (Diagnostics API/UI and provider simulator). Status -> PLANNING. | Project owner / Antigravity |
