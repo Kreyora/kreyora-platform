@@ -366,7 +366,8 @@ public sealed class IntegrationDiagnosticsIntegrationTests : IClassFixture<Postg
             authorizer,
             encryption,
             audit,
-            registry);
+            registry,
+            new RefusingInstagramGraphClient());
 
         var outbound = new OutboundMessageService(
             db,

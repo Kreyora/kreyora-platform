@@ -723,7 +723,8 @@ public sealed class Milestone07ReliabilityAndFailureTests : IClassFixture<Postgr
             authorizer,
             encryption,
             audit,
-            registry);
+            registry,
+            new RefusingInstagramGraphClient());
 
         var outbound = new OutboundMessageService(
             db,

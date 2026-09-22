@@ -1,45 +1,28 @@
-# Handoff: Milestone 08 Step 01 — Provider Readiness Evidence and Adapter Contract Plan
+# Handoff: Milestone 08 Step 02 — Connection / Credential Lifecycle (Instagram)
 
 ## 1. Overview
 
 - **Milestone:** 08 — First Validated Social Channel and Unified Inbox
-- **Step:** 01 — Provider readiness evidence and adapter contract plan
+- **Step:** 02 — Connection/OAuth or credential lifecycle
 - **Phase:** Phase 2 (Builder) Complete — REVIEW
-- **Governing Plan:** `docs/plan/M08-S01_PROVIDER_READINESS_PLAN.md`
+- **Governing Plan:** `docs/plan/M08-S02_CONNECTION_CREDENTIAL_PLAN.md`
 - **Active Milestone File:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
-- **Previous Checkpoint:** `artifacts/checkpoints/M07-EXIT.md` (APPROVED)
+- **Previous Checkpoint:** `artifacts/checkpoints/M08-S01.md` (APPROVED 2026-09-22)
 - **Status:** `PLANNING`
-
----
+- **Precondition for build:** ADR-014 marked `Accepted` by project owner (currently `Proposed`).
 
 ## 2. Implementation Checklist (Phase 2 Builder)
 
-- [x] **Task 1: Create ADR-014 (First Social Channel Adapter Selection)**
-  - Create `docs/decisions/ADR-014-*.md` as `Proposed` only (never `Accepted` in this step), pending owner access confirmation and final choice.
-  - Update `docs/decisions/ADR_INDEX.md` registering ADR-014 as `Proposed`.
-  - If public docs are insufficient for a safe recommendation, skip ADR-014 and classify the milestone `BLOCKED` with enumerated gaps instead.
-
-- [x] **Task 2: Produce Provider Readiness Evaluation Matrix Document**
-  - Create `docs/architecture/PROVIDER_READINESS_EVALUATION.md` documenting the evidence matrix for the 3 priority candidates (WhatsApp, Messenger, Instagram).
-  - Every cell must be `verified` (official doc URL + version/access date), `unsupported` (official source), or `unknown` (`[UNRESOLVED]` gap). No uncited provider facts.
-
-- [x] **Task 3: Refine Domain Capability Models & Preset**
-  - Verify `ChannelCapabilities` presets in `Kreyora.Domain.Integrations` against cited evidence; correct only where evidence contradicts.
-  - No behavior change beyond evidence.
-
-- [x] **Task 4: Implement Application Contracts & Fallback UX (outcome (a) only)**
-  - Create `InstagramContracts.cs` in `Kreyora.Application.Integrations.Instagram` with credential models (no secrets), window status, and fallback UX rules — only if the evidence supports a recommendation.
-  - Each fallback-UX rule needs a citation or `[UNRESOLVED]` marker.
-
-- [x] **Task 5: Implement Unit and Contract Tests (outcome (a) only)**
-  - Add `InstagramCapabilityTests.cs` in `Kreyora.UnitTests`.
-  - Add `InstagramProviderContractTests.cs` in `Kreyora.ContractTests`.
-  - Tests assert only cited evidence; no live network, no secrets or personal payloads in snapshots.
-
+- [x] **Task 1: Application contract `IInstagramGraphClient`**
+  - New file in `Kreyora.Application.Integrations.Instagram`; typed validate/health results; no HTTP.
+- [x] **Task 2: Infrastructure `InstagramGraphClient`**
+  - `HttpClient` to versioned Graph API; error mapping (190/10/429/5xx/timeout); token redaction in logs.
+- [x] **Task 3: Connection lifecycle in `ChannelConnectionService`**
+  - Instagram live-validate-before-persist on create; reauthorize on update; health routing; audit events; RBAC unchanged.
+- [x] **Task 4: DTO options + capability/health refresh**
+  - `InstagramConnectOptions`; refresh capabilities/health records from real responses; no secret leakage (DTO shape already safe).
+- [x] **Task 5: Tests (stubbed HTTP + Testcontainers Postgres)**
+  - `InstagramGraphClientTests`, `ChannelConnectionInstagramTests`, integration persist/health/audit/isolation tests. Recorded-safe fixtures only; no real IDs/tokens.
 - [x] **Task 6: Quality Gates & Review Checkpoint**
-  - Run full backend build and test suite (`536+` tests passing).
-  - Check 0 pending EF model changes.
-  - Run frontend CI (`pnpm ci:frontend`).
-  - `git diff --check` clean.
-  - Create review checkpoint `artifacts/checkpoints/M08-S01.md` with status `REVIEW`, declaring outcome (a) recommendation or (b) `BLOCKED`.
-  - Update `docs/context/CURRENT_WORK.md` and `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`.
+  - Release build 0/0; full suite green with Docker; 0 pending migrations; frontend CI green; `git diff --check`; no-hardcoded-graph-host + no-secret grep proofs.
+  - Checkpoint `artifacts/checkpoints/M08-S02.md` with status `REVIEW`; update `CURRENT_WORK.md` + milestone file; owner live-sandbox checklist recorded.

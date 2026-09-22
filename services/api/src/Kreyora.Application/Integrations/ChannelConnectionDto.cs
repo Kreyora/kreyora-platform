@@ -31,12 +31,31 @@ public sealed record CreateChannelConnectionRequest(
     string? PlainTextSecret = null,
     string? WebhookVerificationToken = null,
     DateTimeOffset? TokenExpiresAt = null,
-    DateTimeOffset? RefreshTokenExpiresAt = null);
+    DateTimeOffset? RefreshTokenExpiresAt = null)
+{
+    /// <summary>
+    /// Instagram live-validation input. When set with <see cref="PlainTextSecret"/> on an
+    /// Instagram connection, the token is validated against the Graph API before persisting.
+    /// </summary>
+    public InstagramConnectOptions? Instagram { get; init; }
+}
 
 public sealed record UpdateChannelConnectionRequest(
     string? DisplayName = null,
     string? StoreId = null,
     string? PlainTextSecret = null,
     DateTimeOffset? TokenExpiresAt = null,
-    DateTimeOffset? RefreshTokenExpiresAt = null);
+    DateTimeOffset? RefreshTokenExpiresAt = null)
+{
+    /// <summary>
+    /// Instagram reauthorization input. When set with <see cref="PlainTextSecret"/>, the new
+    /// token is validated against the Graph API before replacing stored credentials.
+    /// </summary>
+    public InstagramConnectOptions? Instagram { get; init; }
+}
+
+/// <summary>Non-secret Instagram connection parameters (IDs only, never tokens).</summary>
+public sealed record InstagramConnectOptions(
+    string PageId,
+    string InstagramAccountId);
 

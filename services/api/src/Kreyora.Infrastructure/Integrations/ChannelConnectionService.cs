@@ -1,7 +1,9 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using Kreyora.Application.Audit;
 using Kreyora.Application.Authorization;
 using Kreyora.Application.Integrations;
+using Kreyora.Application.Integrations.Instagram;
 using Kreyora.Application.Models;
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Integrations;
@@ -16,7 +18,8 @@ public sealed class ChannelConnectionService(
     ITenantPermissionAuthorizer permissionAuthorizer,
     ISecretEncryptionService encryptionService,
     IAuditEventService auditEvents,
-    IChannelProviderRegistry providerRegistry) : IChannelConnectionService
+    IChannelProviderRegistry providerRegistry,
+    IInstagramGraphClient instagramGraphClient) : IChannelConnectionService
 {
     public async Task<Result<ChannelConnectionDto>> CreateConnectionAsync(
         CreateChannelConnectionRequest request,
@@ -47,6 +50,43 @@ public sealed class ChannelConnectionService(
 
         try
         {
+            string? instagramUsername = null;
+            if (request.Channel == ChannelType.Instagram
+                && request.Instagram != null
+                && !string.IsNullOrWhiteSpace(request.PlainTextSecret))
+            {
+                if (!string.Equals(request.ExternalAccountId, request.Instagram.InstagramAccountId, StringComparison.Ordinal))
+                {
+                    return Result<ChannelConnectionDto>.ValidationError(
+                        "ExternalAccountId must match the Instagram business account ID.");
+                }
+
+                var link = await instagramGraphClient.ValidatePageLinkAsync(
+                    request.PlainTextSecret,
+                    request.Instagram.PageId,
+                    request.Instagram.InstagramAccountId,
+                    cancellationToken);
+
+                if (!link.IsValid)
+                {
+                    return Result<ChannelConnectionDto>.ValidationError(
+                        $"Instagram page-link validation failed: {link.Message}");
+                }
+
+                var account = await instagramGraphClient.ValidateAccountAsync(
+                    request.PlainTextSecret,
+                    request.Instagram.InstagramAccountId,
+                    cancellationToken);
+
+                if (!account.IsValid)
+                {
+                    return Result<ChannelConnectionDto>.ValidationError(
+                        $"Instagram token validation failed: {account.Message}");
+                }
+
+                instagramUsername = account.InstagramUsername;
+            }
+
             EncryptedSecret? encryptedCredentials = null;
             if (!string.IsNullOrWhiteSpace(request.PlainTextSecret))
             {
@@ -63,6 +103,16 @@ public sealed class ChannelConnectionService(
                 webhookVerificationToken: request.WebhookVerificationToken,
                 tokenExpiresAt: request.TokenExpiresAt,
                 refreshTokenExpiresAt: request.RefreshTokenExpiresAt);
+
+            if (instagramUsername != null)
+            {
+                connection.UpdateHealth(
+                    isHealthy: true,
+                    status: ChannelConnectionStatus.Active,
+                    summary: "Validated against Instagram Graph API",
+                    details: $"Connected as @{instagramUsername}.",
+                    checkedAt: DateTimeOffset.UtcNow);
+            }
 
             dbContext.ChannelConnections.Add(connection);
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -126,14 +176,33 @@ public sealed class ChannelConnectionService(
 
             if (!string.IsNullOrWhiteSpace(request.PlainTextSecret))
             {
+                if (connection.Channel == ChannelType.Instagram && request.Instagram != null)
+                {
+                    var account = await instagramGraphClient.ValidateAccountAsync(
+                        request.PlainTextSecret,
+                        request.Instagram.InstagramAccountId,
+                        cancellationToken);
+
+                    if (!account.IsValid)
+                    {
+                        return Result<ChannelConnectionDto>.ValidationError(
+                            $"Instagram token validation failed: {account.Message}");
+                    }
+                }
+
                 var encrypted = encryptionService.Encrypt(request.PlainTextSecret);
                 connection.UpdateCredentials(encrypted, request.TokenExpiresAt, request.RefreshTokenExpiresAt);
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
 
+            var auditAction = !string.IsNullOrWhiteSpace(request.PlainTextSecret)
+                && connection.Channel == ChannelType.Instagram
+                ? "integrations.connection.reauthorized"
+                : "integrations.connection.updated";
+
             await auditEvents.AppendAsync(new AuditEventWrite(
-                Action: "integrations.connection.updated",
+                Action: auditAction,
                 TargetType: "channel-connection",
                 TargetId: connection.Id,
                 Metadata: JsonSerializer.Serialize(new
@@ -355,6 +424,11 @@ public sealed class ChannelConnectionService(
             return Result<ConnectionHealthResult>.NotFound("Channel connection not found.");
         }
 
+        if (connection.Channel == ChannelType.Instagram)
+        {
+            return await CheckInstagramHealthAsync(connection, cancellationToken);
+        }
+
         if (providerRegistry.TryGetProvider(connection.Channel, out var provider))
         {
             var snapshot = new ChannelConnectionSnapshot(
@@ -381,6 +455,53 @@ public sealed class ChannelConnectionService(
 
         var defaultHealth = ConnectionHealthResult.Healthy("No active provider adapter registered; connection metadata valid.");
         return Result<ConnectionHealthResult>.Success(defaultHealth);
+    }
+
+    private async Task<Result<ConnectionHealthResult>> CheckInstagramHealthAsync(
+        ChannelConnection connection,
+        CancellationToken cancellationToken)
+    {
+        if (connection.EncryptedCredentials is null)
+        {
+            return Result<ConnectionHealthResult>.ValidationError("Connection has no credentials to validate.");
+        }
+
+        string pageAccessToken;
+        try
+        {
+            pageAccessToken = encryptionService.Decrypt(connection.EncryptedCredentials);
+        }
+        catch (Exception ex) when (ex is KeyNotFoundException
+            or CryptographicException
+            or InvalidOperationException
+            or FormatException)
+        {
+            var checkedAt = DateTimeOffset.UtcNow;
+            connection.UpdateHealth(
+                isHealthy: false,
+                status: ChannelConnectionStatus.Degraded,
+                summary: "Stored credentials cannot be decrypted",
+                details: "Credential envelope failed to decrypt. Rotate or reauthorize the connection.",
+                checkedAt: checkedAt);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return Result<ConnectionHealthResult>.Success(
+                ConnectionHealthResult.Degraded("Stored credentials cannot be decrypted."));
+        }
+
+        var validation = await instagramGraphClient.ValidateAccountAsync(
+            pageAccessToken,
+            connection.ExternalAccountId,
+            cancellationToken);
+
+        var checkedAtNow = DateTimeOffset.UtcNow;
+        var (isHealthy, status, summary, details) = InstagramHealthMapper.ToHealth(validation, checkedAtNow);
+        connection.UpdateHealth(isHealthy, status, summary, details, checkedAtNow);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Result<ConnectionHealthResult>.Success(
+            isHealthy
+                ? ConnectionHealthResult.Healthy(details)
+                : ConnectionHealthResult.Failed(status, summary));
     }
 
     private static ChannelConnectionDto Map(ChannelConnection connection) => new(
