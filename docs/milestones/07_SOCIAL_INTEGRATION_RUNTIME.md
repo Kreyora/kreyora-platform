@@ -79,3 +79,10 @@ Webhook processing follows: validate request → durably store immutable raw eve
 - Tenant isolation holds across connections, events, jobs, messages, and replay.
 - No unverified provider-specific functionality is present.
 
+## Milestone exit gate approval
+
+- **Status:** `APPROVED`
+- **Date:** 2026-09-22
+- **Approved by:** Project owner
+- **Evidence:** `artifacts/checkpoints/M07-EXIT.md` (`APPROVED`); all six exit criteria accepted as satisfied.
+
