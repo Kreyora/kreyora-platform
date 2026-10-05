@@ -16,7 +16,8 @@ public sealed partial class WebhookIngressService(
     IChannelProviderRegistry providerRegistry,
     ISecretEncryptionService encryptionService,
     ITenantContextAccessor tenantContext,
-    ILogger<WebhookIngressService> logger) : IWebhookIngressService
+    ILogger<WebhookIngressService> logger,
+    IIntegrationWorkScheduler? workScheduler = null) : IWebhookIngressService
 {
     public const int MaxPayloadSizeBytes = 256 * 1024; // 256 KB
 
@@ -251,6 +252,7 @@ public sealed partial class WebhookIngressService(
 
         sw.Stop();
         LogEventPersisted(logger, webhookEvent.Id, providerEventId, connection.Id, sw.ElapsedMilliseconds, correlationId);
+        workScheduler?.ScheduleWebhookProcessing(webhookEvent.Id);
 
         return WebhookIngressResult.Success(webhookEvent.Id, isDuplicate: false);
     }
@@ -480,6 +482,7 @@ public sealed partial class WebhookIngressService(
         foreach (var ev in created)
         {
             LogEventPersisted(logger, ev.Id, providerEventId, ev.ConnectionId, sw.ElapsedMilliseconds, correlationId);
+            workScheduler?.ScheduleWebhookProcessing(ev.Id);
         }
 
         return WebhookIngressResult.Accepted(created[0].Id, ackStatus);

@@ -29,6 +29,10 @@ public sealed class ConversationsController(
             new ConversationQuery(page, pageSize, status, connectionId, unreadOnly, assignedTo),
             cancellationToken));
 
+    [HttpGet("assignees"), Authorize(Policy = TenantPermissions.ConversationsRead)]
+    public async Task<ActionResult<IReadOnlyList<ConversationAssigneeItem>>> ListAssignees(CancellationToken cancellationToken = default) =>
+        this.ToActionResult(await conversationQueryService.ListAssigneesAsync(cancellationToken));
+
     [HttpGet("{id}"), Authorize(Policy = TenantPermissions.ConversationsRead)]
     public async Task<ActionResult<ConversationDetailItem>> Get(
         string id,

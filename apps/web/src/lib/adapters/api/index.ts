@@ -9,3 +9,4 @@ export { apiOrderClient } from "./order-client";
 export { apiPaymentClient } from "./payment-client";
 export { apiPublicCheckoutClient, apiPublicStorefrontClient } from "./public-storefront-client";
 export { apiIntegrationClient } from "./integration-client";
+export { apiConversationClient, resetConversationAssigneeCache } from "./conversation-client";

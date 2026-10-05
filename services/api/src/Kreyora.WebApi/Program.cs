@@ -209,6 +209,7 @@ if (app.Services.GetService<JobStorage>() is not null)
     RecurringJob.AddOrUpdate<CheckoutSessionExpiryJob>("checkout-session-expiry", job => job.RunAsync(), Cron.Minutely);
     RecurringJob.AddOrUpdate<OutboxNotificationProcessorJob>("outbox-notification-processor", job => job.RunAsync(), Cron.Minutely);
     RecurringJob.AddOrUpdate<NotificationDeliveryJob>("notification-delivery", job => job.RunAsync(), Cron.Minutely);
+    IntegrationJobRegistration.RegisterRecurring(scope.ServiceProvider.GetRequiredService<IRecurringJobManager>());
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();

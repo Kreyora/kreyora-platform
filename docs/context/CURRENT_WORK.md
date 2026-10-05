@@ -3,29 +3,29 @@
 ## Active position
 
 - **Milestone:** 08 — First Validated Social Channel and Unified Inbox
-- **Step:** S05 — Staff reply, assignment, and human takeover
-- **Status:** `REVIEW` (implementation complete 2026-10-05)
-- **Plan state:** M08-S04 APPROVED 2026-10-05 (ADR-016). M08-S03 APPROVED 2026-10-05 (live Meta checklist carried to S07).
+- **Step:** S06 — Unified inbox frontend integration
+- **Status:** `REVIEW` (implemented 2026-10-05; was `IN PROGRESS`)
+- **Plan state:** M08-S05 APPROVED 2026-10-05 (ADR-017), merged to `master` at `50faeac`. M08-S03 live Meta checklist carried to S07.
 - **Active milestone file:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master`. The S03, S04, S05 and repo reorganization work are uncommitted.
-- **Current checkpoint:** `artifacts/checkpoints/M08-S05.md` (REVIEW 2026-10-05)
-- **Previous checkpoint:** `artifacts/checkpoints/M08-S04.md` (APPROVED 2026-10-05)
-- **Last approved state:** M08-S04 approved 2026-10-05.
+- **Branch:** `master` at `50faeac` + uncommitted S06 changes (not committed; commit/push needs owner authorization).
+- **Current checkpoint:** `artifacts/checkpoints/M08-S06.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M08-S05.md` (APPROVED 2026-10-05)
+- **Last approved state:** M08-S05 approved 2026-10-05.
 
 ## Current objective
 
-M08-S05 implementation complete (ADR-017). Awaiting owner review of `artifacts/checkpoints/M08-S05.md`. No M08-S06 work until S05 is approved.
+Owner review of M08-S06 (`artifacts/checkpoints/M08-S06.md`), including two pre-existing findings that need a decision: the Simulator fixed-signature bypass and the unpartitioned global sign-in limiter.
 
 ## Next permitted action
 
-Owner review of `artifacts/checkpoints/M08-S05.md`. Manual work: none required (heads-up: Meta App Review is a long-lead item).
+Owner reviews M08-S06 (screenshots in `artifacts/screenshots/M08-S06/`) and approves or requests changes. After approval: M08-S07 planning only.
 
 ## Next prohibited action
 
-- Starting M08-S06 before M08-S05 approval.
+- Starting M08-S07 before M08-S06 approval.
 - Opening a tunnel, changing Meta configuration, or using live credentials without separate authorization.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
@@ -33,6 +33,10 @@ Owner review of `artifacts/checkpoints/M08-S05.md`. Manual work: none required (
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-05 | Completed M08-S06 implementation: Hangfire scheduling of webhook processing and outbound delivery (recurring sweepers + immediate enqueue after commit; closes the M07 gap), assignee directory route, `MessageItem.deliveryFailureCode`, Development-only E2E seed; real inbox clients with demo-mode parity, polling (5 s / 15 s, hidden-tab pause, backoff), list + conversation view rewritten (optimistic replies, denial vs ambiguous failure handling, side panel). OpenAPI regenerated (additive); no migration. Full backend suite 751 passed / 0 failed; EF clean; `pnpm ci:frontend` green (473 tests); fixture E2E 2 passed; real-backend E2E 7 passed (Owner/Admin/Operator/Viewer, live inbound, UI equals API, denial, 360 px); Docker back to baseline. Reported pre-existing findings: Simulator fixed-signature bypass in all environments; global 5-per-15-min sign-in limiter. Status -> `REVIEW`. | Claude |
+| 2026-10-05 | Project owner approved the M08-S06 plan ("ok implement"): Q1–Q4 as recommended. Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-05 | Graphify refreshed at the S05 approval boundary (8,049 nodes, 21,856 edges, 358 communities). Drafted the M08-S06 plan `docs/plan/M08-S06_INBOX_FRONTEND_PLAN.md` (plan only). Found a pre-existing M07 gap: `WebhookProcessingJob` and `OutboundDeliveryJob` are registered in DI but never scheduled with Hangfire (proposed fix in S06 Q1). | Claude |
+| 2026-10-05 | Project owner approved M08-S05 (merged to `master` at `50faeac`, PR #113). Position set to M08-S06 PLANNING (plan only). | Project owner / Claude |
 | 2026-10-05 | CI failure on `b106f8f` (`Race_InboundMessageDuringStaffReply_BothPersist`, Linux) diagnosed by local reproduction as a test-precision bug: PostgreSQL stores microseconds, .NET on Linux has 100 ns ticks (macOS reports whole microseconds, so it passed locally). The service's concurrency retry was working (enqueue calls 2, success). Fixed in the test only (microsecond-aligned test clock). Reply tests 26/26; full backend suite 746 passed / 0 failed. Correction appended to `artifacts/checkpoints/M08-S05.md`. S05 remains `REVIEW`; fix uncommitted. | Claude |
 | 2026-10-05 | Completed M08-S05 implementation (ADR-017 accepted): staff reply through the durable outbox with implicit takeover, takeover/release/assign/labels/status with audit, enqueue- and delivery-time gate, Instagram Send API (`/me/messages`), at-most-once on ambiguous sends, echo handling, additive migration `AddConversationOwnershipAndOutboundOrigin`, OpenAPI/TS regenerated. Full backend suite 746 passed / 0 failed on re-run (first run: 1 failure in the pre-existing timing-sensitive M07 Scenario04, passed 6/6 isolated); EF clean; frontend CI green; Docker back to baseline. Status -> `REVIEW`. | Claude |
 | 2026-10-05 | Project owner approved the M08-S05 plan ("ok implement"): Q1–Q5 as recommended, ADR-017, read-only Meta documentation access. Status -> `IN PROGRESS`. | Project owner / Claude |

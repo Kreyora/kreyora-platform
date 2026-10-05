@@ -7,7 +7,7 @@ export { mockCheckoutClient } from "./mock-checkout-client";
 export { mockPublicCheckoutClient, mockPublicStorefrontClient } from "./mock-public-storefront-client";
 export { mockOrderClient } from "./mock-order-client";
 export { mockPaymentClient } from "./mock-payment-client";
-export { mockConversationClient } from "./mock-conversation-client";
+export { mockConversationClient, resetMockConversations } from "./mock-conversation-client";
 export { mockIntegrationClient } from "./mock-integration-client";
 export { mockAIClient } from "./mock-ai-client";
 export { mockBillingClient } from "./mock-billing-client";
