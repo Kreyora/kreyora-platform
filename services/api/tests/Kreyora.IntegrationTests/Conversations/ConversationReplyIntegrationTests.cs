@@ -475,7 +475,10 @@ public sealed class ConversationReplyIntegrationTests : IClassFixture<PostgresFi
         db.Tenants.Add(tenant);
         await db.SaveChangesAsync();
 
-        var clock = new MutableClock(DateTimeOffset.UtcNow);
+        // PostgreSQL timestamptz keeps microseconds; .NET on Linux has 100 ns ticks. Start the test clock on a
+        // microsecond boundary so clock-derived values compare equal after a database round trip.
+        var now = DateTimeOffset.UtcNow;
+        var clock = new MutableClock(new DateTimeOffset(now.Ticks - (now.Ticks % 10), TimeSpan.Zero));
         var env = new Env(this, db, accessor, tenant.Id, clock, humanAgentApproved);
         await env.SeedAsync(prefix, clock.UtcNow - (lastCustomerMessageAgo ?? TimeSpan.FromHours(1)));
         return env;
