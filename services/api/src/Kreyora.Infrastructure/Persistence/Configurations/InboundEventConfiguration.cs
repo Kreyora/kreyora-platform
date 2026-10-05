@@ -17,6 +17,7 @@ public sealed class InboundEventConfiguration : IEntityTypeConfiguration<Inbound
         builder.Property(e => e.WebhookEventId).IsRequired().HasMaxLength(26);
         builder.Property(e => e.Channel).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(e => e.ProviderMessageId).HasMaxLength(InboundEvent.ProviderMessageIdMaxLength);
+        builder.Property(e => e.DeduplicationKey).IsRequired().HasMaxLength(InboundEvent.DeduplicationKeyLength);
         builder.Property(e => e.SchemaVersion).IsRequired().HasMaxLength(InboundEvent.SchemaVersionMaxLength);
         builder.Property(e => e.EventType).IsRequired().HasMaxLength(InboundEvent.EventTypeMaxLength);
         builder.Property(e => e.PayloadJson).HasColumnType("jsonb").IsRequired();
@@ -36,9 +37,12 @@ public sealed class InboundEventConfiguration : IEntityTypeConfiguration<Inbound
             .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique deduplication index per connection for normalized messages
+        // Event-level deduplication per connection (ADR-015). Several events may reference one provider
+        // message (message, read receipt, reactions), so the provider message ID index is a lookup index only.
+        builder.HasIndex(e => new { e.ConnectionId, e.DeduplicationKey })
+            .IsUnique();
+
         builder.HasIndex(e => new { e.ConnectionId, e.ProviderMessageId })
-            .IsUnique()
             .HasFilter("provider_message_id IS NOT NULL");
 
         builder.HasIndex(e => new { e.TenantId, e.WebhookEventId });

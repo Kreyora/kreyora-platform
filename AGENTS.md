@@ -1,4 +1,6 @@
-# Kreyora — Codex Instructions
+# Kreyora — Agent Instructions
+
+Shared instructions for every coding agent working in this repository (Claude Code, Codex, OpenCode, and others). This is the single source; `CLAUDE.md` imports this file, so edit only here.
 
 ## Project identity
 
@@ -100,9 +102,10 @@ Every implementation step must report:
 | ADR template | `docs/decisions/ADR_TEMPLATE.md` |
 | Checkpoint template | `artifacts/checkpoints/CHECKPOINT_TEMPLATE.md` |
 | Checkpoints | `artifacts/checkpoints/M<NN>-S<NN>.md` |
-| Frontend rules | `.Codex/rules/frontend.md` |
-| Backend rules | `.Codex/rules/backend.md` |
-| Testing rules | `.Codex/rules/testing.md` |
-| Doc/checkpoint rules | `.Codex/rules/documentation-and-checkpoints.md` |
+| Step plans and build checklists | `docs/plan/M<NN>-S<NN>_<TOPIC>_PLAN.md` (replaces the retired root `task.md`) |
+| Frontend rules | `.claude/rules/frontend.md` |
+| Backend rules | `.claude/rules/backend.md` |
+| Testing rules | `.claude/rules/testing.md` |
+| Doc/checkpoint rules | `.claude/rules/documentation-and-checkpoints.md` |
 
 Do not import entire plan or milestone files into context. Read them on demand per the session-start procedure.

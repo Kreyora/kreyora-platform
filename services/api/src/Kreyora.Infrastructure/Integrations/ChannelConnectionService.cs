@@ -38,14 +38,24 @@ public sealed class ChannelConnectionService(
             }
         }
 
-        var isDuplicate = await dbContext.ChannelConnections.AnyAsync(
-            c => c.Channel == request.Channel && c.ExternalAccountId == request.ExternalAccountId,
-            cancellationToken);
+        // Instagram ownership must be proven against the Graph API before anything is stored (ADR-015).
+        if (request.Channel == ChannelType.Instagram
+            && (request.Instagram == null || string.IsNullOrWhiteSpace(request.PlainTextSecret)))
+        {
+            return Result<ChannelConnectionDto>.ValidationError(
+                "Instagram connections require a Page access token and Instagram connect options for live validation.");
+        }
+
+        // Each external account is owned by exactly one connection across all tenants (ADR-015).
+        // The message is deliberately neutral: it must not reveal which workspace owns the account.
+        var isDuplicate = await dbContext.ChannelConnections
+            .IgnoreQueryFilters()
+            .AnyAsync(c => c.Channel == request.Channel && c.ExternalAccountId == request.ExternalAccountId, cancellationToken);
 
         if (isDuplicate)
         {
             return Result<ChannelConnectionDto>.Conflict(
-                $"A connection for channel '{request.Channel}' with account ID '{request.ExternalAccountId}' already exists in this tenant.");
+                $"This {request.Channel} account is already connected to a Kreyora workspace.");
         }
 
         try
@@ -176,8 +186,16 @@ public sealed class ChannelConnectionService(
 
             if (!string.IsNullOrWhiteSpace(request.PlainTextSecret))
             {
-                if (connection.Channel == ChannelType.Instagram && request.Instagram != null)
+                if (connection.Channel == ChannelType.Instagram)
                 {
+                    // Reauthorization must be validated for the account this connection already owns.
+                    if (request.Instagram == null
+                        || !string.Equals(request.Instagram.InstagramAccountId, connection.ExternalAccountId, StringComparison.Ordinal))
+                    {
+                        return Result<ChannelConnectionDto>.ValidationError(
+                            "Instagram reauthorization requires Instagram connect options for this connection's account.");
+                    }
+
                     var account = await instagramGraphClient.ValidateAccountAsync(
                         request.PlainTextSecret,
                         request.Instagram.InstagramAccountId,

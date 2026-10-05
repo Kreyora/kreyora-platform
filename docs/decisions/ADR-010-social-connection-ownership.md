@@ -50,3 +50,6 @@ We must decide at which hierarchy level social connections (`ChannelConnection`)
 
 - Introduction of enterprise multi-subsidiary organizational units requiring hierarchical channel sharing beyond a single tenant.
 
+## Amendment note (2026-10-05)
+
+Amended by [ADR-015](ADR-015-social-account-ownership-fanout-and-event-identity.md): the composite unique index `(TenantId, Provider, ExternalAccountId)` named under Consequences is replaced by a global unique index on `(Channel, ExternalAccountId)`. Webhook routing precedence is also defined there: the signed payload account outranks headers, and a route connection ID must match the signed account. The text above is unchanged.
