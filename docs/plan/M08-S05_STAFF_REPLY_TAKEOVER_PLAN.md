@@ -6,7 +6,7 @@
 - **Step:** 05 — Staff reply, assignment, and human takeover
 - **Author:** Claude (planning)
 - **Date:** 2026-10-05
-- **Status:** `REVIEW` — implemented 2026-10-05 (evidence: `artifacts/checkpoints/M08-S05.md`); approved by the owner on 2026-10-05 ("ok implement"): decisions Q1–Q5 as recommended, ADR-017, read-only Meta documentation access
+- **Status:** `APPROVED` (2026-10-05) — implemented 2026-10-05 (evidence: `artifacts/checkpoints/M08-S05.md`); approved by the owner on 2026-10-05 ("ok implement"): decisions Q1–Q5 as recommended, ADR-017, read-only Meta documentation access
 - **Prerequisites:** M08-S04 `APPROVED` (2026-10-05); ADR-010–016 `Accepted`.
 - **Manual work for the owner in this step:** none. Real sends to Instagram happen only at M08-S07 (sandbox).
 

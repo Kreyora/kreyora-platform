@@ -1,82 +1,79 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useClients } from "@/lib/providers/client-provider";
+import { useClients, USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
 import { useSession } from "@/hooks/use-session";
+import { usePolling } from "@/hooks/use-polling";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ViewerBadge } from "@/components/viewer-badge";
-import type { Conversation } from "@/lib/types";
-import type { BadgeVariant } from "@/components/ui/badge";
+import { InboxAlert } from "@/components/inbox/inbox-alert";
+import { StaleBanner } from "@/components/inbox/stale-banner";
+import { CHANNEL_MAP, STATE_MAP, relativeTime } from "@/components/inbox/inbox-display";
+import { describeInboxError, type InboxErrorCopy } from "@/lib/utils/conversation-errors";
+import type { Conversation, ConversationState, PaginatedResult } from "@/lib/types";
 
-const STATE_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
-  new: { label: "New", variant: "info" },
-  bot_active: { label: "Bot Active", variant: "info" },
-  human_assigned: { label: "Human", variant: "warning" },
-  awaiting_customer: { label: "Awaiting", variant: "neutral" },
-  checkout_in_progress: { label: "Checkout", variant: "info" },
-  order_created: { label: "Ordered", variant: "success" },
-  resolved: { label: "Resolved", variant: "success" },
-  closed: { label: "Closed", variant: "neutral" },
-  spam: { label: "Spam", variant: "danger" },
-};
+const LIST_POLL_MS = 15_000;
+const PAGE_SIZE = 20;
 
-const CHANNEL_MAP: Record<string, { label: string; color: string }> = {
-  facebook: { label: "FB", color: "bg-blue-500" },
-  instagram: { label: "IG", color: "bg-pink-500" },
-  whatsapp: { label: "WA", color: "bg-green-500" },
-  tiktok: { label: "TT", color: "bg-gray-800" },
-  storefront: { label: "SF", color: "bg-purple-500" },
-};
+type View = "all" | "unread" | "mine";
 
 export default function InboxPage() {
   const { conversation } = useClients();
-  const { effectiveRole } = useSession();
+  const { effectiveRole, session } = useSession();
+  const currentUserId = session?.membership.userId;
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<InboxErrorCopy | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [pages, setPages] = useState(1);
+  const [view, setView] = useState<View>("all");
+  const [stateFilter, setStateFilter] = useState<ConversationState | "">("");
   const [search, setSearch] = useState("");
-  const [stateFilter, setStateFilter] = useState("");
   const [channelFilter, setChannelFilter] = useState("");
 
-  useEffect(() => {
-    conversation.listConversations().then((result) => {
-      setConversations(result.items);
-      setIsLoading(false);
-    });
-  }, [conversation]);
+  const fetchList = useCallback(() => conversation.listConversations({
+    state: stateFilter || undefined,
+    unreadOnly: view === "unread",
+    assignedTo: view === "mine" ? currentUserId : undefined,
+    page: 1,
+    pageSize: PAGE_SIZE * pages,
+  }), [conversation, stateFilter, view, currentUserId, pages]);
 
-  const filtered = useMemo(() => {
+  const apply = useCallback((result: PaginatedResult<Conversation>) => {
+    setConversations(result.items);
+    setHasMore(result.hasMore);
+    setLoadError(null);
+  }, []);
+
+  const load = useCallback(async () => apply(await fetchList()), [apply, fetchList]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchList()
+      .then((result) => { if (!cancelled) apply(result); })
+      .catch((error: unknown) => { if (!cancelled) setLoadError(describeInboxError(error)); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, [apply, fetchList]);
+
+  const polling = usePolling(load, LIST_POLL_MS, !isLoading && !loadError);
+
+  // Search and channel filters exist only for demo data; the API has no free-text search yet.
+  const visible = useMemo(() => {
+    if (!USING_FIXTURE_ADAPTERS) return conversations;
     let result = conversations;
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.customerName.toLowerCase().includes(q) ||
-          c.lastMessage?.toLowerCase().includes(q) ||
-          c.labels.some((l) => l.toLowerCase().includes(q)),
-      );
+      result = result.filter((c) => c.customerName.toLowerCase().includes(q) || c.lastMessage?.toLowerCase().includes(q) || c.labels.some((l) => l.toLowerCase().includes(q)));
     }
-    if (stateFilter) result = result.filter((c) => c.state === stateFilter);
     if (channelFilter) result = result.filter((c) => c.channel === channelFilter);
     return result;
-  }, [conversations, search, stateFilter, channelFilter]);
-
-  if (isLoading) {
-    return (
-      <div>
-        <Skeleton className="mb-2 h-8 w-24" />
-        <Skeleton className="mb-6 h-11 w-full" />
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-[var(--radius-lg)]" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  }, [conversations, search, channelFilter]);
 
   return (
     <div>
@@ -84,117 +81,109 @@ export default function InboxPage() {
         <h1 className="text-heading-page text-[var(--color-ink-primary)]">Inbox</h1>
         {effectiveRole === "viewer" && <ViewerBadge />}
       </div>
+      {USING_FIXTURE_ADAPTERS && (
+        <p className="mt-2 text-xs text-[var(--color-ink-secondary)]" role="note">Demo data — nothing is sent to real customers.</p>
+      )}
 
-      <div className="mt-6 flex flex-wrap items-end gap-3">
-        <div className="min-w-[200px] flex-1">
-          <Input
-            placeholder="Search by name, message, label..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search conversations"
-          />
-        </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Inbox view">
+        {(["all", "unread", "mine"] as View[]).map((v) => (
+          <Button
+            key={v}
+            role="tab"
+            aria-selected={view === v}
+            size="sm"
+            variant={view === v ? "solid" : "outline"}
+            onClick={() => { setView(v); setPages(1); }}
+            disabled={v === "mine" && !currentUserId}
+          >
+            {v === "all" ? "All" : v === "unread" ? "Unread" : "Assigned to me"}
+          </Button>
+        ))}
+        <label htmlFor="state-filter" className="sr-only">Filter by status</label>
         <select
+          id="state-filter"
+          aria-label="Filter by status"
           value={stateFilter}
-          onChange={(e) => setStateFilter(e.target.value)}
-          className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-canvas)] px-[var(--space-3)] text-sm text-[var(--color-ink-primary)] focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2"
-          aria-label="Filter by state"
+          onChange={(event) => { setStateFilter(event.target.value as ConversationState | ""); setPages(1); }}
+          className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 text-sm"
         >
-          <option value="">All states</option>
-          <option value="bot_active">Bot Active</option>
-          <option value="human_assigned">Human Assigned</option>
-          <option value="awaiting_customer">Awaiting Customer</option>
-          <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
+          <option value="">All statuses</option>
+          {(Object.keys(STATE_MAP) as ConversationState[]).map((s) => <option key={s} value={s}>{STATE_MAP[s].label}</option>)}
         </select>
-        <select
-          value={channelFilter}
-          onChange={(e) => setChannelFilter(e.target.value)}
-          className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-canvas)] px-[var(--space-3)] text-sm text-[var(--color-ink-primary)] focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)] focus-visible:outline-offset-2"
-          aria-label="Filter by channel"
-        >
-          <option value="">All channels</option>
-          <option value="facebook">Facebook</option>
-          <option value="instagram">Instagram</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="tiktok">TikTok</option>
-          <option value="storefront">Storefront</option>
-        </select>
+        <Button size="sm" variant="ghost" onClick={() => void polling.refreshNow()}>Refresh</Button>
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="mt-8">
-          <EmptyState
-            title="No conversations found"
-            description={search || stateFilter || channelFilter ? "Try adjusting your filters." : "No conversations yet."}
-          />
-        </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-2">
-          {filtered.map((c) => {
-            const st = STATE_MAP[c.state] ?? { label: c.state, variant: "neutral" as const };
-            const ch = CHANNEL_MAP[c.channel] ?? { label: c.channel.substring(0, 2).toUpperCase(), color: "bg-gray-400" };
-            return (
-              <Link
-                key={c.id}
-                href={`/inbox/${c.id}`}
-                className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4 transition-colors hover:bg-[var(--color-canvas-subtle)]"
-              >
-                <span
-                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${ch.color}`}
-                  aria-label={c.channel}
-                >
-                  {ch.label}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-[var(--color-ink-primary)]">
-                      {c.customerName}
-                    </span>
-                    <Badge variant={st.variant}>{st.label}</Badge>
-                    {c.unreadCount > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-danger)] px-1 text-[10px] font-bold text-white">
-                        {c.unreadCount}
-                      </span>
-                    )}
-                    {c.isAutomationActive && (
-                      <span className="text-[10px] text-[var(--color-info)]">Bot</span>
-                    )}
-                  </div>
-                  {c.lastMessage && (
-                    <p className="mt-0.5 truncate text-xs text-[var(--color-ink-secondary)]">
-                      {c.lastMessage}
-                    </p>
-                  )}
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    {c.assignment && (
-                      <span className="text-[10px] text-[var(--color-ink-secondary)]">
-                        Assigned: {c.assignment.assigneeName}
-                      </span>
-                    )}
-                    {c.labels.map((l) => (
-                      <span
-                        key={l}
-                        className="rounded-[var(--radius-full)] bg-[var(--color-canvas-subtle)] px-2 py-0.5 text-[10px] text-[var(--color-ink-secondary)]"
-                      >
-                        {l}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <span className="shrink-0 text-[10px] text-[var(--color-ink-secondary)]">
-                  {c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleDateString() : ""}
-                </span>
-              </Link>
-            );
-          })}
+      {USING_FIXTURE_ADAPTERS && (
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <Input placeholder="Search conversations…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search conversations" className="flex-1" />
+          <select
+            aria-label="Filter by channel"
+            value={channelFilter}
+            onChange={(e) => setChannelFilter(e.target.value)}
+            className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 text-sm"
+          >
+            <option value="">All channels</option>
+            {Object.entries(CHANNEL_MAP).map(([key, c]) => <option key={key} value={key}>{c.label}</option>)}
+          </select>
         </div>
       )}
 
-      <p className="mt-6 text-xs text-[var(--color-ink-secondary)]">
-        {conversations.length} conversation{conversations.length !== 1 ? "s" : ""} total
-        {filtered.length !== conversations.length && `, ${filtered.length} shown`}
-      </p>
+      <div className="mt-4">
+        <StaleBanner isStale={polling.isStale} lastSuccessAt={polling.lastSuccessAt} onRefresh={() => void polling.refreshNow()} />
+        <InboxAlert error={loadError} onRefresh={() => void polling.refreshNow()} />
+
+        {isLoading ? (
+          <div className="space-y-3" aria-busy="true" aria-label="Loading conversations">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-[var(--radius-lg)]" />)}
+          </div>
+        ) : loadError ? null : visible.length === 0 ? (
+          <EmptyState
+            title={view === "all" && !stateFilter ? "No conversations yet" : "No conversations match"}
+            description={view === "all" && !stateFilter ? "Messages from connected channels will appear here." : "Try a different filter."}
+            action={view === "all" && !stateFilter ? <Link href="/integrations" className="text-sm underline">Connect a channel</Link> : undefined}
+          />
+        ) : (
+          <>
+            <ul className="space-y-3" aria-label="Conversations">
+              {visible.map((c) => {
+                const state = STATE_MAP[c.state];
+                const channel = CHANNEL_MAP[c.channel] ?? CHANNEL_MAP.simulator;
+                return (
+                  <li key={c.id}>
+                    <Link
+                      href={`/inbox/${c.id}`}
+                      className="block rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4 transition-colors duration-[var(--duration-hover)] hover:bg-[var(--color-canvas-subtle)] focus-visible:outline-2 focus-visible:outline-[var(--color-focus-ring)]"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${channel.color}`} aria-label={channel.label}>{channel.short}</span>
+                        <span className="font-medium text-[var(--color-ink-primary)]">{c.customerName}</span>
+                        <Badge variant={state.variant}>{state.label}</Badge>
+                        {!c.isAutomationActive && <Badge variant="warning">Human</Badge>}
+                        {c.unreadCount > 0 && (
+                          <span className="ml-auto rounded-full bg-[var(--color-surface-dark)] px-2 py-0.5 text-xs font-semibold text-[var(--color-on-dark)]" aria-label={`${c.unreadCount} unread`}>
+                            {c.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      {c.lastMessage && <p className="mt-2 line-clamp-2 text-sm text-[var(--color-ink-secondary)]">{c.lastMessage}</p>}
+                      <div className="mt-2 flex flex-wrap gap-3 text-xs text-[var(--color-ink-secondary)]">
+                        <span>{relativeTime(c.lastMessageAt)}</span>
+                        {c.assignment && <span>Assigned to {c.assignment.assigneeName}</span>}
+                        {c.labels.map((l) => <span key={l}>#{l}</span>)}
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            {hasMore && (
+              <div className="mt-4 flex justify-center">
+                <Button variant="outline" onClick={() => setPages((p) => p + 1)}>Load more</Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

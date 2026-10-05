@@ -33,6 +33,9 @@ public interface IConversationQueryService
         string? beforeMessageId,
         int pageSize,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Active members of the current workspace (display name and role only) for assignment and sender names.</summary>
+    Task<Result<IReadOnlyList<ConversationAssigneeItem>>> ListAssigneesAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>Staff inbox operations (ADR-016/017). All require <c>conversations.write</c>.</summary>
@@ -161,7 +164,10 @@ public sealed record MessageItem(
     bool IsRedacted,
     IReadOnlyList<MessageReactionSummary> Reactions,
     bool IsPending = false,
-    string? ActorUserId = null);
+    string? ActorUserId = null,
+    string? DeliveryFailureCode = null);
+
+public sealed record ConversationAssigneeItem(string UserId, string DisplayName, Kreyora.Domain.Tenancy.TenantRole Role);
 
 /// <summary>Messages in chronological order; <see cref="NextBeforeMessageId"/> pages to older messages.</summary>
 public sealed record MessagePage(IReadOnlyList<MessageItem> Items, string? NextBeforeMessageId);
