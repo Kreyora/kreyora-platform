@@ -1111,6 +1111,305 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/conversations/{id}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StaffReplyRequest"];
+                    "text/json": components["schemas"]["StaffReplyRequest"];
+                    "application/*+json": components["schemas"]["StaffReplyRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MessageItem"];
+                        "application/json": components["schemas"]["MessageItem"];
+                        "text/json": components["schemas"]["MessageItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}/takeover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationDetailItem"];
+                        "application/json": components["schemas"]["ConversationDetailItem"];
+                        "text/json": components["schemas"]["ConversationDetailItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationDetailItem"];
+                        "application/json": components["schemas"]["ConversationDetailItem"];
+                        "text/json": components["schemas"]["ConversationDetailItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AssignConversationRequest"];
+                    "text/json": components["schemas"]["AssignConversationRequest"];
+                    "application/*+json": components["schemas"]["AssignConversationRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationDetailItem"];
+                        "application/json": components["schemas"]["ConversationDetailItem"];
+                        "text/json": components["schemas"]["ConversationDetailItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}/unassign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationDetailItem"];
+                        "application/json": components["schemas"]["ConversationDetailItem"];
+                        "text/json": components["schemas"]["ConversationDetailItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SetConversationLabelsRequest"];
+                    "text/json": components["schemas"]["SetConversationLabelsRequest"];
+                    "application/*+json": components["schemas"]["SetConversationLabelsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationDetailItem"];
+                        "application/json": components["schemas"]["ConversationDetailItem"];
+                        "text/json": components["schemas"]["ConversationDetailItem"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeConversationStatusRequest"];
+                    "text/json": components["schemas"]["ChangeConversationStatusRequest"];
+                    "application/*+json": components["schemas"]["ChangeConversationStatusRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationDetailItem"];
+                        "application/json": components["schemas"]["ConversationDetailItem"];
+                        "text/json": components["schemas"]["ConversationDetailItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/store/delivery-rules": {
         parameters: {
             query?: never;
@@ -4538,6 +4837,9 @@ export interface components {
             /** Format: uint32 */
             expectedVersion: number | string;
         };
+        AssignConversationRequest: {
+            userId: string;
+        };
         AttachBody: {
             productId: string;
             /** Format: int32 */
@@ -4593,6 +4895,9 @@ export interface components {
             isPublished: boolean;
             /** Format: uint32 */
             version: number | string;
+        };
+        ChangeConversationStatusRequest: {
+            action: components["schemas"]["ConversationStatusAction"];
         };
         ChangeMembershipRoleRequest: {
             role: components["schemas"]["TenantRole"];
@@ -4699,6 +5004,7 @@ export interface components {
             modifiedAt: string;
         };
         ConversationStatus: number;
+        ConversationStatusAction: number;
         ConversationSummaryItem: {
             id: string;
             connectionId: string;
@@ -4996,6 +5302,9 @@ export interface components {
             occurredAt: string;
             isRedacted: boolean;
             reactions: components["schemas"]["MessageReactionSummary"][];
+            /** @default false */
+            isPending: boolean;
+            actorUserId?: null | string;
         };
         MessageKind: number;
         MessageOrigin: number;
@@ -5604,6 +5913,9 @@ export interface components {
         RotateSecretRequestBody: {
             targetKeyVersion: string;
         };
+        SetConversationLabelsRequest: {
+            labels: string[];
+        };
         SignInRequest: {
             email: string;
             password: string;
@@ -5625,6 +5937,9 @@ export interface components {
             executedAt: string;
         };
         SimulatorScenarioType: number;
+        StaffReplyRequest: {
+            text: string;
+        };
         StockAdjustmentRequest: {
             variantId: string;
             type: components["schemas"]["StockMovementType"];

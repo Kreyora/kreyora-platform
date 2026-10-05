@@ -21,8 +21,15 @@ public sealed partial class OutboundMessageService(
     IChannelProviderRegistry providerRegistry,
     IConversationGate conversationGate,
     ITimeProvider timeProvider,
-    ILogger<OutboundMessageService> logger) : IOutboundMessageService
+    ILogger<OutboundMessageService> logger,
+    IConversationOutboundReconciler? conversationReconciler = null) : IOutboundMessageService, IOutboundEnqueuer
 {
+    [LoggerMessage(Level = LogLevel.Information, Message = "Outbound message {MessageId} stopped before sending on tenant {TenantId}: {ReasonCode}")]
+    private static partial void LogDeliveryBlocked(ILogger logger, string messageId, string tenantId, string? reasonCode);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Outbound message {MessageId} changed concurrently before sending (e.g. cancelled by takeover); not sent")]
+    private static partial void LogDeliveryRaceLost(ILogger logger, string messageId);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Queued outbound message {MessageId} for recipient {Recipient} via connection {ConnectionId} on tenant {TenantId}")]
     private static partial void LogMessageQueued(ILogger logger, string messageId, string recipient, string connectionId, string tenantId);
 
@@ -82,11 +89,12 @@ public sealed partial class OutboundMessageService(
                 break;
         }
 
-        // Conversation gate check (placeholder for M08)
+        // Conversation gate (ADR-017). The provider-neutral outbox API sends as System origin.
         var gateResult = await conversationGate.CheckSendPermissionAsync(
             context.TenantId,
             request.ConnectionId,
             request.ConversationId,
+            OutboundMessageOrigin.System,
             cancellationToken);
 
         if (!gateResult.Allowed)
@@ -129,6 +137,60 @@ public sealed partial class OutboundMessageService(
         return OutboundMessageResult.Success(message.Id, message.Status);
     }
 
+    /// <inheritdoc />
+    public async Task<OutboundEnqueueResult> EnqueueAsync(
+        OutboundEnqueueRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var connection = await dbContext.ChannelConnections
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.TenantId == request.TenantId && c.Id == request.ConnectionId, cancellationToken);
+        if (connection is null || connection.Status != ChannelConnectionStatus.Active)
+        {
+            return OutboundEnqueueResult.Denied("The channel connection is not active and cannot send messages.", ConversationDenialReasons.ConnectionInactive);
+        }
+
+        if (!connection.Capabilities.CanSendText)
+        {
+            return OutboundEnqueueResult.Denied("This channel does not support sending text messages.", ConversationDenialReasons.CapabilityUnsupported);
+        }
+
+        var gate = await conversationGate.CheckSendPermissionAsync(
+            request.TenantId, request.ConnectionId, request.ConversationId, request.Origin, cancellationToken);
+        if (!gate.Allowed)
+        {
+            return OutboundEnqueueResult.Denied(gate.DenialReason ?? "Message send was blocked.", gate.ReasonCode);
+        }
+
+        var existingId = await dbContext.OutboundMessages
+            .IgnoreQueryFilters()
+            .Where(m => m.TenantId == request.TenantId && m.ConnectionId == request.ConnectionId && m.IdempotencyKey == request.IdempotencyKey)
+            .Select(m => m.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (existingId is not null)
+        {
+            return OutboundEnqueueResult.Duplicate(existingId);
+        }
+
+        var message = OutboundMessage.Create(
+            tenantId: request.TenantId,
+            connectionId: request.ConnectionId,
+            channel: connection.Channel,
+            recipientChannelId: request.RecipientChannelId,
+            idempotencyKey: request.IdempotencyKey,
+            messageType: OutboundMessageType.Text,
+            textContent: request.Text,
+            conversationId: request.ConversationId,
+            queuedAt: timeProvider.UtcNow,
+            origin: request.Origin,
+            actorUserId: request.ActorUserId);
+
+        dbContext.OutboundMessages.Add(message);
+        return OutboundEnqueueResult.Added(message);
+    }
+
     public async Task ProcessDeliveryAsync(
         string outboundMessageId,
         CancellationToken cancellationToken = default)
@@ -153,8 +215,44 @@ public sealed partial class OutboundMessageService(
             .FirstOrDefaultAsync(c => c.TenantId == message.TenantId && c.Id == message.ConnectionId, cancellationToken);
 
         var now = timeProvider.UtcNow;
+
+        // ADR-017 delivery-time gate: re-evaluated against committed state immediately before MarkSending, so a
+        // takeover or a closed window stops messages that were queued earlier.
+        var gate = await conversationGate.CheckSendPermissionAsync(
+            message.TenantId, message.ConnectionId, message.ConversationId, message.Origin, cancellationToken);
+
+        if (!gate.Allowed && gate.ReasonCode == ConversationDenialReasons.AutomationPausedByTakeover)
+        {
+            message.Cancel(now);
+            await SaveIgnoringConcurrencyAsync(message.Id, cancellationToken);
+            LogDeliveryBlocked(logger, message.Id, message.TenantId, gate.ReasonCode);
+            return;
+        }
+
         message.MarkSending();
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (!gate.Allowed)
+        {
+            var blocked = OutboundDeliveryAttempt.Create(
+                tenantId: message.TenantId,
+                outboundMessageId: message.Id,
+                attemptNumber: message.AttemptCount,
+                channel: message.Channel,
+                connectionId: message.ConnectionId,
+                startedAt: now);
+            blocked.CompleteFailure(gate.ReasonCode ?? "GATE_DENIED", gate.DenialReason ?? "Blocked by conversation gate.", now);
+            dbContext.OutboundDeliveryAttempts.Add(blocked);
+            message.RecordDeliveryFailure(gate.DenialReason ?? "Blocked by conversation gate.", WebhookFailureClassification.Permanent, now);
+            await ReconcileFailureAsync(message, cancellationToken);
+            await SaveIgnoringConcurrencyAsync(message.Id, cancellationToken);
+            LogDeliveryBlocked(logger, message.Id, message.TenantId, gate.ReasonCode);
+            return;
+        }
+
+        // A takeover that cancelled this message after the gate read wins: the Sending save conflicts on xmin.
+        if (!await SaveIgnoringConcurrencyAsync(message.Id, cancellationToken))
+        {
+            return;
+        }
 
         if (connection is null || connection.Status != ChannelConnectionStatus.Active)
         {
@@ -222,6 +320,15 @@ public sealed partial class OutboundMessageService(
             }
         }
 
+        if (!string.IsNullOrWhiteSpace(gate.MessagingTag))
+        {
+            var withTag = metadata is null
+                ? new Dictionary<string, string>(StringComparer.Ordinal)
+                : new Dictionary<string, string>(metadata, StringComparer.Ordinal);
+            withTag[ConversationGateResult.MessagingTagMetadataKey] = gate.MessagingTag;
+            metadata = withTag;
+        }
+
         var outboundRequest = new OutboundMessageRequest(
             MessageId: message.Id,
             ConversationId: message.ConversationId ?? string.Empty,
@@ -251,6 +358,11 @@ public sealed partial class OutboundMessageService(
             {
                 attempt.CompleteSuccess(deliveryResult.ProviderMessageId, completedAt);
                 message.RecordDeliverySuccess(deliveryResult.ProviderMessageId, completedAt);
+                if (conversationReconciler is not null)
+                {
+                    await conversationReconciler.OnDeliverySucceededAsync(message, deliveryResult.ProviderMessageId, completedAt, cancellationToken);
+                }
+
                 LogMessageSent(logger, message.Id, deliveryResult.ProviderMessageId, message.TenantId);
             }
             else
@@ -259,11 +371,23 @@ public sealed partial class OutboundMessageService(
                 var err = deliveryResult.ProviderErrorMessage ?? "Provider returned unsuccessful delivery result.";
                 attempt.CompleteFailure(code, err, completedAt);
 
-                var classification = err.Contains("rate limit", StringComparison.OrdinalIgnoreCase) || err.Contains("429", StringComparison.OrdinalIgnoreCase)
+                // Provider-declared transience wins; otherwise the M07 heuristic. Unconfirmed deliveries are
+                // never retried automatically (ADR-017: at most once when the outcome is ambiguous).
+                var classification = deliveryResult.IsTransient == true
                     ? WebhookFailureClassification.Transient
-                    : WebhookFailureClassification.Permanent;
+                    : code != ConversationDenialReasons.DeliveryUnconfirmed
+                      && (err.Contains("rate limit", StringComparison.OrdinalIgnoreCase) || err.Contains("429", StringComparison.OrdinalIgnoreCase))
+                        ? WebhookFailureClassification.Transient
+                        : WebhookFailureClassification.Permanent;
+
+                if (code == "190")
+                {
+                    connection.UpdateHealth(false, ChannelConnectionStatus.Expired,
+                        "Page access token expired or invalid", "Reauthorize the connection to resume sending.", completedAt);
+                }
 
                 message.RecordDeliveryFailure(err, classification, completedAt);
+                await ReconcileFailureAsync(message, cancellationToken);
                 LogDeliveryFailed(logger, message.Id, message.AttemptCount, message.Status, message.TenantId);
             }
         }
@@ -273,11 +397,36 @@ public sealed partial class OutboundMessageService(
             var classification = WebhookFailureClassifier.Classify(ex);
             attempt.CompleteFailure(ex.GetType().Name, ex.Message, completedAt);
             message.RecordDeliveryFailure(ex.Message, classification, completedAt);
+            await ReconcileFailureAsync(message, cancellationToken);
             LogDeliveryFailed(logger, message.Id, message.AttemptCount, message.Status, message.TenantId);
         }
 
         dbContext.OutboundDeliveryAttempts.Add(attempt);
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task ReconcileFailureAsync(OutboundMessage message, CancellationToken cancellationToken)
+    {
+        if (conversationReconciler is not null && message.Status == OutboundMessageStatus.DeadLetter)
+        {
+            await conversationReconciler.OnDeliveryFailedPermanentlyAsync(message, cancellationToken);
+        }
+    }
+
+    /// <summary>Saves; returns false (and discards the attempt) when a concurrent change won the row version.</summary>
+    private async Task<bool> SaveIgnoringConcurrencyAsync(string messageId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            dbContext.ChangeTracker.Clear();
+            LogDeliveryRaceLost(logger, messageId);
+            return false;
+        }
     }
 
     public async Task ProcessStatusReceiptAsync(

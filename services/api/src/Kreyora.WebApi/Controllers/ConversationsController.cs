@@ -13,7 +13,8 @@ namespace Kreyora.WebApi.Controllers;
 [Route("v{version:apiVersion}/conversations")]
 public sealed class ConversationsController(
     IConversationQueryService conversationQueryService,
-    IConversationInboxService conversationInboxService) : ControllerBase
+    IConversationInboxService conversationInboxService,
+    IConversationReplyService conversationReplyService) : ControllerBase
 {
     [HttpGet, Authorize(Policy = TenantPermissions.ConversationsRead)]
     public async Task<ActionResult<PagedResult<ConversationSummaryItem>>> List(
@@ -47,4 +48,68 @@ public sealed class ConversationsController(
         string id,
         CancellationToken cancellationToken = default) =>
         this.ToActionResult(await conversationInboxService.MarkReadAsync(id, cancellationToken));
+
+    [HttpPost("{id}/replies"), Authorize(Policy = TenantPermissions.ConversationsWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<MessageItem>> Reply(
+        string id,
+        [FromBody] StaffReplyRequest body,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                Title = "Validation Error",
+                Status = StatusCodes.Status400BadRequest,
+                Detail = "An Idempotency-Key header is required to send a reply."
+            });
+        }
+
+        ArgumentNullException.ThrowIfNull(body);
+        return this.ToActionResult(await conversationReplyService.SendStaffReplyAsync(id, body.Text, idempotencyKey, cancellationToken));
+    }
+
+    [HttpPost("{id}/takeover"), Authorize(Policy = TenantPermissions.ConversationsWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<ConversationDetailItem>> TakeOver(string id, CancellationToken cancellationToken = default) =>
+        this.ToActionResult(await conversationInboxService.TakeOverAsync(id, cancellationToken));
+
+    [HttpPost("{id}/release"), Authorize(Policy = TenantPermissions.ConversationsWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<ConversationDetailItem>> Release(string id, CancellationToken cancellationToken = default) =>
+        this.ToActionResult(await conversationInboxService.ReleaseAsync(id, cancellationToken));
+
+    [HttpPost("{id}/assign"), Authorize(Policy = TenantPermissions.ConversationsWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<ConversationDetailItem>> Assign(
+        string id,
+        [FromBody] AssignConversationRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        return this.ToActionResult(await conversationInboxService.AssignAsync(id, body.UserId, cancellationToken));
+    }
+
+    [HttpPost("{id}/unassign"), Authorize(Policy = TenantPermissions.ConversationsWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<ConversationDetailItem>> Unassign(string id, CancellationToken cancellationToken = default) =>
+        this.ToActionResult(await conversationInboxService.UnassignAsync(id, cancellationToken));
+
+    [HttpPut("{id}/labels"), Authorize(Policy = TenantPermissions.ConversationsWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<ConversationDetailItem>> SetLabels(
+        string id,
+        [FromBody] SetConversationLabelsRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        return this.ToActionResult(await conversationInboxService.SetLabelsAsync(id, body.Labels, cancellationToken));
+    }
+
+    [HttpPost("{id}/status"), Authorize(Policy = TenantPermissions.ConversationsWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<ConversationDetailItem>> ChangeStatus(
+        string id,
+        [FromBody] ChangeConversationStatusRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        return this.ToActionResult(await conversationInboxService.ChangeStatusAsync(id, body.Action, cancellationToken));
+    }
 }

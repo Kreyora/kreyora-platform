@@ -16,6 +16,8 @@ public sealed class OutboundMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.Property(e => e.ConnectionId).IsRequired().HasMaxLength(26);
         builder.Property(e => e.Channel).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(e => e.ConversationId).HasMaxLength(OutboundMessage.ConversationIdMaxLength);
+        builder.Property(e => e.Origin).HasConversion<string>().HasMaxLength(32).HasDefaultValue(OutboundMessageOrigin.System).IsRequired();
+        builder.Property(e => e.ActorUserId).HasMaxLength(64);
         builder.Property(e => e.RecipientChannelId).IsRequired().HasMaxLength(OutboundMessage.RecipientChannelIdMaxLength);
         builder.Property(e => e.IdempotencyKey).IsRequired().HasMaxLength(OutboundMessage.IdempotencyKeyMaxLength);
         builder.Property(e => e.MessageType).HasConversion<string>().HasMaxLength(32).IsRequired();
@@ -46,6 +48,10 @@ public sealed class OutboundMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.Property<uint>("xmin").HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
 
         builder.HasAlternateKey(e => new { e.TenantId, e.Id });
+
+        // Takeover cancellation and delivery gate lookups by conversation (ADR-017).
+        builder.HasIndex(e => new { e.TenantId, e.ConversationId, e.Origin, e.Status })
+            .HasFilter("conversation_id IS NOT NULL");
 
         // Idempotency constraint per tenant and connection
         builder.HasIndex(e => new { e.TenantId, e.ConnectionId, e.IdempotencyKey })

@@ -354,15 +354,44 @@ public sealed class InstagramChannelProviderTests
     }
 
     [Fact]
-    public async Task OutboundAndHealth_ThrowNotSupported()
+    public async Task Health_StaysWithGraphClient_AndSendWithoutHostWiring_FailsCleanly()
     {
+        // M08-S05: sending is implemented (see InstagramSendTests); health remains the S02 graph client's job.
         var provider = CreateProvider();
         var connection = ChannelConnectionSnapshot.Create("c", "t", null, ChannelType.Instagram);
 
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            provider.SendMessageAsync(connection, OutboundMessageRequest.TextMessage("igsid", "hi")));
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            provider.ValidateOrRefreshConnectionAsync(connection));
+        var send = await provider.SendMessageAsync(connection, OutboundMessageRequest.TextMessage("igsid", "hi"));
+
+        Assert.False(send.Succeeded);
+        Assert.Equal("provider_unconfigured", send.ProviderErrorCode);
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.ValidateOrRefreshConnectionAsync(connection));
+    }
+
+    [Fact]
+    public async Task Normalize_Echo_MapsToEchoPayloadWithCustomerAsRecipient()
+    {
+        var provider = CreateProvider();
+        var body = "{\"object\":\"instagram\",\"entry\":[" + Entry("igid_biz",
+            "{\"sender\":{\"id\":\"igid_biz\"},\"recipient\":{\"id\":\"igsid_customer\"},\"timestamp\":1000," +
+            "\"message\":{\"mid\":\"mid_echo\",\"text\":\"Sent from the app\",\"is_echo\":true}}") + "]}";
+
+        var envelope = Assert.Single(await provider.NormalizeInboundAsync(Raw(body)));
+
+        var text = Assert.IsType<TextMessageReceivedPayload>(envelope.Payload);
+        Assert.True(text.IsEcho);
+        Assert.Equal("igsid_customer", text.RecipientChannelId);
+        Assert.Equal("mid_echo", text.MessageId);
+        Assert.Equal("mid_echo", envelope.DeduplicationKey);
+    }
+
+    [Fact]
+    public async Task Normalize_EchoWithoutRecipient_IsSkipped()
+    {
+        var provider = CreateProvider();
+        var body = "{\"object\":\"instagram\",\"entry\":[" + Entry("igid_biz",
+            "{\"sender\":{\"id\":\"igid_biz\"},\"timestamp\":1000,\"message\":{\"mid\":\"mid_e2\",\"text\":\"x\",\"is_echo\":true}}") + "]}";
+
+        Assert.Empty(await provider.NormalizeInboundAsync(Raw(body)));
     }
 
     private static InstagramChannelProvider CreateProvider() =>

@@ -16,6 +16,9 @@ public sealed class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.Property(e => e.ConversationId).IsRequired().HasMaxLength(26);
         builder.Property(e => e.ConnectionId).IsRequired().HasMaxLength(26);
         builder.Property(e => e.InboundEventId).HasMaxLength(26);
+        builder.Property(e => e.OutboundMessageId).HasMaxLength(26);
+        builder.Property(e => e.ActorUserId).HasMaxLength(64);
+        builder.Ignore(e => e.IsPending);
         builder.Property(e => e.Direction).HasConversion<string>().HasMaxLength(16).IsRequired();
         builder.Property(e => e.Origin).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(e => e.ProviderMessageId).HasMaxLength(Message.ProviderMessageIdMaxLength);
@@ -48,5 +51,8 @@ public sealed class MessageConfiguration : IEntityTypeConfiguration<Message>
         // Timeline keyset: provider time, then insertion, then ID.
         builder.HasIndex(e => new { e.ConversationId, e.OccurredAt, e.CreatedAt, e.Id });
         builder.HasIndex(e => new { e.TenantId, e.InboundEventId }).HasFilter("inbound_event_id IS NOT NULL");
+
+        // One timeline entry per outbox message (staff reply reconciliation, ADR-017).
+        builder.HasIndex(e => e.OutboundMessageId).IsUnique().HasFilter("outbound_message_id IS NOT NULL");
     }
 }

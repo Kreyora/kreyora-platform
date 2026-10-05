@@ -3,29 +3,29 @@
 ## Active position
 
 - **Milestone:** 08 — First Validated Social Channel and Unified Inbox
-- **Step:** S04 — Customer identities, conversations, and messages
+- **Step:** S05 — Staff reply, assignment, and human takeover
 - **Status:** `REVIEW` (implementation complete 2026-10-05)
-- **Plan state:** M08-S03 APPROVED 2026-10-05; its live Meta sandbox checklist is carried to M08-S07 by owner decision. ADR-015 accepted 2026-10-05.
+- **Plan state:** M08-S04 APPROVED 2026-10-05 (ADR-016). M08-S03 APPROVED 2026-10-05 (live Meta checklist carried to S07).
 - **Active milestone file:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master`. The S03, S04 and repo reorganization work are uncommitted.
-- **Current checkpoint:** `artifacts/checkpoints/M08-S04.md` (REVIEW 2026-10-05)
-- **Previous checkpoint:** `artifacts/checkpoints/M08-S03.md` (APPROVED 2026-10-05)
-- **Last approved state:** M08-S03 approved 2026-10-05.
+- **Branch:** `master`. The S03, S04, S05 and repo reorganization work are uncommitted.
+- **Current checkpoint:** `artifacts/checkpoints/M08-S05.md` (REVIEW 2026-10-05)
+- **Previous checkpoint:** `artifacts/checkpoints/M08-S04.md` (APPROVED 2026-10-05)
+- **Last approved state:** M08-S04 approved 2026-10-05.
 
 ## Current objective
 
-M08-S04 implementation complete (ADR-016). Awaiting owner review of `artifacts/checkpoints/M08-S04.md`. No M08-S05 work until S04 is approved.
+M08-S05 implementation complete (ADR-017). Awaiting owner review of `artifacts/checkpoints/M08-S05.md`. No M08-S06 work until S05 is approved.
 
 ## Next permitted action
 
-Owner review of `artifacts/checkpoints/M08-S04.md`. Manual work: none required.
+Owner review of `artifacts/checkpoints/M08-S05.md`. Manual work: none required (heads-up: Meta App Review is a long-lead item).
 
 ## Next prohibited action
 
-- Starting M08-S05 before M08-S04 approval.
+- Starting M08-S06 before M08-S05 approval.
 - Opening a tunnel, changing Meta configuration, or using live credentials without separate authorization.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
@@ -33,6 +33,10 @@ Owner review of `artifacts/checkpoints/M08-S04.md`. Manual work: none required.
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-05 | Completed M08-S05 implementation (ADR-017 accepted): staff reply through the durable outbox with implicit takeover, takeover/release/assign/labels/status with audit, enqueue- and delivery-time gate, Instagram Send API (`/me/messages`), at-most-once on ambiguous sends, echo handling, additive migration `AddConversationOwnershipAndOutboundOrigin`, OpenAPI/TS regenerated. Full backend suite 746 passed / 0 failed on re-run (first run: 1 failure in the pre-existing timing-sensitive M07 Scenario04, passed 6/6 isolated); EF clean; frontend CI green; Docker back to baseline. Status -> `REVIEW`. | Claude |
+| 2026-10-05 | Project owner approved the M08-S05 plan ("ok implement"): Q1–Q5 as recommended, ADR-017, read-only Meta documentation access. Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-05 | Graphify refreshed at the S04 approval boundary (7,686 nodes, 20,665 edges, 337 communities). Drafted the M08-S05 plan `docs/plan/M08-S05_STAFF_REPLY_TAKEOVER_PLAN.md` (plan only; no S05 code). | Claude |
+| 2026-10-05 | Project owner approved M08-S04 (`artifacts/checkpoints/M08-S04.md`). Position set to M08-S05 PLANNING (plan only). | Project owner / Claude |
 | 2026-10-05 | Completed M08-S04 implementation: channel identities, conversations, messages, reactions, labels (ADR-016 accepted); atomic ingestion from webhook processing; read-only inbox API + mark-read; owner erasure service; additive migration `AddConversationsMessagesAndChannelIdentities`; OpenAPI/TS regenerated (fixed snapshot drift since M05-S05, additive only). Full backend suite 671 passed / 0 failed; EF clean; frontend CI green; Docker back to baseline. Status -> `REVIEW`. | Claude |
 | 2026-10-05 | Project owner approved the M08-S04 plan, including ADR-016 rules D2–D3 ("implement"). Status -> `IN PROGRESS`. | Project owner / Claude |
 | 2026-10-05 | Graphify code graph refreshed at the S03 approval boundary (7,299 nodes, 19,633 edges, 314 communities). Drafted the M08-S04 plan `docs/plan/M08-S04_CONVERSATIONS_MESSAGES_PLAN.md` (plan only; no S04 code). | Claude |

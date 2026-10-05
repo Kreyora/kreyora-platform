@@ -175,6 +175,95 @@ public sealed class ConversationEndpointTests : IClassFixture<PostgresFixture>
         Assert.Equal(HttpStatusCode.BadRequest, foreignCursor.StatusCode);
     }
 
+    public static TheoryData<string, string, string?> WriteRoutes => new()
+    {
+        { "POST", "replies", "{\"text\":\"hi\"}" },
+        { "POST", "takeover", null },
+        { "POST", "release", null },
+        { "POST", "assign", "{\"userId\":\"01H00000000000000000000004\"}" },
+        { "POST", "unassign", null },
+        { "PUT", "labels", "{\"labels\":[\"vip\"]}" },
+        { "POST", "status", "{\"action\":\"Resolve\"}" }
+    };
+
+    [Theory]
+    [MemberData(nameof(WriteRoutes))]
+    public async Task S05WriteRoutes_ViewerForbidden_MissingCsrfRejected_OtherTenantNotFound(string method, string route, string? json)
+    {
+        var seeded = await SeedAsync("s05-http-" + route, messages: 1);
+        var other = await SeedAsync("s05-http-other-" + route, messages: 1);
+        await using var factory = new InboxFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        HttpRequestMessage Build(string tenantId, TenantRole role, string conversationId, string? csrf)
+        {
+            var request = Request(new HttpMethod(method), $"/v1/conversations/{conversationId}/{route}", tenantId, role);
+            request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
+            if (json is not null)
+            {
+                request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            }
+
+            if (csrf is not null)
+            {
+                request.Headers.Add("X-CSRF-Token", csrf);
+            }
+
+            return request;
+        }
+
+        var viewer = await client.SendAsync(Build(seeded.TenantId, TenantRole.Viewer, seeded.ConversationId, await CsrfAsync(client, seeded.TenantId, TenantRole.Viewer)));
+        var noCsrf = await client.SendAsync(Build(seeded.TenantId, TenantRole.Operator, seeded.ConversationId, null));
+        var crossTenant = await client.SendAsync(Build(other.TenantId, TenantRole.Owner, seeded.ConversationId, await CsrfAsync(client, other.TenantId, TenantRole.Owner)));
+
+        Assert.Equal(HttpStatusCode.Forbidden, viewer.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, noCsrf.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, crossTenant.StatusCode);
+
+        await using var db = fixture.CreateDbContext(new TenantContextAccessor());
+        var unchanged = await db.Conversations.IgnoreQueryFilters().AsNoTracking().SingleAsync(c => c.Id == seeded.ConversationId);
+        Assert.Equal(ConversationStatus.New, unchanged.Status);
+        Assert.Equal(AutomationMode.Automated, unchanged.AutomationMode);
+        Assert.Equal(0, await db.OutboundMessages.IgnoreQueryFilters().CountAsync(m => m.ConversationId == seeded.ConversationId));
+    }
+
+    [Fact]
+    public async Task OperatorReply_OverHttp_ReturnsPendingMessage_AndRequiresIdempotencyKey()
+    {
+        var seeded = await SeedAsync("s05-http-reply", messages: 1);
+        await using (var db = fixture.CreateDbContext(new TenantContextAccessor()))
+        {
+            // Open the 24-hour window relative to the real clock.
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE conversations SET last_customer_message_at = {DateTimeOffset.UtcNow.AddMinutes(-5)} WHERE id = {seeded.ConversationId}");
+        }
+
+        await using var factory = new InboxFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+        var token = await CsrfAsync(client, seeded.TenantId, TenantRole.Operator);
+
+        var withoutKey = Request(HttpMethod.Post, $"/v1/conversations/{seeded.ConversationId}/replies", seeded.TenantId, TenantRole.Operator);
+        withoutKey.Headers.Add("X-CSRF-Token", token);
+        withoutKey.Content = new StringContent("{\"text\":\"hi\"}", System.Text.Encoding.UTF8, "application/json");
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(withoutKey)).StatusCode);
+
+        var reply = Request(HttpMethod.Post, $"/v1/conversations/{seeded.ConversationId}/replies", seeded.TenantId, TenantRole.Operator);
+        reply.Headers.Add("X-CSRF-Token", token);
+        reply.Headers.Add("Idempotency-Key", "http-reply-1");
+        reply.Content = new StringContent("{\"text\":\"Yes, available in M\"}", System.Text.Encoding.UTF8, "application/json");
+        var response = await client.SendAsync(reply);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(body.RootElement.GetProperty("isPending").GetBoolean());
+        Assert.Equal("outbound", body.RootElement.GetProperty("direction").GetString());
+        Assert.Equal("staff", body.RootElement.GetProperty("origin").GetString());
+
+        var detail = await GetJsonAsync(client, $"/v1/conversations/{seeded.ConversationId}", seeded.TenantId);
+        Assert.False(detail.RootElement.GetProperty("isAutomationActive").GetBoolean());
+        Assert.Equal("humanAssigned", detail.RootElement.GetProperty("status").GetString());
+    }
+
     // ---------- helpers ----------
 
     private static string Texts(JsonDocument page) =>

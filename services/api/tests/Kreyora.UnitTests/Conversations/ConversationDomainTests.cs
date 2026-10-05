@@ -163,6 +163,107 @@ public sealed class ConversationDomainTests
         Assert.Equal(expected, CustomerChannelIdentity.MaskedLabel(ChannelType.Instagram, externalUserId));
     }
 
+    [Fact]
+    public void TakeOver_PausesAutomation_MovesActiveThreadToHumanAssigned_AndIsIdempotent()
+    {
+        var conversation = Conversation.Start("tenant_1", "conn_1", null, "identity_1", ChannelType.Instagram);
+
+        Assert.True(conversation.TakeOver());
+        Assert.False(conversation.TakeOver());
+        Assert.Equal(AutomationMode.HumanTakeover, conversation.AutomationMode);
+        Assert.Equal(ConversationStatus.HumanAssigned, conversation.Status);
+        Assert.False(conversation.IsAutomationActive);
+
+        Assert.True(conversation.Release());
+        Assert.False(conversation.Release());
+        Assert.Equal(AutomationMode.Automated, conversation.AutomationMode);
+        Assert.Equal(ConversationStatus.BotActive, conversation.Status);
+    }
+
+    [Theory]
+    [InlineData(ConversationStatus.Resolved)]
+    [InlineData(ConversationStatus.Closed)]
+    [InlineData(ConversationStatus.Spam)]
+    public void TakeOverAndRelease_KeepDispositions(ConversationStatus disposition)
+    {
+        var conversation = WithStatus(disposition);
+
+        conversation.TakeOver();
+        Assert.Equal(disposition, conversation.Status);
+        conversation.Release();
+        Assert.Equal(disposition, conversation.Status);
+    }
+
+    [Theory]
+    [InlineData(ConversationStatus.New, ConversationStatusAction.Resolve, ConversationStatus.Resolved)]
+    [InlineData(ConversationStatus.HumanAssigned, ConversationStatusAction.Close, ConversationStatus.Closed)]
+    [InlineData(ConversationStatus.Resolved, ConversationStatusAction.Reopen, ConversationStatus.New)]
+    [InlineData(ConversationStatus.Closed, ConversationStatusAction.Reopen, ConversationStatus.New)]
+    [InlineData(ConversationStatus.BotActive, ConversationStatusAction.MarkSpam, ConversationStatus.Spam)]
+    [InlineData(ConversationStatus.Spam, ConversationStatusAction.UnmarkSpam, ConversationStatus.New)]
+    public void StatusActions_FollowAdr017(ConversationStatus from, ConversationStatusAction action, ConversationStatus to)
+    {
+        var conversation = WithStatus(from);
+
+        Assert.True(conversation.ApplyStatusAction(action));
+        Assert.Equal(to, conversation.Status);
+    }
+
+    [Theory]
+    [InlineData(ConversationStatus.New, ConversationStatusAction.Reopen)]
+    [InlineData(ConversationStatus.Spam, ConversationStatusAction.Resolve)]
+    [InlineData(ConversationStatus.Spam, ConversationStatusAction.Close)]
+    [InlineData(ConversationStatus.New, ConversationStatusAction.UnmarkSpam)]
+    public void StatusActions_RejectInvalidTransitions(ConversationStatus from, ConversationStatusAction action)
+    {
+        var conversation = WithStatus(from);
+
+        Assert.Throws<InvalidOperationException>(() => conversation.ApplyStatusAction(action));
+        Assert.Equal(from, conversation.Status);
+    }
+
+    [Fact]
+    public void StatusAction_SameTarget_IsNoOp()
+    {
+        var conversation = WithStatus(ConversationStatus.Resolved);
+
+        Assert.False(conversation.ApplyStatusAction(ConversationStatusAction.Resolve));
+    }
+
+    [Fact]
+    public void PendingStaffReply_AcceptsOnce_ThenFailureCannotOverrideSuccess()
+    {
+        var reply = Message.CreatePendingStaffReply("tenant_1", "conv_1", "conn_1", "out_1", "user_1", "On it!", T0);
+
+        Assert.True(reply.IsPending);
+        Assert.Null(reply.ProviderMessageId);
+        reply.RecordProviderAcceptance("mid_sent", T0.AddSeconds(2));
+        Assert.False(reply.IsPending);
+        Assert.Equal(MessageDeliveryStatus.Sent, reply.DeliveryStatus);
+        Assert.False(reply.MarkDeliveryFailed());
+        Assert.Equal("user_1", reply.ActorUserId);
+        Assert.Equal(MessageOrigin.Staff, reply.Origin);
+    }
+
+    [Fact]
+    public void PendingStaffReply_PermanentFailure_IsVisible()
+    {
+        var reply = Message.CreatePendingStaffReply("tenant_1", "conv_1", "conn_1", "out_1", "user_1", "On it!", T0);
+
+        Assert.True(reply.MarkDeliveryFailed());
+        Assert.Equal(MessageDeliveryStatus.Failed, reply.DeliveryStatus);
+    }
+
+    [Fact]
+    public void ProviderNativeEcho_IsOutboundAndSent()
+    {
+        var echo = Message.CreateProviderNativeEcho("tenant_1", "conv_1", "conn_1", null, "mid_echo", "typed in app", null, null, T0, T0);
+
+        Assert.Equal(MessageDirection.Outbound, echo.Direction);
+        Assert.Equal(MessageOrigin.ProviderNative, echo.Origin);
+        Assert.Equal(MessageDeliveryStatus.Sent, echo.DeliveryStatus);
+    }
+
     private static Conversation WithStatus(ConversationStatus status)
     {
         var conversation = Conversation.Start("tenant_1", "conn_1", null, "identity_1", ChannelType.Instagram);
