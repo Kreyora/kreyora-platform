@@ -111,9 +111,10 @@ builder.Services.AddRateLimiter(options =>
         await context.HttpContext.Response.WriteAsJsonAsync(
             ProblemDetailsFactory.Create(StatusCodes.Status429TooManyRequests, "Too Many Requests", "Please retry later."), cancellationToken);
     };
-    options.AddFixedWindowLimiter("auth-registration", limiter => { limiter.PermitLimit = 3; limiter.Window = TimeSpan.FromHours(1); });
-    options.AddFixedWindowLimiter("auth-sign-in", limiter => { limiter.PermitLimit = 5; limiter.Window = TimeSpan.FromMinutes(15); });
-    options.AddFixedWindowLimiter("auth-password-reset", limiter => { limiter.PermitLimit = 3; limiter.Window = TimeSpan.FromHours(1); });
+    // Per client address: a single shared window would let one client exhaust the budget for every user.
+    options.AddPolicy("auth-registration", httpContext => ClientPartition(httpContext, "registration", 3, TimeSpan.FromHours(1)));
+    options.AddPolicy("auth-sign-in", httpContext => ClientPartition(httpContext, "sign-in", 5, TimeSpan.FromMinutes(15)));
+    options.AddPolicy("auth-password-reset", httpContext => ClientPartition(httpContext, "password-reset", 3, TimeSpan.FromHours(1)));
     options.AddPolicy("public-reads", httpContext =>
     {
         var publicOptions = httpContext.RequestServices.GetRequiredService<IOptions<PublicStorefrontOptions>>().Value;
@@ -249,6 +250,18 @@ static RateLimitPartition<string> PublicPartition(HttpContext httpContext, Publi
     var slug = publicContext?.PlatformSlug ?? "unresolved";
     var address = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     return RateLimitPartition.GetFixedWindowLimiter($"{family}:{slug}:{address}", _ => new FixedWindowRateLimiterOptions
+    {
+        PermitLimit = permitLimit,
+        Window = window,
+        QueueLimit = 0,
+        AutoReplenishment = true
+    });
+}
+
+static RateLimitPartition<string> ClientPartition(HttpContext httpContext, string family, int permitLimit, TimeSpan window)
+{
+    var address = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    return RateLimitPartition.GetFixedWindowLimiter($"{family}:{address}", _ => new FixedWindowRateLimiterOptions
     {
         PermitLimit = permitLimit,
         Window = window,

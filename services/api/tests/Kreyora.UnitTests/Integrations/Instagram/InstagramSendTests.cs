@@ -60,11 +60,27 @@ public sealed class InstagramSendTests
     }
 
     [Theory]
+    [InlineData("{\"error\":{\"code\":10,\"error_subcode\":2018278}}", "window has expired (Meta 10/2018278)")]
+    [InlineData("{\"error\":{\"code\":551,\"error_subcode\":1545041}}", "not available to receive messages")]
+    [InlineData("{\"error\":{\"code\":10}}", "lacks permission")]
+    public async Task SendText_ExplainsRejections_PerMetaErrorReference(string payload, string expectedMessagePart)
+    {
+        var client = Client((_, _) => Task.FromResult(Json(payload, HttpStatusCode.BadRequest)));
+
+        var result = await client.SendTextAsync("page-token", "recipient", "hello", null);
+
+        Assert.Equal(InstagramSendOutcome.Rejected, result.Outcome);
+        Assert.Contains(expectedMessagePart, result.Message);
+    }
+
+    [Theory]
     [InlineData("{\"error\":{\"code\":190}}", HttpStatusCode.BadRequest, InstagramSendOutcome.TokenExpired, "190")]
     [InlineData("{\"error\":{\"code\":613}}", HttpStatusCode.BadRequest, InstagramSendOutcome.Transient, "613")]
+    [InlineData("{\"error\":{\"code\":80002}}", HttpStatusCode.BadRequest, InstagramSendOutcome.Transient, "80002")]
     [InlineData("{\"error\":{\"code\":2,\"is_transient\":true}}", HttpStatusCode.InternalServerError, InstagramSendOutcome.Transient, "2")]
     [InlineData("{}", HttpStatusCode.TooManyRequests, InstagramSendOutcome.Transient, "429")]
-    [InlineData("{\"error\":{\"code\":10,\"error_subcode\":2018278}}", HttpStatusCode.BadRequest, InstagramSendOutcome.Rejected, "10/2018278")]
+    [InlineData("{\"error\":{\"code\":10,\"error_subcode\":2018278}}", HttpStatusCode.BadRequest, InstagramSendOutcome.Rejected, "window_closed")]
+    [InlineData("{\"error\":{\"code\":2534022}}", HttpStatusCode.BadRequest, InstagramSendOutcome.Rejected, "window_closed")]
     [InlineData("{\"error\":{\"code\":551}}", HttpStatusCode.BadRequest, InstagramSendOutcome.Rejected, "551")]
     [InlineData("{\"error\":{\"code\":10,\"error_subcode\":1545041}}", HttpStatusCode.BadRequest, InstagramSendOutcome.Rejected, "10/1545041")]
     [InlineData("not json", HttpStatusCode.BadGateway, InstagramSendOutcome.Unconfirmed, "502")]

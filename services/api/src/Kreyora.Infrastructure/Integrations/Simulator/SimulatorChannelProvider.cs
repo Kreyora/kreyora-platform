@@ -3,12 +3,21 @@ using System.Text;
 using System.Text.Json;
 using Kreyora.Application.Integrations;
 using Kreyora.Domain.Integrations;
+using Microsoft.Extensions.Hosting;
 
 namespace Kreyora.Infrastructure.Integrations.Simulator;
 
-public sealed class SimulatorChannelProvider : IChannelProvider
+/// <param name="acceptsFixedTestSignature">
+/// Whether <see cref="DefaultValidSignature"/> is accepted in place of a real HMAC. Only Development and Testing
+/// enable it (see <c>DependencyInjection</c>); everywhere else a Simulator webhook needs the connection secret.
+/// </param>
+public sealed class SimulatorChannelProvider(bool acceptsFixedTestSignature = false) : IChannelProvider
 {
     public const string DefaultValidSignature = "sha256=valid_test_signature";
+
+    /// <summary>The fixed test signature is a convenience for local development and automated tests only.</summary>
+    public static bool AcceptsFixedTestSignatureIn(IHostEnvironment environment) =>
+        environment.IsDevelopment() || environment.IsEnvironment("Testing");
     public const string DefaultVerifyToken = "simulator_verify_token";
     public const int DefaultReplayWindowSeconds = 300;
 
@@ -101,7 +110,7 @@ public sealed class SimulatorChannelProvider : IChannelProvider
         }
 
         var isSignatureValid = false;
-        if (signature == DefaultValidSignature)
+        if (acceptsFixedTestSignature && signature == DefaultValidSignature)
         {
             isSignatureValid = true;
         }

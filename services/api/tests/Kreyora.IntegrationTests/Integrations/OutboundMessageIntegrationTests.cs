@@ -479,7 +479,7 @@ public sealed class OutboundMessageIntegrationTests : IClassFixture<PostgresFixt
     {
         var authorizer = new TenantPermissionAuthorizer(accessor);
         var audit = new AuditEventService(db, accessor, new Correlation("test-corr"), authorizer);
-        var registry = new ChannelProviderRegistry([new SimulatorChannelProvider()]);
+        var registry = new ChannelProviderRegistry([new SimulatorChannelProvider(acceptsFixedTestSignature: true)]);
         var gate = new AlwaysAllowConversationGate();
         var time = new SystemTimeProvider();
         var logger = new NullLogger<OutboundMessageService>();

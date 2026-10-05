@@ -3,29 +3,28 @@
 ## Active position
 
 - **Milestone:** 08 — First Validated Social Channel and Unified Inbox
-- **Step:** S06 — Unified inbox frontend integration
-- **Status:** `REVIEW` (implemented 2026-10-05; was `IN PROGRESS`)
-- **Plan state:** M08-S05 APPROVED 2026-10-05 (ADR-017), merged to `master` at `50faeac`. M08-S03 live Meta checklist carried to S07.
+- **Step:** M08 Exit Gate — milestone completion review
+- **Status:** `REVIEW` (exit gate review written 2026-10-06; all seven M08 steps `APPROVED`)
+- **Plan state:** M08-S06 APPROVED 2026-10-05, merged to `master` at `fa91a38`. M08-S03 live Meta checklist carried to S07.
 - **Active milestone file:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master` at `50faeac` + uncommitted S06 changes (not committed; commit/push needs owner authorization).
-- **Current checkpoint:** `artifacts/checkpoints/M08-S06.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M08-S05.md` (APPROVED 2026-10-05)
-- **Last approved state:** M08-S05 approved 2026-10-05.
+- **Branch:** `master` at `fa91a38` + uncommitted S07 changes (commit/push needs owner authorization).
+- **Current checkpoint:** `artifacts/checkpoints/M08-EXIT.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M08-S07.md` (APPROVED 2026-10-06)
+- **Last approved state:** M08-S07 approved 2026-10-06 (with documented gaps).
 
 ## Current objective
 
-Owner review of M08-S06 (`artifacts/checkpoints/M08-S06.md`), including two pre-existing findings that need a decision: the Simulator fixed-signature bypass and the unpartitioned global sign-in limiter.
+Owner review of the M08 exit gate (`artifacts/checkpoints/M08-EXIT.md`): decide on limitations L-A (automation suppression live in M09) and L-B (token expiry/replay tests only, or run S07 S11–S13 first). Owner follow-ups still open: reset the App Secret; remove/regrant app access; keep or destroy the sandbox database.
 
 ## Next permitted action
 
-Owner reviews M08-S06 (screenshots in `artifacts/screenshots/M08-S06/`) and approves or requests changes. After approval: M08-S07 planning only.
+Owner approves or requests changes for the M08 exit gate. After approval: M09-S01 planning only.
 
 ## Next prohibited action
 
-- Starting M08-S07 before M08-S06 approval.
 - Opening a tunnel, changing Meta configuration, or using live credentials without separate authorization.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
@@ -33,6 +32,14 @@ Owner reviews M08-S06 (screenshots in `artifacts/screenshots/M08-S06/`) and appr
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-06 | Project owner approved M08-S07 ("approve") with documented gaps. Claude wrote the M08 exit gate review `artifacts/checkpoints/M08-EXIT.md`: criteria 1–3 and 6 satisfied with live evidence; 4 satisfied with limitation L-A (automation suppression tested, live in M09); 5 satisfied by automated evidence with limitation L-B (S07 S11–S13 not live). Status -> exit gate `REVIEW`. | Project owner / Claude |
+| 2026-10-06 | M08-S07 live session (2026-10-05 22:58 – 2026-10-06 00:42 NPT) with the owner: passed S1–S5, S7, S8, S10, S16 (real DM signature-verified and processed once; duplicate delivery deduplicated; staff reply sent through the outbox; assign/label/takeover audited; `mid` length 164). S9 not observed; S6 and S11–S13 skipped by the owner; S14 not done. Findings L1–L4 (`pages_read_engagement` needed by connect; webhook must go in the main Webhooks product; `messaging_seen` not a Page field; long-lived Page token never expires). Owner shared secrets in chat and authorized their use; Claude created the app's `instagram` webhook subscription with the owner's approval. Production connection classified `BLOCKED`. Tunnel closed; sandbox database kept (stopped). Checkpoint `M08-S07.md`. Status -> `REVIEW`. | Claude |
+| 2026-10-05 | M08-S07 Tasks 1–6 complete: Simulator fixed signature limited to Development/Testing; all three auth rate limiters partitioned per client address; `BackgroundJobs:ServerEnabled`; sandbox tools in `scripts/sandbox/` (allowlist proxy + duplicate mode, owner-run connect/reauthorize with hidden input, runner, control, evidence; 13 proxy tests); Meta docs verified → `docs/architecture/INSTAGRAM_PRODUCTION_READINESS.md`; fixed Graph 80002 classification and Meta window-error mapping (ADR-017 correction note appended). Backend 773 passed / 0 failed; EF clean; `pnpm ci:frontend` green (one transient Google Fonts fetch failure, passed on rerun); fixture E2E 2 passed; real-backend E2E 7 passed; Docker at baseline. Next: owner sets `Development:Seed:DemoPassword`, then the live session (Task 7). Status stays `IN PROGRESS`. | Claude |
+| 2026-10-05 | Project owner approved the M08-S07 plan ("ok implement"): Q1–Q6 as recommended (S06 findings fixed in S07; `BackgroundJobs:ServerEnabled`; owner-run connect script; cloudflared quick tunnel via allowlist proxy; read-only Meta docs; real revoke). Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-05 | Owner authorized installing the tunnel tool ("install cloudflared ok"): `cloudflared` 2026.9.3 installed via Homebrew. Not started; no background service enabled; no tunnel opened. Remaining: S07 plan approval. | Project owner / Claude |
+| 2026-10-05 | Owner reported S07 preparation Parts 1–6 done (public privacy/data-deletion pages, app settings + Live mode, Instagram message access, customer test account, long-lived Page token held privately by the owner, local user secrets `InstagramWebhook:AppSecret`, `InstagramWebhook:VerifyToken`, `SecretEncryption:MasterKey`; names verified by Claude, values not seen). Remaining: tunnel tool authorization; S07 plan approval. No step status changed. | Project owner / Claude |
+| 2026-10-05 | Graphify refreshed at the S06 approval boundary (8,296 nodes, 22,503 edges, 375 communities). Drafted the M08-S07 plan `docs/plan/M08-S07_SANDBOX_READINESS_PLAN.md` (plan only; no S07 code). Found: no tunnel tool installed, no user secrets configured, no connect UI, and no safe way to produce a failed inbound event for replay (proposed fixes A3–A6). | Claude |
+| 2026-10-05 | Project owner approved M08-S06 (merged to `master` at `fa91a38`, PR #115). Position set to M08-S07 PLANNING (plan only). | Project owner / Claude |
 | 2026-10-05 | Completed M08-S06 implementation: Hangfire scheduling of webhook processing and outbound delivery (recurring sweepers + immediate enqueue after commit; closes the M07 gap), assignee directory route, `MessageItem.deliveryFailureCode`, Development-only E2E seed; real inbox clients with demo-mode parity, polling (5 s / 15 s, hidden-tab pause, backoff), list + conversation view rewritten (optimistic replies, denial vs ambiguous failure handling, side panel). OpenAPI regenerated (additive); no migration. Full backend suite 751 passed / 0 failed; EF clean; `pnpm ci:frontend` green (473 tests); fixture E2E 2 passed; real-backend E2E 7 passed (Owner/Admin/Operator/Viewer, live inbound, UI equals API, denial, 360 px); Docker back to baseline. Reported pre-existing findings: Simulator fixed-signature bypass in all environments; global 5-per-15-min sign-in limiter. Status -> `REVIEW`. | Claude |
 | 2026-10-05 | Project owner approved the M08-S06 plan ("ok implement"): Q1–Q4 as recommended. Status -> `IN PROGRESS`. | Project owner / Claude |
 | 2026-10-05 | Graphify refreshed at the S05 approval boundary (8,049 nodes, 21,856 edges, 358 communities). Drafted the M08-S06 plan `docs/plan/M08-S06_INBOX_FRONTEND_PLAN.md` (plan only). Found a pre-existing M07 gap: `WebhookProcessingJob` and `OutboundDeliveryJob` are registered in DI but never scheduled with Hangfire (proposed fix in S06 Q1). | Claude |

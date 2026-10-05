@@ -696,7 +696,7 @@ public sealed class Milestone07ReliabilityAndFailureTests : IClassFixture<Postgr
 
     private static TestEnvironment CreateEnvironment(AppDbContext db, TenantContextAccessor accessor)
     {
-        var registry = new ChannelProviderRegistry([new SimulatorChannelProvider()]);
+        var registry = new ChannelProviderRegistry([new SimulatorChannelProvider(acceptsFixedTestSignature: true)]);
         var authorizer = new TenantPermissionAuthorizer(accessor);
         var audit = new AuditEventService(db, accessor, new Correlation("rel-test"), authorizer);
         var encryption = new FakeSecretEncryptionService();

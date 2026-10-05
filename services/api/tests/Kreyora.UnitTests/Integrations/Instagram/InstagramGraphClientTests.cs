@@ -48,6 +48,7 @@ public sealed class InstagramGraphClientTests
     [InlineData(190, InstagramValidationKind.TokenExpired)]
     [InlineData(10, InstagramValidationKind.PermissionDenied)]
     [InlineData(613, InstagramValidationKind.Throttled)]
+    [InlineData(80002, InstagramValidationKind.Throttled)]
     [InlineData(800, InstagramValidationKind.ProviderError)]
     public async Task ValidateAccount_WithGraphErrors_MapsKinds(int code, InstagramValidationKind expected)
     {
