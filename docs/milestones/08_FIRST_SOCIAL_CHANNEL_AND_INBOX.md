@@ -25,8 +25,8 @@ Human takeover is a transactional conversation-state change checked by outbound 
 | 01 | Provider readiness evidence and adapter contract plan | `APPROVED` |
 | 02 | Connection/OAuth or credential lifecycle | `APPROVED` |
 | 03 | Real webhook validation and inbound normalization | `APPROVED` |
-| 04 | Customer identities, conversations, and messages | `REVIEW` |
-| 05 | Staff reply, assignment, and human takeover | `NOT STARTED` |
+| 04 | Customer identities, conversations, and messages | `APPROVED` |
+| 05 | Staff reply, assignment, and human takeover | `REVIEW` |
 | 06 | Unified inbox frontend integration | `NOT STARTED` |
 | 07 | Sandbox/production-readiness verification | `NOT STARTED` |
 

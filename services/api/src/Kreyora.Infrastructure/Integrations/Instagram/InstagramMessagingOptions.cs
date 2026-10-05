@@ -1,0 +1,19 @@
+namespace Kreyora.Infrastructure.Integrations.Instagram;
+
+/// <summary>Instagram messaging policy (ADR-017). Non-secret; safe defaults until Meta approvals exist.</summary>
+public sealed class InstagramMessagingOptions
+{
+    public const string SectionName = "InstagramMessaging";
+
+    /// <summary>
+    /// Whether Meta App Review has approved the HUMAN_AGENT tag (7-day manual-response window). Until true,
+    /// replies 24h–7d after the customer's last message are refused with a clear reason.
+    /// </summary>
+    public bool HumanAgentTagApproved { get; set; }
+
+    /// <summary>
+    /// Conservative text limit. Meta's Send API documentation (accessed 2026-10-05) states no explicit
+    /// maximum; tighten or relax once sandbox behaviour is observed (M08-S07).
+    /// </summary>
+    public int MaxTextLength { get; set; } = 1000;
+}

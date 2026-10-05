@@ -70,7 +70,14 @@ public sealed record TextMessageReceivedPayload(
     string SenderChannelId,
     string? SenderName,
     string Text,
-    DateTimeOffset Timestamp) : NormalizedInboundPayload;
+    DateTimeOffset Timestamp) : NormalizedInboundPayload
+{
+    /// <summary>Optional v1 field (ADR-011 §3): a business-sent message reported back by the provider.</summary>
+    public bool IsEcho { get; init; }
+
+    /// <summary>Optional v1 field: the customer an echo was sent to.</summary>
+    public string? RecipientChannelId { get; init; }
+}
 
 public sealed record MediaMessageReceivedPayload(
     string MessageId,
@@ -80,7 +87,14 @@ public sealed record MediaMessageReceivedPayload(
     string ContentType,
     long? ByteSize,
     string? Caption,
-    DateTimeOffset Timestamp) : NormalizedInboundPayload;
+    DateTimeOffset Timestamp) : NormalizedInboundPayload
+{
+    /// <summary>Optional v1 field (ADR-011 §3): a business-sent message reported back by the provider.</summary>
+    public bool IsEcho { get; init; }
+
+    /// <summary>Optional v1 field: the customer an echo was sent to.</summary>
+    public string? RecipientChannelId { get; init; }
+}
 
 public sealed record MessageStatusUpdatedPayload(
     string MessageId,

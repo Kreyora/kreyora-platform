@@ -42,6 +42,15 @@ public sealed partial class ConversationIngestionService(
 
         switch (payload)
         {
+            case TextMessageReceivedPayload { IsEcho: true } echoText:
+                await IngestEchoAsync(inboundEvent, connection, echoText.RecipientChannelId, echoText.MessageId, echoText.Text, null, null, echoText.Timestamp, cancellationToken);
+                break;
+
+            case MediaMessageReceivedPayload { IsEcho: true } echoMedia:
+                await IngestEchoAsync(inboundEvent, connection, echoMedia.RecipientChannelId, echoMedia.MessageId, echoMedia.Caption,
+                    echoMedia.MediaUrl, echoMedia.ContentType, echoMedia.Timestamp, cancellationToken);
+                break;
+
             case TextMessageReceivedPayload text:
                 await IngestMessageAsync(inboundEvent, connection, text.SenderChannelId, text.SenderName, text.MessageId, text.Timestamp,
                     (conversationId, receivedAt) => Message.CreateInboundText(
@@ -110,6 +119,54 @@ public sealed partial class ConversationIngestionService(
 
         conversation.RecordInboundMessage(occurredAt);
         dbContext.Messages.Add(createMessage(conversation.Id, DateTimeOffset.UtcNow));
+    }
+
+    /// <summary>
+    /// A business message reported back by the provider (ADR-017). Kreyora's own sends already have a timeline
+    /// row with this provider ID and are skipped; messages typed in the provider's app become ProviderNative
+    /// rows. Echoes never count as customer activity or unread, and never take over automation (Q5).
+    /// </summary>
+    private async Task IngestEchoAsync(
+        InboundEvent inboundEvent,
+        ChannelConnection connection,
+        string? customerChannelId,
+        string providerMessageId,
+        string? text,
+        string? mediaUrl,
+        string? mediaContentType,
+        DateTimeOffset occurredAt,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(customerChannelId))
+        {
+            return;
+        }
+
+        if (await MessageExistsAsync(connection.Id, providerMessageId, cancellationToken))
+        {
+            LogMessageExists(logger, connection.Id, inboundEvent.Id);
+            return;
+        }
+
+        var identity = await FindIdentityAsync(connection, customerChannelId, cancellationToken);
+        if (identity == null)
+        {
+            // Seller-initiated thread from the provider app.
+            identity = CustomerChannelIdentity.Create(connection.TenantId, connection.Id, connection.Channel, customerChannelId, occurredAt);
+            dbContext.CustomerChannelIdentities.Add(identity);
+        }
+
+        var conversation = await FindConversationAsync(connection, identity.Id, cancellationToken);
+        if (conversation == null)
+        {
+            conversation = Conversation.Start(connection.TenantId, connection.Id, connection.StoreId, identity.Id, connection.Channel);
+            dbContext.Conversations.Add(conversation);
+        }
+
+        conversation.RecordOutboundMessage(occurredAt);
+        dbContext.Messages.Add(Message.CreateProviderNativeEcho(
+            connection.TenantId, conversation.Id, connection.Id, inboundEvent.Id, providerMessageId,
+            text, mediaUrl, mediaContentType, occurredAt, DateTimeOffset.UtcNow));
     }
 
     private async Task ApplyStatusAsync(

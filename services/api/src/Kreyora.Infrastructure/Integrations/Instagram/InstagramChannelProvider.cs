@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Kreyora.Application.Integrations;
+using Kreyora.Application.Integrations.Instagram;
 using Kreyora.Domain.Integrations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,10 +11,10 @@ using Microsoft.Extensions.Options;
 namespace Kreyora.Infrastructure.Integrations.Instagram;
 
 /// <summary>
-/// Instagram Messaging channel adapter, Step 03 scope: app-level webhook verification challenge,
-/// HMAC-SHA256 request validation, per-account delivery splitting, and inbound normalization to v1
-/// envelopes with event-level deduplication keys (ADR-015).
-/// Outbound delivery and connection health stay out of scope (S05 future work / S02 graph client).
+/// Instagram Messaging channel adapter: app-level webhook verification challenge, HMAC-SHA256 request
+/// validation, per-account delivery splitting, inbound normalization to v1 envelopes with event-level
+/// deduplication keys (ADR-015), echo normalization and text sends through the Send API (M08-S05, ADR-017).
+/// Connection health stays with the S02 graph client.
 /// Evidence: docs/architecture/PROVIDER_READINESS_EVALUATION.md; Meta Webhooks docs (accessed 2026-10-05).
 /// </summary>
 public sealed partial class InstagramChannelProvider : IChannelProvider
@@ -34,13 +35,19 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
 
     private readonly InstagramWebhookOptions webhookOptions;
     private readonly ILogger<InstagramChannelProvider> logger;
+    private readonly IInstagramGraphClient? graphClient;
+    private readonly ISecretEncryptionService? encryption;
 
     public InstagramChannelProvider(
         IOptions<InstagramWebhookOptions> webhookOptions,
-        ILogger<InstagramChannelProvider>? logger = null)
+        ILogger<InstagramChannelProvider>? logger = null,
+        IInstagramGraphClient? graphClient = null,
+        ISecretEncryptionService? encryption = null)
     {
         this.webhookOptions = webhookOptions.Value;
         this.logger = logger ?? NullLogger<InstagramChannelProvider>.Instance;
+        this.graphClient = graphClient;
+        this.encryption = encryption;
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Instagram webhook item skipped for connection {ConnectionId}: {Reason}")]
@@ -188,11 +195,44 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
             .ToList();
     }
 
-    public Task<OutboundDeliveryResult> SendMessageAsync(
+    /// <summary>
+    /// Text-only send via the Send API. The Page token is decrypted here and only here (ADR-013); it travels
+    /// as a Bearer header and is never logged. Outcomes map to ADR-017 retry semantics.
+    /// </summary>
+    public async Task<OutboundDeliveryResult> SendMessageAsync(
         ChannelConnectionSnapshot connection,
         OutboundMessageRequest message,
-        CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException("Instagram outbound delivery is not implemented in M08-S03.");
+        CancellationToken cancellationToken = default)
+    {
+        if (graphClient is null || encryption is null)
+        {
+            return OutboundDeliveryResult.Failure("provider_unconfigured", "Instagram sending is not configured in this host.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(message.MediaUrl) || string.IsNullOrWhiteSpace(message.Text))
+        {
+            return OutboundDeliveryResult.Failure(ConversationDenialReasons.CapabilityUnsupported,
+                "Instagram sends support text messages only in this release.");
+        }
+
+        if (connection.EncryptedCredentials is null)
+        {
+            return OutboundDeliveryResult.Failure("credentials_missing", "The connection has no Page access token. Reauthorize it.");
+        }
+
+        var token = encryption.Decrypt(connection.EncryptedCredentials);
+        var tag = message.Metadata?.GetValueOrDefault(ConversationGateResult.MessagingTagMetadataKey);
+        var result = await graphClient.SendTextAsync(token, message.RecipientChannelId, message.Text, tag, cancellationToken);
+
+        return result.Outcome switch
+        {
+            InstagramSendOutcome.Sent => OutboundDeliveryResult.Success(result.MessageId!, DateTimeOffset.UtcNow),
+            InstagramSendOutcome.Transient => OutboundDeliveryResult.TransientFailure(result.ProviderErrorCode ?? "transient", result.Message ?? "Transient provider failure."),
+            InstagramSendOutcome.TokenExpired => OutboundDeliveryResult.Failure("190", result.Message ?? "The Page access token is expired."),
+            InstagramSendOutcome.Unconfirmed => OutboundDeliveryResult.Failure(ConversationDenialReasons.DeliveryUnconfirmed, result.Message ?? "Delivery could not be confirmed."),
+            _ => OutboundDeliveryResult.Failure(result.ProviderErrorCode ?? "rejected", result.Message ?? "The provider rejected the message.")
+        };
+    }
 
     public Task<ConnectionHealthResult> ValidateOrRefreshConnectionAsync(
         ChannelConnectionSnapshot connection,
@@ -298,7 +338,22 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
 
         if (item.TryGetProperty("message", out var messageElement))
         {
-            NormalizeMessage(rawPayload, senderId, messageElement, occurredAt, envelopes);
+            string? echoRecipient = null;
+            if (IsTrue(messageElement, "is_echo"))
+            {
+                // Echo = a business-sent message; the customer is the recipient (ADR-017, M08-S05).
+                echoRecipient = item.TryGetProperty("recipient", out var recipient)
+                    && recipient.TryGetProperty("id", out var recipientIdProp)
+                    ? recipientIdProp.GetString()
+                    : null;
+                if (string.IsNullOrWhiteSpace(echoRecipient))
+                {
+                    LogItemSkipped(logger, rawPayload.ConnectionId, "echo without recipient");
+                    return;
+                }
+            }
+
+            NormalizeMessage(rawPayload, senderId, messageElement, occurredAt, envelopes, echoRecipient);
             return;
         }
 
@@ -323,7 +378,8 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
         string senderId,
         JsonElement message,
         DateTimeOffset occurredAt,
-        List<NormalizedInboundEnvelope> envelopes)
+        List<NormalizedInboundEnvelope> envelopes,
+        string? echoRecipient = null)
     {
         var mid = message.TryGetProperty("mid", out var midProp) ? midProp.GetString() : null;
         if (string.IsNullOrWhiteSpace(mid))
@@ -332,11 +388,13 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
             return;
         }
 
-        if (IsTrue(message, "is_echo") || IsTrue(message, "is_deleted") || IsTrue(message, "is_unsupported"))
+        if (IsTrue(message, "is_deleted") || IsTrue(message, "is_unsupported"))
         {
-            LogItemSkipped(logger, rawPayload.ConnectionId, "echo, deleted, or unsupported message");
+            LogItemSkipped(logger, rawPayload.ConnectionId, "deleted or unsupported message");
             return;
         }
+
+        var isEcho = echoRecipient is not null;
 
         var contents = new List<NormalizedInboundPayload>();
 
@@ -350,7 +408,11 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
 
         if (!string.IsNullOrWhiteSpace(text))
         {
-            contents.Add(new TextMessageReceivedPayload(mid, senderId, null, text, occurredAt));
+            contents.Add(new TextMessageReceivedPayload(mid, senderId, null, text, occurredAt)
+            {
+                IsEcho = isEcho,
+                RecipientChannelId = echoRecipient
+            });
         }
 
         if (message.TryGetProperty("attachments", out var attachments)
@@ -378,7 +440,11 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
                     type,
                     null,
                     null,
-                    occurredAt));
+                    occurredAt)
+                {
+                    IsEcho = isEcho,
+                    RecipientChannelId = echoRecipient
+                });
             }
         }
 
@@ -391,7 +457,7 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
         {
             var messageId = contents.Count == 1 ? mid : $"{mid}#p{i}";
             envelopes.Add(NormalizedInboundEnvelope.Create(
-                eventId: $"ig_{messageId}",
+                eventId: isEcho ? $"ig_echo_{messageId}" : $"ig_{messageId}",
                 tenantId: rawPayload.TenantId,
                 connectionId: rawPayload.ConnectionId,
                 channel: ChannelType.Instagram,

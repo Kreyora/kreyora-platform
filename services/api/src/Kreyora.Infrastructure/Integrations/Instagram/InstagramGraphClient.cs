@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Kreyora.Application.Integrations.Instagram;
 using Microsoft.Extensions.Options;
@@ -6,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace Kreyora.Infrastructure.Integrations.Instagram;
 
 /// <summary>
-/// Live Instagram Graph API client used only for connection lifecycle validation (M08-S02).
+/// Live Instagram Graph API client: connection lifecycle validation (M08-S02) and text sends (M08-S05).
 /// Sends the caller's Page access token as a Bearer header (never in URLs) and never logs it.
 /// </summary>
 public sealed class InstagramGraphClient : IInstagramGraphClient
@@ -147,6 +148,149 @@ public sealed class InstagramGraphClient : IInstagramGraphClient
             return InstagramValidationResult.Failed(
                 InstagramValidationKind.ProviderError, "invalid_response",
                 "The provider returned an unreadable response.");
+        }
+    }
+
+    public async Task<InstagramSendResult> SendTextAsync(
+        string pageAccessToken,
+        string recipientId,
+        string text,
+        string? messagingTag = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(pageAccessToken))
+        {
+            return InstagramSendResult.Failed(InstagramSendOutcome.TokenExpired, null, "A Page access token is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(recipientId) || string.IsNullOrWhiteSpace(text))
+        {
+            return InstagramSendResult.Failed(InstagramSendOutcome.Rejected, "invalid_request", "A recipient and message text are required.");
+        }
+
+        // Meta Send API (Messenger Platform, Instagram): POST /me/messages with the Page token resolves to the Page.
+        object payload = string.IsNullOrWhiteSpace(messagingTag)
+            ? new { recipient = new { id = recipientId }, messaging_type = "RESPONSE", message = new { text } }
+            : new { recipient = new { id = recipientId }, messaging_type = "MESSAGE_TAG", tag = messagingTag, message = new { text } };
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"{options.BaseAddress.TrimEnd('/')}/{options.ApiVersion.Trim('/')}/me/messages")
+        {
+            Content = JsonContent.Create(payload)
+        };
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", pageAccessToken);
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(request, cancellationToken);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // The request may already have been processed; retrying could double-message the customer.
+            return InstagramSendResult.Failed(InstagramSendOutcome.Unconfirmed, "timeout",
+                "The provider did not answer in time; the message may or may not have been delivered.");
+        }
+        catch (HttpRequestException ex) when (ex.HttpRequestError is HttpRequestError.ConnectionError
+                                                  or HttpRequestError.NameResolutionError
+                                                  or HttpRequestError.SecureConnectionError)
+        {
+            return InstagramSendResult.Failed(InstagramSendOutcome.Transient, "transport_not_sent",
+                "The provider could not be reached. Retry later.");
+        }
+        catch (HttpRequestException)
+        {
+            return InstagramSendResult.Failed(InstagramSendOutcome.Unconfirmed, "transport",
+                "The connection failed after sending; the message may or may not have been delivered.");
+        }
+
+        using (response)
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                var messageId = TryReadString(body, "message_id");
+                return string.IsNullOrWhiteSpace(messageId)
+                    ? InstagramSendResult.Failed(InstagramSendOutcome.Unconfirmed, "invalid_response",
+                        "The provider accepted the request but returned no message ID.")
+                    : InstagramSendResult.Sent(messageId);
+            }
+
+            return MapSendError(response.StatusCode, body);
+        }
+    }
+
+    private static InstagramSendResult MapSendError(HttpStatusCode statusCode, string body)
+    {
+        var (code, subcode, isTransient) = TryReadError(body);
+        var codeText = code is null
+            ? ((int)statusCode).ToString(System.Globalization.CultureInfo.InvariantCulture)
+            : subcode is null
+                ? code.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                : $"{code.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}/{subcode.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+        if (code == 190)
+        {
+            return InstagramSendResult.Failed(InstagramSendOutcome.TokenExpired, codeText,
+                "The Page access token is expired or invalid. Reauthorize the connection.");
+        }
+
+        if (code is 4 or 17 or 32 or 613 || statusCode == HttpStatusCode.TooManyRequests || isTransient)
+        {
+            return InstagramSendResult.Failed(InstagramSendOutcome.Transient, codeText,
+                "The provider throttled or temporarily failed the request. It will be retried.");
+        }
+
+        if (code is null && (int)statusCode >= 500)
+        {
+            return InstagramSendResult.Failed(InstagramSendOutcome.Unconfirmed, codeText,
+                "The provider returned a server error; the message may or may not have been delivered.");
+        }
+
+        return InstagramSendResult.Failed(InstagramSendOutcome.Rejected, codeText, code switch
+        {
+            10 or 200 => "The connection lacks permission to send messages.",
+            551 => "This person is not available to receive messages.",
+            _ when code == 1545041 || subcode == 1545041 => "The 24-hour standard messaging window has expired.",
+            _ => "The provider rejected the message."
+        });
+    }
+
+    private static (int? Code, int? Subcode, bool IsTransient) TryReadError(string body)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (!document.RootElement.TryGetProperty("error", out var error))
+            {
+                return (null, null, false);
+            }
+
+            int? code = error.TryGetProperty("code", out var c) && c.TryGetInt32(out var cv) ? cv : null;
+            int? subcode = error.TryGetProperty("error_subcode", out var sc) && sc.TryGetInt32(out var sv) ? sv : null;
+            var transient = error.TryGetProperty("is_transient", out var t) && t.ValueKind == JsonValueKind.True;
+            return (code, subcode, transient);
+        }
+        catch (JsonException)
+        {
+            return (null, null, false);
+        }
+    }
+
+    private static string? TryReadString(string body, string property)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            return document.RootElement.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String
+                ? value.GetString()
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
         }
     }
 
