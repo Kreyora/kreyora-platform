@@ -56,3 +56,14 @@ This ADR was accepted by the project owner on 2026-09-22 (see the note at the to
 Two items listed under Validation evidence as acceptance requirements were **not** met when the ADR was accepted and remain outstanding: an observed sandbox webhook and an App Review plan. They are tracked in M08-S03 (manual sandbox checklist) and M08-S07.
 
 The "non-expiring long-lived PAT" statement is a documentation claim (source S4, accessed 2026-09-22) still to be confirmed against current Meta documentation and observed token behavior. Webhook routing, ownership, and event identity for this channel are governed by ADR-015.
+
+## Status note (2026-10-06, M08-S07) — appended
+
+Outcome of the open acceptance items listed above:
+
+- **Observed sandbox webhook: met.** On 2026-10-05/06 a real Instagram DM to the owner's Live app was signature-verified (App Secret), processed once into the right tenant conversation, and answered through the durable outbox.
+- **"Non-expiring long-lived PAT": confirmed.** Meta documents that long-lived Page tokens "do not have an expiration date", and the owner's Access Token Tool showed "will never expire".
+- **Data-retention terms: closed.** Platform Terms effective 2026-02-03: delete "as soon as reasonably possible" when no longer needed, and promptly on request; no fixed maximum period.
+- **App Review plan: documented.** Prerequisites P2–P4 in `docs/architecture/INSTAGRAM_PRODUCTION_READINESS.md`, including `pages_read_engagement`, which Kreyora's connect check needs.
+
+Observed `mid` length is 164 characters (column 512). The production connection is classified `BLOCKED` pending Advanced Access and the live credential-lifecycle checks. The decision itself is unchanged.

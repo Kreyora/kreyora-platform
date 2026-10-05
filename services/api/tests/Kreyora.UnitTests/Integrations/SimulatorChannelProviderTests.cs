@@ -7,7 +7,8 @@ namespace Kreyora.UnitTests.Integrations;
 
 public sealed class SimulatorChannelProviderTests
 {
-    private readonly SimulatorChannelProvider _provider = new();
+    // Development/Testing behavior; the production default is covered by the FixedTestSignature tests below.
+    private readonly SimulatorChannelProvider _provider = new(acceptsFixedTestSignature: true);
 
     [Fact]
     public async Task ValidateWebhookAsync_WithDefaultValidSignature_ReturnsSuccess()
@@ -24,6 +25,61 @@ public sealed class SimulatorChannelProviderTests
         Assert.True(result.IsValid);
         Assert.Null(result.ErrorReason);
         Assert.Equal("evt_100", result.ProviderEventId);
+    }
+
+    [Fact]
+    public async Task FixedTestSignature_IsRejectedByDefault()
+    {
+        var request = WebhookValidationRequest.Create(
+            rawBody: "{\"id\":\"evt_forged\",\"text\":\"forged\"}",
+            headers: new Dictionary<string, string> { ["X-Hub-Signature-256"] = SimulatorChannelProvider.DefaultValidSignature },
+            secret: "connection_secret_1234567890");
+
+        var result = await new SimulatorChannelProvider().ValidateWebhookAsync(request);
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public async Task FixedTestSignature_IsRejectedByDefault_EvenWithoutAConnectionSecret()
+    {
+        var request = WebhookValidationRequest.Create(
+            rawBody: "{\"id\":\"evt_forged\",\"text\":\"forged\"}",
+            headers: new Dictionary<string, string> { ["X-Hub-Signature-256"] = SimulatorChannelProvider.DefaultValidSignature });
+
+        var result = await new SimulatorChannelProvider().ValidateWebhookAsync(request);
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public async Task HmacSignature_IsStillAcceptedByDefault()
+    {
+        const string secret = "connection_secret_1234567890";
+        const string rawBody = "{\"id\":\"evt_real\",\"text\":\"real\"}";
+        var request = WebhookValidationRequest.Create(
+            rawBody: rawBody,
+            headers: new Dictionary<string, string>
+            {
+                ["X-Hub-Signature-256"] = SimulatorChannelProvider.GenerateValidSignature(System.Text.Encoding.UTF8.GetBytes(rawBody), secret)
+            },
+            secret: secret);
+
+        var result = await new SimulatorChannelProvider().ValidateWebhookAsync(request);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData("Development", true)]
+    [InlineData("Testing", true)]
+    [InlineData("Production", false)]
+    [InlineData("Staging", false)]
+    public void FixedTestSignature_IsOnlyEnabledInDevelopmentAndTesting(string environmentName, bool expected)
+    {
+        var environment = new Microsoft.Extensions.Hosting.Internal.HostingEnvironment { EnvironmentName = environmentName };
+
+        Assert.Equal(expected, SimulatorChannelProvider.AcceptsFixedTestSignatureIn(environment));
     }
 
     [Fact]

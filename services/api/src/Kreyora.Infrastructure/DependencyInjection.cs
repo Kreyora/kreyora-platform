@@ -88,7 +88,7 @@ public static class DependencyInjection
         services.AddOptions<SecretEncryptionOptions>()
             .BindConfiguration(SecretEncryptionOptions.SectionName);
         services.AddSingleton<ISecretEncryptionService, AesGcmSecretEncryptionService>();
-        services.AddSingleton<IChannelProvider, SimulatorChannelProvider>();
+        services.AddSingleton<IChannelProvider>(new SimulatorChannelProvider(SimulatorChannelProvider.AcceptsFixedTestSignatureIn(environment)));
         // Scoped: the send path uses the typed Graph HttpClient (ADR-017).
         services.AddScoped<IChannelProvider, InstagramChannelProvider>();
         services.AddScoped<IChannelProviderRegistry, ChannelProviderRegistry>();

@@ -29,10 +29,15 @@ public static class HangfireSetup
                 options.UseNpgsqlConnection(connectionString);
             }));
 
-        services.AddHangfireServer(options =>
+        // BackgroundJobs:ServerEnabled=false keeps enqueueing (jobs wait in storage) but runs no server in this
+        // process: for a separate worker later, and for deterministic failure/replay checks in the M08-S07 sandbox.
+        if (configuration.GetValue("BackgroundJobs:ServerEnabled", defaultValue: true))
         {
-            options.WorkerCount = 2;
-        });
+            services.AddHangfireServer(options =>
+            {
+                options.WorkerCount = 2;
+            });
+        }
 
         return services;
     }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Kreyora.Application.Integrations;
 using Kreyora.Application.Integrations.Instagram;
 using Microsoft.Extensions.Options;
 
@@ -237,7 +238,8 @@ public sealed class InstagramGraphClient : IInstagramGraphClient
                 "The Page access token is expired or invalid. Reauthorize the connection.");
         }
 
-        if (code is 4 or 17 or 32 or 613 || statusCode == HttpStatusCode.TooManyRequests || isTransient)
+        // Throttling codes per Meta's rate-limiting reference; 80002 is the Instagram business-use-case limit.
+        if (code is 4 or 17 or 32 or 613 or 80002 || statusCode == HttpStatusCode.TooManyRequests || isTransient)
         {
             return InstagramSendResult.Failed(InstagramSendOutcome.Transient, codeText,
                 "The provider throttled or temporarily failed the request. It will be retried.");
@@ -249,11 +251,18 @@ public sealed class InstagramGraphClient : IInstagramGraphClient
                 "The provider returned a server error; the message may or may not have been delivered.");
         }
 
+        // Outside the messaging window (Meta Send API error reference: 10/2018278 and 2534022). Reported with the
+        // stable reason code the inbox already explains; the raw Meta code stays in the message for diagnostics.
+        if ((code == 10 && subcode == 2018278) || code == 2534022 || subcode == 2534022)
+        {
+            return InstagramSendResult.Failed(InstagramSendOutcome.Rejected, ConversationDenialReasons.WindowClosed,
+                $"The 24-hour standard messaging window has expired (Meta {codeText}).");
+        }
+
         return InstagramSendResult.Failed(InstagramSendOutcome.Rejected, codeText, code switch
         {
+            _ when code == 551 || subcode == 1545041 => "This person is not available to receive messages.",
             10 or 200 => "The connection lacks permission to send messages.",
-            551 => "This person is not available to receive messages.",
-            _ when code == 1545041 || subcode == 1545041 => "The 24-hour standard messaging window has expired.",
             _ => "The provider rejected the message."
         });
     }
@@ -348,7 +357,7 @@ public sealed class InstagramGraphClient : IInstagramGraphClient
             10 => InstagramValidationResult.Failed(
                 InstagramValidationKind.PermissionDenied, "10",
                 "The token lacks the required permissions or does not match the Page."),
-            4 or 17 or 32 or 613 => InstagramValidationResult.Failed(
+            4 or 17 or 32 or 613 or 80002 => InstagramValidationResult.Failed(
                 InstagramValidationKind.Throttled, code.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 "The provider throttled the request. Retry after the limit window resets."),
             _ when (int)statusCode >= 500 => InstagramValidationResult.Failed(

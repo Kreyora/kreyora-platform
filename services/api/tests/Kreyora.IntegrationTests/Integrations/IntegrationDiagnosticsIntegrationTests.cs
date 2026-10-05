@@ -339,7 +339,7 @@ public sealed class IntegrationDiagnosticsIntegrationTests : IClassFixture<Postg
         AppDbContext db,
         TenantContextAccessor accessor)
     {
-        var registry = new ChannelProviderRegistry([new SimulatorChannelProvider()]);
+        var registry = new ChannelProviderRegistry([new SimulatorChannelProvider(acceptsFixedTestSignature: true)]);
         var authorizer = new TenantPermissionAuthorizer(accessor);
         var audit = new AuditEventService(db, accessor, new Correlation("diag-test"), authorizer);
         var encryption = new FakeSecretEncryptionService();

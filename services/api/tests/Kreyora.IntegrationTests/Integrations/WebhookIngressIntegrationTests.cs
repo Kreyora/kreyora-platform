@@ -361,7 +361,7 @@ public sealed class WebhookIngressIntegrationTests : IClassFixture<PostgresFixtu
 
     private static WebhookIngressService CreateIngressService(AppDbContext db, TenantContextAccessor accessor)
     {
-        var provider = new SimulatorChannelProvider();
+        var provider = new SimulatorChannelProvider(acceptsFixedTestSignature: true);
         var registry = new ChannelProviderRegistry(new[] { provider });
         var encryptionService = CreateEncryptionService();
         return new WebhookIngressService(db, registry, encryptionService, accessor, NullLogger<WebhookIngressService>.Instance);
