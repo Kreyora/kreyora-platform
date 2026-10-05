@@ -6,7 +6,7 @@
 - **Step:** 03 — Real webhook validation and inbound normalization
 - **Author:** Phase 1 (Architect)
 - **Date:** 2026-09-22
-- **Status:** `REVIEW` — corrective scope implemented 2026-10-05; awaiting owner review and the manual sandbox checklist
+- **Status:** `APPROVED` (2026-10-05) — live sandbox checklist carried to M08-S07
 - **Prerequisites:** M08-S02 `APPROVED`; ADR-014 `Accepted`. Owner Dev-mode sandbox available for manual verification.
 
 ### Status history
@@ -19,6 +19,7 @@
 | 2026-10-05 | `CHANGES REQUESTED` | Owner-authorized after review: findings B1–B5 confirmed and reproduced (see "Corrective scope"). |
 | 2026-10-05 | `IN PROGRESS` | Owner approved the corrective scope C1–C6, the ADR-015 direction, and the recommended Q1 policy ("ok do your recommended things"). |
 | 2026-10-05 | `REVIEW` | Corrective build complete; evidence in `artifacts/checkpoints/M08-S03.md` § "Corrective implementation". Live-sandbox checklist outstanding. |
+| 2026-10-05 | `APPROVED` | Owner approval; live-sandbox checklist carried to M08-S07. |
 
 ## Objective
 

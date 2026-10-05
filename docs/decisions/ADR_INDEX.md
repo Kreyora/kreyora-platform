@@ -20,6 +20,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-016 | Conversation identity and inbound lifecycle rules | `Accepted` | 2026-10-05 | — |
 | ADR-015 | Social account ownership, webhook account fan-out, and inbound event identity | `Accepted` | 2026-10-05 | — |
 | ADR-014 | First social channel: Instagram Messaging | `Accepted` | 2026-09-22 | — |
 | ADR-013 | Secrets encryption and key management for social credentials | `Accepted` | 2026-09-20 | — |
@@ -40,6 +41,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-016 | Conversation identity and inbound lifecycle rules | `Accepted` | 2026-10-05 | — |
 | ADR-015 | Social account ownership, webhook account fan-out, and inbound event identity | `Accepted` | 2026-10-05 | — |
 | ADR-014 | First social channel: Instagram Messaging | `Accepted` | 2026-09-22 | — |
 | ADR-013 | Secrets encryption and key management for social credentials | `Accepted` | 2026-09-20 | — |

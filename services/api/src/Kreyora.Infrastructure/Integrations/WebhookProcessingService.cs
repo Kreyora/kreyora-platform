@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Kreyora.Application.Audit;
 using Kreyora.Application.Authorization;
+using Kreyora.Application.Conversations;
 using Kreyora.Application.Integrations;
 using Kreyora.Application.Models;
 using Kreyora.Application.Tenancy;
@@ -20,7 +21,8 @@ public sealed partial class WebhookProcessingService(
     IAuditEventService auditEvents,
     IChannelProviderRegistry providerRegistry,
     ILogger<WebhookProcessingService> logger,
-    IServiceProvider? serviceProvider = null) : IWebhookProcessingService
+    IServiceProvider? serviceProvider = null,
+    IConversationIngestionService? conversationIngestion = null) : IWebhookProcessingService
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "Successfully normalized and processed webhook event {EventId} with {Count} inbound events for tenant {TenantId}")]
     private static partial void LogProcessingSuccess(ILogger logger, string eventId, int count, string tenantId);
@@ -164,6 +166,13 @@ public sealed partial class WebhookProcessingService(
 
                 dbContext.InboundEvents.Add(inbound);
                 normalizedCount++;
+
+                // M08-S04 (ADR-016): conversation state is written in the same unit of work as the inbound
+                // event, so both commit or neither does. Duplicates were already skipped above.
+                if (conversationIngestion is not null)
+                {
+                    await conversationIngestion.IngestAsync(inbound, envelope.Payload, connection, cancellationToken);
+                }
 
                 if (envelope.Payload is MessageStatusUpdatedPayload statusPayload)
                 {
