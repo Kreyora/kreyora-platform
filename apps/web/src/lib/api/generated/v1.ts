@@ -991,6 +991,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/conversations/assignees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationAssigneeItem"][];
+                        "application/json": components["schemas"]["ConversationAssigneeItem"][];
+                        "text/json": components["schemas"]["ConversationAssigneeItem"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/conversations/{id}": {
         parameters: {
             query?: never;
@@ -4977,6 +5014,11 @@ export interface components {
             checkedAt: string;
             newStatus?: components["schemas"]["ChannelConnectionStatus"];
         };
+        ConversationAssigneeItem: {
+            userId: string;
+            displayName: string;
+            role: components["schemas"]["TenantRole"];
+        };
         ConversationDetailItem: {
             id: string;
             connectionId: string;
@@ -5305,6 +5347,7 @@ export interface components {
             /** @default false */
             isPending: boolean;
             actorUserId?: null | string;
+            deliveryFailureCode?: null | string;
         };
         MessageKind: number;
         MessageOrigin: number;

@@ -312,6 +312,34 @@ public sealed class ConversationReplyIntegrationTests : IClassFixture<PostgresFi
             (await env.Fresh(db => db.Messages.IgnoreQueryFilters().SingleAsync(m => m.OutboundMessageId == outboundId))).DeliveryStatus);
         Assert.Equal(ConversationDenialReasons.DeliveryUnconfirmed,
             (await env.Fresh(db => db.OutboundDeliveryAttempts.IgnoreQueryFilters().SingleAsync(a => a.OutboundMessageId == outboundId))).ProviderErrorCode);
+
+        // M08-S06: the timeline exposes the failure reason so the UI can warn before a resend.
+        var page = await env.TimelineAsync();
+        var failed = Assert.Single(page.Items);
+        Assert.Equal(ConversationDenialReasons.DeliveryUnconfirmed, failed.DeliveryFailureCode);
+    }
+
+    [Fact]
+    public async Task Scheduling_HappensAfterCommit_OnlyForNewWork()
+    {
+        var env = await ArrangeAsync("s06-schedule");
+        var scheduler = new RecordingScheduler();
+
+        var reply = await env.ReplyAsync("scheduled reply", "sched-1", scheduler: scheduler);
+        var denied = await env.ReplyAsync(new string('x', 1001), "sched-2", scheduler: scheduler);
+        var outboundId = await env.Fresh(db => db.OutboundMessages.IgnoreQueryFilters().Where(m => m.ConnectionId == env.ConnectionId).Select(m => m.Id).SingleAsync());
+
+        Assert.True(reply.IsSuccess);
+        Assert.False(denied.IsSuccess);
+        Assert.Equal([outboundId], scheduler.Outbound);
+
+        var body = EchoBody(env.Igid, "mid_sched_echo", "from app");
+        var first = await env.IngestWithSchedulerAsync(body, scheduler);
+        var duplicate = await env.IngestWithSchedulerAsync(body, scheduler);
+
+        Assert.False(first.IsDuplicate);
+        Assert.True(duplicate.IsDuplicate);
+        Assert.Equal([first.EventId!], scheduler.Webhooks);
     }
 
     [Fact]
@@ -563,20 +591,47 @@ public sealed class ConversationReplyIntegrationTests : IClassFixture<PostgresFi
                 new AuditEventService(context, contextAccessor, new Correlation("s05"), authorizer), clock);
         }
 
-        public ConversationReplyService Replies(AppDbContext context, TenantContextAccessor contextAccessor, IOutboundEnqueuer? enqueuer = null)
+        public ConversationReplyService Replies(AppDbContext context, TenantContextAccessor contextAccessor, IOutboundEnqueuer? enqueuer = null, IIntegrationWorkScheduler? scheduler = null)
         {
             var authorizer = new TenantPermissionAuthorizer(contextAccessor);
             return new ConversationReplyService(context, contextAccessor, authorizer, enqueuer ?? Outbox(context, contextAccessor),
-                new AuditEventService(context, contextAccessor, new Correlation("s05"), authorizer), clock, Options.Create(Messaging));
+                new AuditEventService(context, contextAccessor, new Correlation("s05"), authorizer), clock, Options.Create(Messaging), scheduler);
         }
 
-        public async Task<Result<MessageItem>> ReplyAsync(string text, string key, IOutboundEnqueuer? enqueuer = null)
+        public async Task<Result<MessageItem>> ReplyAsync(string text, string key, IOutboundEnqueuer? enqueuer = null, IIntegrationWorkScheduler? scheduler = null)
         {
             var contextAccessor = new TenantContextAccessor();
             await using var context = owner.fixture.CreateDbContext(contextAccessor);
             using var scope = contextAccessor.BeginScope(Context(tenantId, TenantRole.Operator));
-            return await Replies(context, contextAccessor, enqueuer is InterleavingEnqueuer i ? i.Bind(context, contextAccessor) : enqueuer)
+            return await Replies(context, contextAccessor, enqueuer is InterleavingEnqueuer i ? i.Bind(context, contextAccessor) : enqueuer, scheduler)
                 .SendStaffReplyAsync(ConversationId, text, key);
+        }
+
+        public async Task<MessagePage> TimelineAsync()
+        {
+            var contextAccessor = new TenantContextAccessor();
+            await using var context = owner.fixture.CreateDbContext(contextAccessor);
+            using var scope = contextAccessor.BeginScope(Context(tenantId, TenantRole.Viewer));
+            var result = await new ConversationQueryService(context, contextAccessor, new TenantPermissionAuthorizer(contextAccessor))
+                .GetMessagesAsync(ConversationId, null, 50);
+            Assert.True(result.IsSuccess, result.Error?.Detail);
+            return result.Value!;
+        }
+
+        public async Task<WebhookIngressResult> IngestWithSchedulerAsync(string body, IIntegrationWorkScheduler scheduler)
+        {
+            var contextAccessor = new TenantContextAccessor();
+            await using var context = owner.fixture.CreateDbContext(contextAccessor);
+            var ingress = new WebhookIngressService(context, Registry(), encryption, contextAccessor, NullLogger<WebhookIngressService>.Instance, scheduler);
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(AppSecret));
+            return await ingress.HandleWebhookAsync(new WebhookIngressCommand(
+                ChannelType.Instagram, null, "POST", "/v1/webhooks/instagram",
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["content-type"] = "application/json",
+                    [InstagramChannelProvider.SignatureHeader] = "sha256=" + Convert.ToHexStringLower(hmac.ComputeHash(Encoding.UTF8.GetBytes(body)))
+                },
+                new Dictionary<string, string>(), Encoding.UTF8.GetBytes(body), "application/json", Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow));
         }
 
         public async Task<Result<string>> AutomationAsync(string text, string key)
@@ -689,6 +744,16 @@ public sealed class ConversationReplyIntegrationTests : IClassFixture<PostgresFi
             await context.Database.ExecuteSqlRawAsync(sql);
 #pragma warning restore EF1002
         }
+    }
+
+    private sealed class RecordingScheduler : IIntegrationWorkScheduler
+    {
+        public List<string> Webhooks { get; } = [];
+        public List<string> Outbound { get; } = [];
+
+        public void ScheduleWebhookProcessing(string webhookEventId) => Webhooks.Add(webhookEventId);
+
+        public void ScheduleOutboundDelivery(string outboundMessageId) => Outbound.Add(outboundMessageId);
     }
 
     /// <summary>Stand-in for the Graph API: scripted outcomes, recorded calls, thread-safe.</summary>

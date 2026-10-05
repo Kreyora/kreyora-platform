@@ -1230,6 +1230,44 @@
         }
       }
     },
+    "/v1/conversations/assignees": {
+      "get": {
+        "tags": [
+          "Conversations"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationAssigneeItem"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationAssigneeItem"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationAssigneeItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/conversations/{id}": {
       "get": {
         "tags": [
@@ -6444,6 +6482,25 @@
           }
         }
       },
+      "ConversationAssigneeItem": {
+        "required": [
+          "userId",
+          "displayName",
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/TenantRole"
+          }
+        }
+      },
       "ConversationDetailItem": {
         "required": [
           "id",
@@ -7837,6 +7894,12 @@
             "default": false
           },
           "actorUserId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "deliveryFailureCode": {
             "type": [
               "null",
               "string"

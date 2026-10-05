@@ -264,6 +264,57 @@ public sealed class ConversationEndpointTests : IClassFixture<PostgresFixture>
         Assert.Equal("humanAssigned", detail.RootElement.GetProperty("status").GetString());
     }
 
+    [Fact]
+    public async Task Assignees_ListsActiveMembersOfThisWorkspaceOnly_WithoutEmails()
+    {
+        var seeded = await SeedAsync("s06-assignees", messages: 1);
+        var other = await SeedAsync("s06-assignees-other", messages: 1);
+        await using (var db = fixture.CreateDbContext(new TenantContextAccessor()))
+        {
+            await AddMemberAsync(db, seeded.TenantId, "Asha Operator", active: true);
+            await AddMemberAsync(db, seeded.TenantId, "Bikash Suspended", active: false);
+            await AddMemberAsync(db, other.TenantId, "Chandra Elsewhere", active: true);
+        }
+
+        await using var factory = new InboxFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+        var response = await client.SendAsync(Request(HttpMethod.Get, "/v1/conversations/assignees", seeded.TenantId, TenantRole.Viewer));
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Asha Operator", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Bikash Suspended", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Chandra Elsewhere", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("@", body, StringComparison.Ordinal);
+    }
+
+    private async Task AddMemberAsync(AppDbContext db, string tenantId, string displayName, bool active)
+    {
+        var email = $"m{Guid.NewGuid():N}@kreyora.test";
+        var user = new Kreyora.Infrastructure.Identity.ApplicationUser
+        {
+            UserName = email,
+            NormalizedUserName = email.ToUpperInvariant(),
+            Email = email,
+            NormalizedEmail = email.ToUpperInvariant(),
+            DisplayName = displayName
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var accessor = new TenantContextAccessor();
+        await using var scoped = fixture.CreateDbContext(accessor);
+        using var scope = accessor.BeginScope(new TenantContext(tenantId, "01J00000000000000000000001", "01J00000000000000000000002", TenantRole.Owner));
+        var membership = Membership.Grant(tenantId, user.Id, TenantRole.Operator);
+        if (!active)
+        {
+            membership.Suspend(DateTimeOffset.UtcNow);
+        }
+
+        scoped.Memberships.Add(membership);
+        await scoped.SaveChangesAsync();
+    }
+
     // ---------- helpers ----------
 
     private static string Texts(JsonDocument page) =>

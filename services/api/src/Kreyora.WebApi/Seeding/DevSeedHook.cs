@@ -80,6 +80,11 @@ public static partial class DevSeedHook
             await memberships.GrantMembershipAsync(tenant.Id, demoUser.Id, TenantRole.Owner);
         }
 
+        if (configuration.GetValue<bool>("Development:Seed:E2ePersonas"))
+        {
+            await E2eSeed.SeedAsync(scope.ServiceProvider, tenant, demoUser, demoPassword, configuration);
+        }
+
         LogSeedCompleted(logger);
     }
 

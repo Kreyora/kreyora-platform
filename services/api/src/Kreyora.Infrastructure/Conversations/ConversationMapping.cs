@@ -7,7 +7,7 @@ namespace Kreyora.Infrastructure.Conversations;
 
 internal static class ConversationMapping
 {
-    public static MessageItem ToItem(Message m, IReadOnlyList<MessageReactionSummary> reactions) => new(
+    public static MessageItem ToItem(Message m, IReadOnlyList<MessageReactionSummary> reactions, string? deliveryFailureCode = null) => new(
         m.Id,
         m.ConversationId,
         m.Direction,
@@ -21,7 +21,8 @@ internal static class ConversationMapping
         m.RedactedAt.HasValue,
         reactions,
         m.IsPending,
-        m.ActorUserId);
+        m.ActorUserId,
+        deliveryFailureCode);
 
     /// <summary>RFC 7807 problem carrying a stable ADR-017 reason code.</summary>
     public static Result<T> Denied<T>(string reasonCode, string detail, int status = 422) =>

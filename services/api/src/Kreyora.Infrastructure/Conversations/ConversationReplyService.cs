@@ -27,7 +27,8 @@ public sealed class ConversationReplyService(
     IOutboundEnqueuer enqueuer,
     IAuditEventService auditEvents,
     ITimeProvider timeProvider,
-    IOptions<InstagramMessagingOptions> messagingOptions) : IConversationReplyService
+    IOptions<InstagramMessagingOptions> messagingOptions,
+    IIntegrationWorkScheduler? workScheduler = null) : IConversationReplyService
 {
     public async Task<Result<MessageItem>> SendStaffReplyAsync(
         string conversationId,
@@ -162,6 +163,7 @@ public sealed class ConversationReplyService(
                 : Result<MessageItem>.Success(duplicate);
         }
 
+        workScheduler?.ScheduleOutboundDelivery(enqueue.Message.Id);
         return Result<MessageItem>.Success(ConversationMapping.ToItem(pending, []));
     }
 
@@ -205,6 +207,7 @@ public sealed class ConversationReplyService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        workScheduler?.ScheduleOutboundDelivery(enqueue.Message.Id);
         return Result<string>.Success(enqueue.Message.Id);
     }
 

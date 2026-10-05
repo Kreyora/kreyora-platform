@@ -11,7 +11,7 @@ export type ConversationState =
   | "closed"
   | "spam";
 
-export type Channel = "facebook" | "instagram" | "whatsapp" | "tiktok" | "storefront";
+export type Channel = "facebook" | "instagram" | "whatsapp" | "tiktok" | "storefront" | "viber" | "telegram" | "simulator";
 
 export type MessageDirection = "inbound" | "outbound";
 export type MessageDeliveryState = "pending" | "sent" | "delivered" | "read" | "failed";
@@ -22,16 +22,24 @@ export interface Assignment {
   assignedAt: Timestamp;
 }
 
+/** `external` = a business message sent outside Kreyora (e.g. typed in the Instagram app). */
+export type MessageSenderType = "customer" | "staff" | "bot" | "external";
+
 export interface Message {
   id: string;
   conversationId: string;
   direction: MessageDirection;
   senderName: string;
-  senderType: "customer" | "staff" | "bot";
+  senderType: MessageSenderType;
   content: string;
   attachments: Array<{ url: string; type: string; name: string }>;
   deliveryState: MessageDeliveryState;
   createdAt: Timestamp;
+  /** Server-assigned failure code for failed outbound messages (e.g. `delivery_unconfirmed`). */
+  failureCode?: string;
+  /** True when content was removed by an erasure request. */
+  isRedacted?: boolean;
+  reactions?: Array<{ emoji: string; count: number }>;
 }
 
 export interface Conversation {
@@ -50,4 +58,14 @@ export interface Conversation {
   connectionId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  /** Last customer message time; the server decides reply windows, this is only a display hint. */
+  lastCustomerMessageAt?: Timestamp;
 }
+
+export interface ConversationAssignee {
+  userId: string;
+  displayName: string;
+  role: string;
+}
+
+export type ConversationStatusAction = "resolve" | "reopen" | "close" | "mark_spam" | "unmark_spam";

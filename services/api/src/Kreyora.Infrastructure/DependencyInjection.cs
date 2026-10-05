@@ -18,6 +18,7 @@ using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authentication;
 using Kreyora.Infrastructure.Authorization;
+using Kreyora.Infrastructure.BackgroundJobs;
 using Kreyora.Infrastructure.Catalog;
 using Kreyora.Infrastructure.Conversations;
 using Kreyora.Infrastructure.Correlation;
@@ -192,6 +193,7 @@ public static class DependencyInjection
         services.AddScoped<IConversationInboxService, ConversationInboxService>();
         services.AddScoped<IConversationPrivacyService, ConversationPrivacyService>();
         services.AddScoped<IConversationReplyService, ConversationReplyService>();
+        services.AddScoped<IIntegrationWorkScheduler, HangfireIntegrationWorkScheduler>();
         services.AddScoped<IConversationOutboundReconciler, ConversationOutboundReconciler>();
         services.AddScoped<IOutboundEnqueuer>(sp => (OutboundMessageService)sp.GetRequiredService<IOutboundMessageService>());
         services.AddTransient<WebhookProcessingJob>();

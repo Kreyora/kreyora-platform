@@ -1,345 +1,320 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useClients } from "@/lib/providers/client-provider";
+import { useClients, USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
 import { useSession } from "@/hooks/use-session";
+import { usePolling } from "@/hooks/use-polling";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ViewerBadge } from "@/components/viewer-badge";
-import type { Conversation, Message } from "@/lib/types";
+import { ConversationTimeline, type TimelineMessage } from "@/components/inbox/conversation-timeline";
+import { ConversationPanel } from "@/components/inbox/conversation-panel";
+import { MessageComposer } from "@/components/inbox/message-composer";
+import { InboxAlert } from "@/components/inbox/inbox-alert";
+import { StaleBanner } from "@/components/inbox/stale-banner";
+import { CHANNEL_MAP, STATE_MAP, windowLikelyClosed } from "@/components/inbox/inbox-display";
+import { ApiClientError } from "@/lib/api/errors";
+import { describeInboxError, type InboxErrorCopy } from "@/lib/utils/conversation-errors";
+import type { Conversation, ConversationAssignee, ConversationStatusAction, Message, PaginatedResult } from "@/lib/types";
 import type { ConnectionHealth } from "@/lib/types/integrations";
 import type { AIActionTrace } from "@/lib/types/ai";
-import type { BadgeVariant } from "@/components/ui/badge";
 
-const STATE_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
-  new: { label: "New", variant: "info" },
-  bot_active: { label: "Bot Active", variant: "info" },
-  human_assigned: { label: "Human Assigned", variant: "warning" },
-  awaiting_customer: { label: "Awaiting Customer", variant: "neutral" },
-  checkout_in_progress: { label: "Checkout", variant: "info" },
-  order_created: { label: "Ordered", variant: "success" },
-  resolved: { label: "Resolved", variant: "success" },
-  closed: { label: "Closed", variant: "neutral" },
-  spam: { label: "Spam", variant: "danger" },
-};
+const CONVERSATION_POLL_MS = 5_000;
 
-const CHANNEL_MAP: Record<string, { label: string; color: string }> = {
-  facebook: { label: "Facebook", color: "bg-blue-500" },
-  instagram: { label: "Instagram", color: "bg-pink-500" },
-  whatsapp: { label: "WhatsApp", color: "bg-green-500" },
-  tiktok: { label: "TikTok", color: "bg-gray-800" },
-  storefront: { label: "Storefront", color: "bg-purple-500" },
-};
+function newKey(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
-const DELIVERY_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
-  pending: { label: "Pending", variant: "neutral" },
-  sent: { label: "Sent", variant: "info" },
-  delivered: { label: "Delivered", variant: "success" },
-  read: { label: "Read", variant: "success" },
-  failed: { label: "Failed", variant: "danger" },
-};
+function mergeById(...lists: Message[][]): Message[] {
+  const byId = new Map<string, Message>();
+  for (const list of lists) for (const m of list) byId.set(m.id, m);
+  return [...byId.values()].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
 
-const SENDER_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
-  customer: { label: "Customer", variant: "neutral" },
-  staff: { label: "Staff", variant: "info" },
-  bot: { label: "Bot", variant: "warning" },
-};
+interface LocalReply {
+  id: string;
+  key: string;
+  text: string;
+  createdAt: string;
+  status: "sending" | "failed";
+  error?: string;
+}
 
-const CONN_STATUS: Record<string, { label: string; variant: BadgeVariant }> = {
-  connected: { label: "Connected", variant: "success" },
-  disconnected: { label: "Disconnected", variant: "danger" },
-  error: { label: "Error", variant: "danger" },
-  pending_reauth: { label: "Reauth Needed", variant: "warning" },
-};
+function isDefinitiveRefusal(error: unknown): boolean {
+  return error instanceof ApiClientError && error.status >= 400 && error.status < 500;
+}
 
 export default function ConversationDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { conversation: convClient, integration, ai } = useClients();
+  const { conversation: client, integration, ai } = useClients();
   const { effectiveRole, session } = useSession();
-  const isViewer = effectiveRole === "viewer";
+  const canWrite = effectiveRole !== "viewer";
+  const currentUserId = session?.membership.userId;
 
   const [conv, setConv] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const [latest, setLatest] = useState<Message[]>([]);
+  const [older, setOlder] = useState<Message[]>([]);
+  const [olderCursor, setOlderCursor] = useState<string | null>(null);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [locals, setLocals] = useState<LocalReply[]>([]);
+  const [assignees, setAssignees] = useState<ConversationAssignee[]>([]);
   const [health, setHealth] = useState<ConnectionHealth | null>(null);
   const [traces, setTraces] = useState<AIActionTrace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<InboxErrorCopy | null>(null);
+  const [actionError, setActionError] = useState<InboxErrorCopy | null>(null);
+  const [composerError, setComposerError] = useState<InboxErrorCopy | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const markedRead = useRef(false);
+  const seenIds = useRef<Set<string>>(new Set());
 
-  const [automationActive, setAutomationActive] = useState(true);
-  const [composerText, setComposerText] = useState("");
+  const fetchAll = useCallback(
+    () => Promise.all([client.getConversation(id), client.getMessages(id)]),
+    [client, id],
+  );
+
+  const apply = useCallback(([c, page]: [Conversation, PaginatedResult<Message>]) => {
+    setConv(c);
+    setLatest(page.items);
+    setOlderCursor((current) => current ?? page.cursor);
+
+    const fresh = page.items.filter((m) => !seenIds.current.has(m.id));
+    if (seenIds.current.size > 0 && fresh.some((m) => m.direction === "inbound")) {
+      setAnnouncement(`New message from ${c.customerName}`);
+    }
+    page.items.forEach((m) => seenIds.current.add(m.id));
+  }, []);
+
+  const refresh = useCallback(async () => apply(await fetchAll()), [apply, fetchAll]);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      convClient.getConversation(id),
-      convClient.getMessages(id),
-      ai.getActionTraces(id),
-    ]).then(async ([c, msgs, tr]) => {
-      if (cancelled) return;
-      setConv(c);
-      setMessages(msgs.items);
-      setTraces(tr);
-      setAutomationActive(c.isAutomationActive);
-
-      try {
-        const h = await integration.getHealth(c.connectionId);
-        if (!cancelled) setHealth(h);
-      } catch {
-        /* connection may not exist in fixtures */
-      }
-
-      if (!cancelled) setIsLoading(false);
-    });
+    fetchAll()
+      .then(async (result) => {
+        if (cancelled) return;
+        apply(result);
+        const people = await client.listAssignees().catch(() => [] as ConversationAssignee[]);
+        if (!cancelled) setAssignees(people);
+      })
+      .catch((error: unknown) => { if (!cancelled) setLoadError(describeInboxError(error)); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
     return () => { cancelled = true; };
-  }, [convClient, ai, integration, id]);
+  }, [apply, client, fetchAll]);
 
-  const handleTakeover = useCallback(() => {
-    setAutomationActive(false);
-  }, []);
+  // Channel health and (demo-only) AI activity: secondary, never block the conversation.
+  useEffect(() => {
+    if (!conv) return;
+    let cancelled = false;
+    integration.getHealth(conv.connectionId).then((h) => { if (!cancelled) setHealth(h); }).catch(() => undefined);
+    if (USING_FIXTURE_ADAPTERS) {
+      ai.getActionTraces(conv.id).then((t) => { if (!cancelled) setTraces(t); }).catch(() => undefined);
+    }
+    return () => { cancelled = true; };
+  }, [ai, integration, conv?.connectionId, conv?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleRelease = useCallback(() => {
-    setAutomationActive(true);
-  }, []);
+  // Q4: opening a conversation with unread messages marks it read once per view (Operator and above).
+  useEffect(() => {
+    if (!conv || !canWrite || markedRead.current || conv.unreadCount === 0) return;
+    markedRead.current = true;
+    client.markRead(conv.id).then(setConv).catch(() => undefined);
+  }, [canWrite, client, conv]);
 
-  const handleSend = useCallback(() => {
-    if (!composerText.trim() || !conv) return;
-    const newMsg: Message = {
-      id: `msg-local-${Date.now()}`,
-      conversationId: conv.id,
+  const polling = usePolling(refresh, CONVERSATION_POLL_MS, !isLoading && !loadError);
+
+  const myName = session?.user.displayName ?? "You";
+  const timeline: TimelineMessage[] = [
+    ...mergeById(older, latest),
+    ...locals.map((l): TimelineMessage => ({
+      id: l.id,
+      conversationId: id,
       direction: "outbound",
-      senderName: session?.user.displayName ?? "Staff",
+      senderName: myName,
       senderType: "staff",
-      content: composerText.trim(),
+      content: l.text,
       attachments: [],
-      deliveryState: "sent",
-      createdAt: new Date().toISOString(),
-    };
-    setLocalMessages((prev) => [...prev, newMsg]);
-    setComposerText("");
-  }, [composerText, conv, session]);
+      deliveryState: "pending",
+      createdAt: l.createdAt,
+      local: { status: l.status, error: l.error },
+    })),
+  ];
 
-  if (isLoading || !conv) {
+  const sendAttempt = useCallback(async (reply: LocalReply, isNewDraft = false): Promise<boolean> => {
+    setLocals((current) => [...current.filter((l) => l.id !== reply.id), { ...reply, status: "sending", error: undefined }]);
+    try {
+      const accepted = await client.sendReply(id, reply.text, reply.key);
+      setLocals((current) => current.filter((l) => l.id !== reply.id));
+      setLatest((current) => mergeById(current, [accepted]));
+      seenIds.current.add(accepted.id);
+      setActionError(null);
+      setConv(await client.getConversation(id));
+      return true;
+    } catch (error) {
+      const copy = describeInboxError(error);
+      // A 4xx is a definitive refusal: nothing was created. A fresh draft goes back to the composer with an
+      // inline error instead of a retry bubble. Anything else (network, 5xx) is ambiguous, so the bubble stays
+      // and "Try again" reuses the same idempotency key.
+      if (isNewDraft && isDefinitiveRefusal(error)) {
+        setLocals((current) => current.filter((l) => l.id !== reply.id));
+        setComposerError(copy);
+        return false;
+      }
+      setLocals((current) => current.map((l) => (l.id === reply.id ? { ...l, status: "failed", error: `${copy.title}: ${copy.detail}` } : l)));
+      if (copy.refresh) setActionError(copy);
+      return isNewDraft;
+    }
+  }, [client, id]);
+
+  const sendNew = useCallback((text: string) => {
+    const key = newKey();
+    setComposerError(null);
+    return sendAttempt({ id: `local-${key}`, key, text, createdAt: new Date().toISOString(), status: "sending" }, true);
+  }, [sendAttempt]);
+
+  const retryLocal = useCallback((localId: string) => {
+    const reply = locals.find((l) => l.id === localId);
+    if (reply) void sendAttempt(reply);
+  }, [locals, sendAttempt]);
+
+  const act = useCallback(async (operation: () => Promise<Conversation>) => {
+    setBusy(true);
+    try {
+      setConv(await operation());
+      setActionError(null);
+    } catch (error) {
+      setActionError(describeInboxError(error));
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
+  const loadOlder = useCallback(async () => {
+    if (!olderCursor) return;
+    setIsLoadingOlder(true);
+    try {
+      const page = await client.getMessages(id, { before: olderCursor });
+      setOlder((current) => mergeById(page.items, current));
+      setOlderCursor(page.cursor);
+    } catch (error) {
+      setActionError(describeInboxError(error));
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  }, [client, id, olderCursor]);
+
+  if (isLoading) {
     return (
-      <div>
+      <div aria-busy="true" aria-label="Loading conversation">
         <Skeleton className="mb-4 h-4 w-48" />
         <Skeleton className="mb-6 h-8 w-64" />
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-[var(--radius-md)]" />
-          ))}
-        </div>
+        <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-[var(--radius-md)]" />)}</div>
       </div>
     );
   }
 
-  const st = STATE_MAP[conv.state] ?? { label: conv.state, variant: "neutral" as const };
-  const ch = CHANNEL_MAP[conv.channel] ?? { label: conv.channel, color: "bg-gray-400" };
-  const allMessages = [...messages, ...localMessages].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-  );
-  const canCompose = !isViewer && !automationActive;
+  if (loadError || !conv) {
+    return (
+      <div>
+        <nav className="mb-4 text-sm" aria-label="Breadcrumb"><Link href="/inbox" className="underline">Inbox</Link></nav>
+        <InboxAlert error={loadError ?? { title: "Not found", detail: "This conversation doesn't exist or isn't in this workspace." }} onRefresh={() => window.location.reload()} />
+      </div>
+    );
+  }
+
+  const state = STATE_MAP[conv.state];
+  const channel = CHANNEL_MAP[conv.channel] ?? CHANNEL_MAP.simulator;
+  const composerBlocked = conv.state === "spam" ? "Replies are blocked while this conversation is marked as spam." : undefined;
+  const windowHint = windowLikelyClosed(conv.lastCustomerMessageAt)
+    ? "The customer last wrote more than 24 hours ago. The channel may refuse replies outside its window; Kreyora will tell you if it does."
+    : undefined;
 
   return (
     <div>
-      {/* Breadcrumb */}
       <nav className="mb-4 text-sm text-[var(--color-ink-secondary)]" aria-label="Breadcrumb">
         <Link href="/inbox" className="hover:underline">Inbox</Link>
         <span className="mx-2" aria-hidden="true">/</span>
         <span className="text-[var(--color-ink-primary)]">{conv.customerName}</span>
       </nav>
 
-      {/* Header */}
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-heading-page text-[var(--color-ink-primary)]">{conv.customerName}</h1>
-        {isViewer && <ViewerBadge />}
+        {!canWrite && <ViewerBadge />}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${ch.color}`}>
-          {ch.label}
-        </span>
-        <Badge variant={st.variant}>{st.label}</Badge>
-        {conv.assignment && (
-          <span className="text-xs text-[var(--color-ink-secondary)]">
-            Assigned to {conv.assignment.assigneeName}
-          </span>
-        )}
-        {automationActive ? (
-          <Badge variant="info">Bot Active</Badge>
-        ) : (
-          <Badge variant="warning">Bot Paused</Badge>
-        )}
+        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${channel.color}`}>{channel.label}</span>
+        <Badge variant={state.variant}>{state.label}</Badge>
+        <Badge variant={conv.isAutomationActive ? "info" : "warning"}>{conv.isAutomationActive ? "Automation on" : "Automation paused"}</Badge>
+        {conv.assignment && <span className="text-xs text-[var(--color-ink-secondary)]">Assigned to {conv.assignment.assigneeName}</span>}
+        <Button size="sm" variant="ghost" onClick={() => void polling.refreshNow()}>Refresh</Button>
+      </div>
+      {USING_FIXTURE_ADAPTERS && (
+        <p className="mt-2 text-xs text-[var(--color-ink-secondary)]" role="note">Demo data — replies are simulated and never sent.</p>
+      )}
+
+      <div className="sr-only" aria-live="polite" role="status">{announcement}</div>
+
+      <div className="mt-6">
+        <StaleBanner isStale={polling.isStale} lastSuccessAt={polling.lastSuccessAt} onRefresh={() => void polling.refreshNow()} />
+        <InboxAlert error={actionError} onRefresh={() => { setActionError(null); void polling.refreshNow(); }} onDismiss={() => setActionError(null)} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        {/* Message timeline */}
-        <div className="lg:col-span-2">
-          <div className="flex flex-col gap-3">
-            {allMessages.map((m) => {
-              const ds = DELIVERY_MAP[m.deliveryState] ?? { label: m.deliveryState, variant: "neutral" as const };
-              const ss = SENDER_MAP[m.senderType] ?? { label: m.senderType, variant: "neutral" as const };
-              const isOutbound = m.direction === "outbound";
-              return (
-                <div
-                  key={m.id}
-                  className={`flex flex-col gap-1 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4 ${isOutbound ? "ml-8 bg-[var(--color-canvas-subtle)]" : "mr-8"}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[var(--color-ink-primary)]">{m.senderName}</span>
-                    <Badge variant={ss.variant}>{ss.label}</Badge>
-                    <Badge variant={ds.variant}>{ds.label}</Badge>
-                    {m.deliveryState === "failed" && (
-                      <span className="text-[10px] text-[var(--color-danger)]">Retry needed</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-[var(--color-ink-primary)]">{m.content}</p>
-                  {m.attachments.length > 0 && (
-                    <div className="mt-1 flex gap-2">
-                      {m.attachments.map((att) => (
-                        <span key={att.name} className="rounded-[var(--radius-md)] bg-[var(--color-canvas-subtle)] px-2 py-1 text-[10px] text-[var(--color-ink-secondary)]">
-                          {att.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <span className="text-[10px] text-[var(--color-ink-secondary)]">
-                    {new Date(m.createdAt).toLocaleString()}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Staff composer */}
-          {canCompose && (
-            <div className="mt-4 flex gap-2">
-              <Input
-                placeholder="Type a message..."
-                value={composerText}
-                onChange={(e) => setComposerText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                aria-label="Message composer"
-                className="flex-1"
-              />
-              <Button onClick={handleSend} disabled={!composerText.trim()}>
-                Send
-              </Button>
-            </div>
-          )}
-
-          {automationActive && !isViewer && (
-            <p className="mt-2 text-xs text-[var(--color-ink-secondary)]">
-              Bot is active. Take over to send messages manually.
+      <div className="mt-2 grid gap-6 lg:grid-cols-3">
+        <div className="min-w-0 lg:col-span-2">
+          <ConversationTimeline
+            messages={timeline}
+            customerName={conv.customerName}
+            canWrite={canWrite}
+            hasOlder={Boolean(olderCursor)}
+            isLoadingOlder={isLoadingOlder}
+            onLoadOlder={() => void loadOlder()}
+            onSendAgain={(text) => void sendNew(text)}
+            onRetryLocal={retryLocal}
+          />
+          {canWrite ? (
+            <>
+              <div className="mt-4">
+                <InboxAlert error={composerError} onDismiss={() => setComposerError(null)} />
+              </div>
+              <MessageComposer onSend={sendNew} disabledReason={composerBlocked} hint={windowHint} />
+            </>
+          ) : (
+            <p className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm text-[var(--color-ink-secondary)]">
+              View-only access. Ask an owner or admin if you need to reply.
             </p>
           )}
 
-          <p className="mt-4 text-[10px] text-[var(--color-ink-secondary)]">
-            Messages are simulated. No real messages are sent or received.
-          </p>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6 lg:self-start">
-          {/* Takeover / Release */}
-          {!isViewer && (
-            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--color-ink-primary)]">Automation Control</h3>
-              <div className="mt-3">
-                {automationActive ? (
-                  <Button variant="outline" className="w-full" onClick={handleTakeover}>
-                    Take Over
-                  </Button>
-                ) : (
-                  <Button variant="outline" className="w-full" onClick={handleRelease}>
-                    Release to Bot
-                  </Button>
-                )}
-              </div>
-              <p className="mt-2 text-[10px] text-[var(--color-ink-secondary)]">
-                {automationActive
-                  ? "AI assistant is handling this conversation."
-                  : "Human control is active. Bot will not send messages."}
-              </p>
-            </div>
-          )}
-
-          {/* Provider health */}
-          {health && (
-            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--color-ink-primary)]">Channel Health</h3>
-              <div className="mt-3 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-ink-secondary)]">Status</span>
-                  <Badge variant={CONN_STATUS[health.status]?.variant ?? "neutral"}>
-                    {CONN_STATUS[health.status]?.label ?? health.status}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-ink-secondary)]">Events (24h)</span>
-                  <span className="text-[var(--color-ink-primary)]">{health.eventsProcessed24h}</span>
-                </div>
-                {health.eventsFailed24h > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-[var(--color-ink-secondary)]">Failed (24h)</span>
-                    <span className="text-[var(--color-danger)]">{health.eventsFailed24h}</span>
-                  </div>
-                )}
-                {health.lastEventAt && (
-                  <div className="flex justify-between">
-                    <span className="text-[var(--color-ink-secondary)]">Last event</span>
-                    <span className="text-[var(--color-ink-primary)]">{new Date(health.lastEventAt).toLocaleString()}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Labels */}
-          {conv.labels.length > 0 && (
-            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--color-ink-primary)]">Labels</h3>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {conv.labels.map((l) => (
-                  <span
-                    key={l}
-                    className="rounded-[var(--radius-full)] bg-[var(--color-canvas-subtle)] px-2.5 py-0.5 text-xs text-[var(--color-ink-secondary)]"
-                  >
-                    {l}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* AI traces */}
-          {traces.length > 0 && (
-            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--color-ink-primary)]">AI Activity</h3>
-              <div className="mt-3 space-y-2 text-sm">
+          {USING_FIXTURE_ADAPTERS && traces.length > 0 && (
+            <section className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5" aria-label="AI activity (demo)">
+              <h2 className="text-sm font-semibold text-[var(--color-ink-primary)]">AI activity (demo)</h2>
+              <ul className="mt-3 space-y-2 text-sm">
                 {traces.map((t) => (
-                  <div key={t.id} className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
+                  <li key={t.id} className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
                     <p className="text-xs font-medium text-[var(--color-ink-primary)]">{t.intent}</p>
-                    <p className="mt-1 text-[10px] text-[var(--color-ink-secondary)]">
-                      {t.toolCalls.length} tool call{t.toolCalls.length !== 1 ? "s" : ""} · {t.latencyMs}ms · confidence {(t.confidenceScore * 100).toFixed(0)}%
-                    </p>
-                  </div>
+                    <p className="mt-1 text-[10px] text-[var(--color-ink-secondary)]">{t.toolCalls.length} tool call{t.toolCalls.length !== 1 ? "s" : ""} · {t.latencyMs}ms</p>
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ul>
+            </section>
           )}
-
-          {/* Customer info */}
-          <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-            <h3 className="text-sm font-semibold text-[var(--color-ink-primary)]">Customer</h3>
-            <div className="mt-3 space-y-1 text-sm">
-              <p className="text-[var(--color-ink-primary)]">{conv.customerName}</p>
-              <p className="text-[var(--color-ink-secondary)]">{conv.customerIdentifier}</p>
-            </div>
-          </div>
         </div>
+
+        <ConversationPanel
+          conversation={conv}
+          canWrite={canWrite}
+          busy={busy}
+          assignees={assignees}
+          currentUserId={currentUserId}
+          health={health}
+          onTakeOver={() => void act(() => client.takeOver(conv.id))}
+          onRelease={() => void act(() => client.release(conv.id))}
+          onAssign={(userId) => void act(() => client.assign(conv.id, userId))}
+          onUnassign={() => void act(() => client.unassign(conv.id))}
+          onSetLabels={(labels) => void act(() => client.setLabels(conv.id, labels))}
+          onStatus={(action: ConversationStatusAction) => void act(() => client.changeStatus(conv.id, action))}
+        />
       </div>
     </div>
   );

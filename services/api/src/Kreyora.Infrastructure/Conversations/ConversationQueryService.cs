@@ -4,6 +4,8 @@ using Kreyora.Application.Models;
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Conversations;
 using Kreyora.Domain.Customers;
+using Kreyora.Domain.Integrations;
+using Kreyora.Domain.Tenancy;
 using Kreyora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -180,15 +182,47 @@ public sealed class ConversationQueryService(
             .Select(g => new { g.Key.ProviderMessageId, g.Key.Emoji, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
+        // Failure reason for failed outbound rows: the latest delivery attempt's code (M08-S06).
+        var failedOutboundIds = pageItems
+            .Where(m => m.DeliveryStatus == MessageDeliveryStatus.Failed && m.OutboundMessageId != null)
+            .Select(m => m.OutboundMessageId!)
+            .ToList();
+        var failureCodes = failedOutboundIds.Count == 0
+            ? new Dictionary<string, string?>()
+            : (await dbContext.OutboundDeliveryAttempts.AsNoTracking()
+                    .Where(a => a.TenantId == tenantId && failedOutboundIds.Contains(a.OutboundMessageId))
+                    .Select(a => new { a.OutboundMessageId, a.AttemptNumber, a.StartedAt, a.ProviderErrorCode })
+                    .ToListAsync(cancellationToken))
+                .GroupBy(a => a.OutboundMessageId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(a => a.AttemptNumber).ThenByDescending(a => a.StartedAt).First().ProviderErrorCode);
+
         var items = pageItems.Select(m => ConversationMapping.ToItem(m,
                 reactions
                     .Where(r => r.ProviderMessageId == m.ProviderMessageId)
                     .OrderBy(r => r.Emoji, StringComparer.Ordinal)
                     .Select(r => new MessageReactionSummary(r.Emoji, r.Count))
-                    .ToList()))
+                    .ToList(),
+                m.OutboundMessageId is not null ? failureCodes.GetValueOrDefault(m.OutboundMessageId) : null))
             .ToList();
 
         return Result<MessagePage>.Success(new MessagePage(items, hasMore && items.Count > 0 ? items[0].Id : null));
+    }
+
+    public async Task<Result<IReadOnlyList<ConversationAssigneeItem>>> ListAssigneesAsync(CancellationToken cancellationToken = default)
+    {
+        authorizer.Demand(TenantPermissions.ConversationsRead);
+        var tenantId = tenantContext.RequireCurrent().TenantId;
+
+        var members = await dbContext.Memberships.AsNoTracking()
+            .Where(m => m.TenantId == tenantId && m.Status == MembershipStatus.Active)
+            .Join(dbContext.Users.AsNoTracking(), m => m.UserId, u => u.Id, (m, u) => new { m.UserId, u.DisplayName, m.Role })
+            .OrderBy(m => m.DisplayName)
+            .ToListAsync(cancellationToken);
+
+        return Result<IReadOnlyList<ConversationAssigneeItem>>.Success(
+            members.Select(m => new ConversationAssigneeItem(m.UserId, m.DisplayName, m.Role)).ToList());
     }
 
     private async Task<ConversationDetailItem?> BuildDetailAsync(string tenantId, string conversationId, CancellationToken cancellationToken)

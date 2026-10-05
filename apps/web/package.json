@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
-    "generate:api": "node scripts/fetch-openapi.mjs && openapi-typescript src/lib/api/generated/openapi-v1.json -o src/lib/api/generated/v1.ts"
+    "generate:api": "node scripts/fetch-openapi.mjs && openapi-typescript src/lib/api/generated/openapi-v1.json -o src/lib/api/generated/v1.ts",
+    "test:e2e:real": "node scripts/e2e-real.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.19",
