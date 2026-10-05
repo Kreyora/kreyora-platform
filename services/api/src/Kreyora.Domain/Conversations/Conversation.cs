@@ -17,6 +17,16 @@ public enum ConversationStatus
     Spam = 9
 }
 
+/// <summary>Staff-initiated status changes (ADR-017).</summary>
+public enum ConversationStatusAction
+{
+    Resolve = 1,
+    Reopen = 2,
+    Close = 3,
+    MarkSpam = 4,
+    UnmarkSpam = 5
+}
+
 /// <summary>The single current owner mode of a conversation (plan §10.4).</summary>
 public enum AutomationMode
 {
@@ -97,6 +107,94 @@ public sealed class Conversation : BaseEntity, ITenantOwned
         CustomerLastReadAt = Max(CustomerLastReadAt, occurredAt);
 
     public void MarkReadByStaff() => UnreadCount = 0;
+
+    /// <summary>Business-side message (staff, automation, or provider echo): moves only the last-activity time.</summary>
+    public void RecordOutboundMessage(DateTimeOffset occurredAt) => LastMessageAt = Max(LastMessageAt, occurredAt);
+
+    /// <summary>
+    /// ADR-017: a human owns the conversation; automation may not send. Active threads move to HumanAssigned;
+    /// Resolved/Closed/Spam keep their disposition. Returns false when already taken over (idempotent).
+    /// </summary>
+    public bool TakeOver()
+    {
+        if (AutomationMode == AutomationMode.HumanTakeover)
+        {
+            return false;
+        }
+
+        AutomationMode = AutomationMode.HumanTakeover;
+        if (!IsDisposition(Status))
+        {
+            Status = ConversationStatus.HumanAssigned;
+        }
+
+        return true;
+    }
+
+    /// <summary>ADR-017: explicit hand-back to automation. Returns false when already automated (idempotent).</summary>
+    public bool Release()
+    {
+        if (AutomationMode == AutomationMode.Automated)
+        {
+            return false;
+        }
+
+        AutomationMode = AutomationMode.Automated;
+        if (!IsDisposition(Status))
+        {
+            Status = ConversationStatus.BotActive;
+        }
+
+        return true;
+    }
+
+    public void Assign(string userId, DateTimeOffset now)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        AssignedUserId = userId;
+        AssignedAt = now;
+    }
+
+    public void Unassign()
+    {
+        AssignedUserId = null;
+        AssignedAt = null;
+    }
+
+    /// <summary>
+    /// ADR-017 staff status actions. Returns false for a no-op (already in the target state) and throws
+    /// <see cref="InvalidOperationException"/> for a transition the state machine forbids.
+    /// </summary>
+    public bool ApplyStatusAction(ConversationStatusAction action)
+    {
+        var target = action switch
+        {
+            ConversationStatusAction.Resolve when Status == ConversationStatus.Spam => throw Invalid(action),
+            ConversationStatusAction.Resolve => ConversationStatus.Resolved,
+            ConversationStatusAction.Close when Status == ConversationStatus.Spam => throw Invalid(action),
+            ConversationStatusAction.Close => ConversationStatus.Closed,
+            ConversationStatusAction.Reopen when Status is ConversationStatus.Resolved or ConversationStatus.Closed => ConversationStatus.New,
+            ConversationStatusAction.Reopen => throw Invalid(action),
+            ConversationStatusAction.MarkSpam => ConversationStatus.Spam,
+            ConversationStatusAction.UnmarkSpam when Status == ConversationStatus.Spam => ConversationStatus.New,
+            ConversationStatusAction.UnmarkSpam => throw Invalid(action),
+            _ => throw new ArgumentOutOfRangeException(nameof(action))
+        };
+
+        if (target == Status)
+        {
+            return false;
+        }
+
+        Status = target;
+        return true;
+    }
+
+    private InvalidOperationException Invalid(ConversationStatusAction action) =>
+        new($"Cannot {action} a conversation in status {Status}.");
+
+    private static bool IsDisposition(ConversationStatus status) =>
+        status is ConversationStatus.Resolved or ConversationStatus.Closed or ConversationStatus.Spam;
 
     private static DateTimeOffset Max(DateTimeOffset? current, DateTimeOffset candidate) =>
         current.HasValue && current.Value >= candidate ? current.Value : candidate;

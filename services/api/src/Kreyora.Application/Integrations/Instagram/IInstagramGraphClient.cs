@@ -57,4 +57,44 @@ public interface IInstagramGraphClient
         string pageAccessToken,
         string instagramAccountId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends a text message through the Send API (<c>POST /me/messages</c> with the Page access token;
+    /// recipient = Instagram-scoped user ID). <paramref name="messagingTag"/> (e.g. HUMAN_AGENT) switches
+    /// <c>messaging_type</c> to MESSAGE_TAG.
+    /// </summary>
+    Task<InstagramSendResult> SendTextAsync(
+        string pageAccessToken,
+        string recipientId,
+        string text,
+        string? messagingTag = null,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>How a send attempt ended (ADR-017 delivery semantics).</summary>
+public enum InstagramSendOutcome
+{
+    Sent = 1,
+    /// <summary>Safe to retry: throttled, provider-declared transient, or the request was never sent.</summary>
+    Transient = 2,
+    /// <summary>The provider rejected the request; retrying will not help.</summary>
+    Rejected = 3,
+    /// <summary>The token is expired or invalid (error 190).</summary>
+    TokenExpired = 4,
+    /// <summary>The request may have been processed (timeout/reset after sending): never auto-retried.</summary>
+    Unconfirmed = 5
+}
+
+public sealed record InstagramSendResult(
+    InstagramSendOutcome Outcome,
+    string? MessageId,
+    string? ProviderErrorCode,
+    string? Message)
+{
+    public bool IsSent => Outcome == InstagramSendOutcome.Sent;
+
+    public static InstagramSendResult Sent(string messageId) => new(InstagramSendOutcome.Sent, messageId, null, null);
+
+    public static InstagramSendResult Failed(InstagramSendOutcome outcome, string? code, string message) =>
+        new(outcome, null, code, message);
 }

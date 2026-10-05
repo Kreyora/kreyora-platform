@@ -20,6 +20,8 @@ public sealed class OutboundMessage : BaseEntity, ITenantOwned
     public string ConnectionId { get; private set; } = string.Empty;
     public ChannelType Channel { get; private set; }
     public string? ConversationId { get; private set; }
+    public OutboundMessageOrigin Origin { get; private set; }
+    public string? ActorUserId { get; private set; }
     public string RecipientChannelId { get; private set; } = string.Empty;
     public string IdempotencyKey { get; private set; } = string.Empty;
     public OutboundMessageType MessageType { get; private set; }
@@ -63,7 +65,9 @@ public sealed class OutboundMessage : BaseEntity, ITenantOwned
         string? metadataJson = null,
         string? conversationId = null,
         DateTimeOffset? queuedAt = null,
-        int maxAttempts = WebhookRetryPolicy.DefaultMaxAttempts)
+        int maxAttempts = WebhookRetryPolicy.DefaultMaxAttempts,
+        OutboundMessageOrigin origin = OutboundMessageOrigin.System,
+        string? actorUserId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
@@ -130,6 +134,8 @@ public sealed class OutboundMessage : BaseEntity, ITenantOwned
             TemplateParametersJson = templateParametersJson,
             MetadataJson = metadataJson,
             ConversationId = trimmedConversationId,
+            Origin = origin,
+            ActorUserId = string.IsNullOrWhiteSpace(actorUserId) ? null : actorUserId,
             Status = OutboundMessageStatus.Queued,
             QueuedAt = queuedAt ?? DateTimeOffset.UtcNow,
             AttemptCount = 0,

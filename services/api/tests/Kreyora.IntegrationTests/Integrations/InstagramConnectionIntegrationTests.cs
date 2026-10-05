@@ -319,4 +319,13 @@ public sealed class RefusingInstagramGraphClient : IInstagramGraphClient
         CancellationToken cancellationToken = default) =>
         Task.FromResult(InstagramValidationResult.Failed(
             InstagramValidationKind.Transient, "refused", "Instagram validation is not stubbed in this suite."));
+
+    public Task<InstagramSendResult> SendTextAsync(
+        string pageAccessToken,
+        string recipientId,
+        string text,
+        string? messagingTag = null,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(InstagramSendResult.Failed(
+            InstagramSendOutcome.Rejected, "refused", "Instagram sending is not stubbed in this suite."));
 }

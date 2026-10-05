@@ -27,6 +27,7 @@ public enum MessageKind
 /// <summary>
 /// One timeline entry. Ordered by provider time (<see cref="OccurredAt"/>), never by arrival.
 /// Provider message IDs are unique per connection so sends and their echoes can never duplicate.
+/// A staff reply exists as a pending entry (no provider ID, no delivery status) until the provider accepts it.
 /// </summary>
 public sealed class Message : BaseEntity, ITenantOwned
 {
@@ -39,6 +40,8 @@ public sealed class Message : BaseEntity, ITenantOwned
     public string ConversationId { get; private set; } = string.Empty;
     public string ConnectionId { get; private set; } = string.Empty;
     public string? InboundEventId { get; private set; }
+    public string? OutboundMessageId { get; private set; }
+    public string? ActorUserId { get; private set; }
     public MessageDirection Direction { get; private set; }
     public MessageOrigin Origin { get; private set; }
     public string? ProviderMessageId { get; private set; }
@@ -51,6 +54,8 @@ public sealed class Message : BaseEntity, ITenantOwned
     public MessageDeliveryStatus? DeliveryStatus { get; private set; }
     public DateTimeOffset? RedactedAt { get; private set; }
 
+    public bool IsPending => Direction == MessageDirection.Outbound && DeliveryStatus is null;
+
     public static Message CreateInboundText(
         string tenantId,
         string conversationId,
@@ -61,8 +66,10 @@ public sealed class Message : BaseEntity, ITenantOwned
         DateTimeOffset occurredAt,
         DateTimeOffset receivedAt)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerMessageId);
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
-        var message = CreateCore(tenantId, conversationId, connectionId, inboundEventId, providerMessageId, MessageKind.Text, occurredAt, receivedAt);
+        var message = CreateCore(tenantId, conversationId, connectionId, providerMessageId, MessageDirection.Inbound, MessageOrigin.Customer, MessageKind.Text, occurredAt, receivedAt);
+        message.InboundEventId = Optional(inboundEventId);
         message.Text = text;
         return message;
     }
@@ -79,20 +86,37 @@ public sealed class Message : BaseEntity, ITenantOwned
         DateTimeOffset occurredAt,
         DateTimeOffset receivedAt)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(mediaUrl);
-        ArgumentException.ThrowIfNullOrWhiteSpace(mediaContentType);
-        var message = CreateCore(tenantId, conversationId, connectionId, inboundEventId, providerMessageId, MessageKind.Media, occurredAt, receivedAt);
-        message.MediaUrl = mediaUrl;
-        message.MediaContentType = mediaContentType.Length > MediaContentTypeMaxLength
-            ? mediaContentType[..MediaContentTypeMaxLength]
-            : mediaContentType;
-        message.Text = string.IsNullOrWhiteSpace(caption) ? null : caption;
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerMessageId);
+        var message = CreateCore(tenantId, conversationId, connectionId, providerMessageId, MessageDirection.Inbound, MessageOrigin.Customer, MessageKind.Media, occurredAt, receivedAt);
+        message.InboundEventId = Optional(inboundEventId);
+        message.ApplyMedia(mediaUrl, mediaContentType, caption);
+        return message;
+    }
+
+    /// <summary>A staff reply recorded at enqueue time; it becomes Sent or Failed when delivery finishes.</summary>
+    public static Message CreatePendingStaffReply(
+        string tenantId,
+        string conversationId,
+        string connectionId,
+        string outboundMessageId,
+        string actorUserId,
+        string text,
+        DateTimeOffset now)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(outboundMessageId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(actorUserId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+        var message = CreateCore(tenantId, conversationId, connectionId, null, MessageDirection.Outbound, MessageOrigin.Staff, MessageKind.Text, now, now);
+        message.OutboundMessageId = outboundMessageId;
+        message.ActorUserId = actorUserId;
+        message.Text = text;
         return message;
     }
 
     /// <summary>
     /// An outbound text already accepted by the provider (it has a provider message ID), starting as
-    /// <see cref="MessageDeliveryStatus.Sent"/>. Staff/automation send orchestration arrives in M08-S05.
+    /// <see cref="MessageDeliveryStatus.Sent"/>. Used for automation sends, which enter the timeline only
+    /// once accepted (ADR-017).
     /// </summary>
     public static Message CreateOutboundText(
         string tenantId,
@@ -102,21 +126,83 @@ public sealed class Message : BaseEntity, ITenantOwned
         string providerMessageId,
         string text,
         DateTimeOffset occurredAt,
-        DateTimeOffset receivedAt)
+        DateTimeOffset receivedAt,
+        string? outboundMessageId = null,
+        string? actorUserId = null)
     {
         if (origin == MessageOrigin.Customer)
         {
             throw new ArgumentException("Outbound messages cannot originate from the customer.", nameof(origin));
         }
 
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerMessageId);
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
-        var message = CreateCore(tenantId, conversationId, connectionId, null, providerMessageId, MessageKind.Text, occurredAt, receivedAt);
-        message.Direction = MessageDirection.Outbound;
-        message.Origin = origin;
+        var message = CreateCore(tenantId, conversationId, connectionId, providerMessageId, MessageDirection.Outbound, origin, MessageKind.Text, occurredAt, receivedAt);
         message.Text = text;
+        message.OutboundMessageId = Optional(outboundMessageId);
+        message.ActorUserId = Optional(actorUserId);
         message.DeliveryStatus = MessageDeliveryStatus.Sent;
         return message;
     }
+
+    /// <summary>A business message sent outside Kreyora (provider echo), e.g. typed in the Instagram app.</summary>
+    public static Message CreateProviderNativeEcho(
+        string tenantId,
+        string conversationId,
+        string connectionId,
+        string? inboundEventId,
+        string providerMessageId,
+        string? text,
+        string? mediaUrl,
+        string? mediaContentType,
+        DateTimeOffset occurredAt,
+        DateTimeOffset receivedAt)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerMessageId);
+        var isMedia = !string.IsNullOrWhiteSpace(mediaUrl);
+        if (!isMedia && string.IsNullOrWhiteSpace(text))
+        {
+            throw new ArgumentException("An echo needs text or media.", nameof(text));
+        }
+
+        var message = CreateCore(tenantId, conversationId, connectionId, providerMessageId, MessageDirection.Outbound,
+            MessageOrigin.ProviderNative, isMedia ? MessageKind.Media : MessageKind.Text, occurredAt, receivedAt);
+        message.InboundEventId = Optional(inboundEventId);
+        if (isMedia)
+        {
+            message.ApplyMedia(mediaUrl!, mediaContentType ?? "unknown", text);
+        }
+        else
+        {
+            message.Text = text;
+        }
+
+        message.DeliveryStatus = MessageDeliveryStatus.Sent;
+        return message;
+    }
+
+    /// <summary>The provider accepted a pending outbound message.</summary>
+    public void RecordProviderAcceptance(string providerMessageId, DateTimeOffset sentAt)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerMessageId);
+        if (Direction != MessageDirection.Outbound)
+        {
+            throw new InvalidOperationException("Only outbound messages can be accepted by a provider.");
+        }
+
+        if (providerMessageId.Length > ProviderMessageIdMaxLength)
+        {
+            throw new ArgumentOutOfRangeException(nameof(providerMessageId));
+        }
+
+        ProviderMessageId = providerMessageId;
+        OccurredAt = sentAt;
+        AdvanceDeliveryStatus(MessageDeliveryStatus.Sent);
+    }
+
+    /// <summary>Terminal delivery failure of a pending outbound message.</summary>
+    public bool MarkDeliveryFailed() =>
+        IsPending && AdvanceDeliveryStatus(MessageDeliveryStatus.Failed);
 
     /// <summary>Delivery state only moves forward (Sent → Delivered → Read); a failure never replaces a success.</summary>
     public bool AdvanceDeliveryStatus(MessageDeliveryStatus status)
@@ -144,12 +230,24 @@ public sealed class Message : BaseEntity, ITenantOwned
         return true;
     }
 
+    private void ApplyMedia(string mediaUrl, string mediaContentType, string? caption)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(mediaUrl);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mediaContentType);
+        MediaUrl = mediaUrl;
+        MediaContentType = mediaContentType.Length > MediaContentTypeMaxLength
+            ? mediaContentType[..MediaContentTypeMaxLength]
+            : mediaContentType;
+        Text = string.IsNullOrWhiteSpace(caption) ? null : caption;
+    }
+
     private static Message CreateCore(
         string tenantId,
         string conversationId,
         string connectionId,
-        string? inboundEventId,
-        string providerMessageId,
+        string? providerMessageId,
+        MessageDirection direction,
+        MessageOrigin origin,
         MessageKind kind,
         DateTimeOffset occurredAt,
         DateTimeOffset receivedAt)
@@ -157,8 +255,7 @@ public sealed class Message : BaseEntity, ITenantOwned
         ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
         ArgumentException.ThrowIfNullOrWhiteSpace(conversationId);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(providerMessageId);
-        if (providerMessageId.Length > ProviderMessageIdMaxLength)
+        if (providerMessageId is { Length: > ProviderMessageIdMaxLength })
         {
             throw new ArgumentOutOfRangeException(nameof(providerMessageId));
         }
@@ -168,15 +265,16 @@ public sealed class Message : BaseEntity, ITenantOwned
             TenantId = tenantId,
             ConversationId = conversationId,
             ConnectionId = connectionId,
-            InboundEventId = string.IsNullOrWhiteSpace(inboundEventId) ? null : inboundEventId,
-            Direction = MessageDirection.Inbound,
-            Origin = MessageOrigin.Customer,
-            ProviderMessageId = providerMessageId,
+            Direction = direction,
+            Origin = origin,
+            ProviderMessageId = Optional(providerMessageId),
             Kind = kind,
             OccurredAt = occurredAt,
             ReceivedAt = receivedAt
         };
     }
+
+    private static string? Optional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     private static int Rank(MessageDeliveryStatus? status) => status switch
     {

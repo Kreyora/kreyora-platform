@@ -88,13 +88,16 @@ public static class DependencyInjection
             .BindConfiguration(SecretEncryptionOptions.SectionName);
         services.AddSingleton<ISecretEncryptionService, AesGcmSecretEncryptionService>();
         services.AddSingleton<IChannelProvider, SimulatorChannelProvider>();
-        services.AddSingleton<IChannelProvider, InstagramChannelProvider>();
+        // Scoped: the send path uses the typed Graph HttpClient (ADR-017).
+        services.AddScoped<IChannelProvider, InstagramChannelProvider>();
         services.AddScoped<IChannelProviderRegistry, ChannelProviderRegistry>();
 
         services.AddOptions<InstagramGraphOptions>()
             .BindConfiguration(InstagramGraphOptions.SectionName);
         services.AddOptions<InstagramWebhookOptions>()
             .BindConfiguration(InstagramWebhookOptions.SectionName);
+        services.AddOptions<InstagramMessagingOptions>()
+            .BindConfiguration(InstagramMessagingOptions.SectionName);
         services.AddHttpClient<IInstagramGraphClient, InstagramGraphClient>(
             (serviceProvider, httpClient) =>
             {
@@ -188,8 +191,11 @@ public static class DependencyInjection
         services.AddScoped<IConversationQueryService, ConversationQueryService>();
         services.AddScoped<IConversationInboxService, ConversationInboxService>();
         services.AddScoped<IConversationPrivacyService, ConversationPrivacyService>();
+        services.AddScoped<IConversationReplyService, ConversationReplyService>();
+        services.AddScoped<IConversationOutboundReconciler, ConversationOutboundReconciler>();
+        services.AddScoped<IOutboundEnqueuer>(sp => (OutboundMessageService)sp.GetRequiredService<IOutboundMessageService>());
         services.AddTransient<WebhookProcessingJob>();
-        services.AddScoped<IConversationGate, AlwaysAllowConversationGate>();
+        services.AddScoped<IConversationGate, ConversationGate>();
         services.AddScoped<IOutboundMessageService, OutboundMessageService>();
         services.AddTransient<OutboundDeliveryJob>();
         services.AddScoped<IIntegrationDiagnosticsService, IntegrationDiagnosticsService>();

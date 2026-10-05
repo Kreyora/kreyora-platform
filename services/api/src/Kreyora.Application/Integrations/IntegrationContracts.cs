@@ -140,6 +140,13 @@ public sealed record OutboundDeliveryResult(
     public static OutboundDeliveryResult Failure(string errorCode, string errorMessage) =>
         new(false, null, errorCode, errorMessage, null);
 
+    /// <summary>Provider-declared retryable failure (throttling, transient error, request not sent).</summary>
+    public static OutboundDeliveryResult TransientFailure(string errorCode, string errorMessage) =>
+        new(false, null, errorCode, errorMessage, null) { IsTransient = true };
+
+    /// <summary>True when the provider says the failure is retryable; null when unknown (legacy heuristic applies).</summary>
+    public bool? IsTransient { get; init; }
+
     public static OutboundDeliveryResult Delivered(string providerMessageId, DateTimeOffset deliveredAt) =>
         Success(providerMessageId, deliveredAt);
 

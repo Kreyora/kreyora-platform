@@ -180,18 +180,7 @@ public sealed class ConversationQueryService(
             .Select(g => new { g.Key.ProviderMessageId, g.Key.Emoji, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
-        var items = pageItems.Select(m => new MessageItem(
-                m.Id,
-                m.ConversationId,
-                m.Direction,
-                m.Origin,
-                m.Kind,
-                m.Text,
-                m.MediaUrl,
-                m.MediaContentType,
-                m.DeliveryStatus,
-                m.OccurredAt,
-                m.RedactedAt.HasValue,
+        var items = pageItems.Select(m => ConversationMapping.ToItem(m,
                 reactions
                     .Where(r => r.ProviderMessageId == m.ProviderMessageId)
                     .OrderBy(r => r.Emoji, StringComparer.Ordinal)

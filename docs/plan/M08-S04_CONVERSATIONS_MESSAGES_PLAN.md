@@ -6,7 +6,7 @@
 - **Step:** 04 — Customer identities, conversations, and messages
 - **Author:** Claude (planning)
 - **Date:** 2026-10-05
-- **Status:** `REVIEW` — implemented 2026-10-05; evidence in `artifacts/checkpoints/M08-S04.md` (plan, including ADR-016 rules D2–D3, approved by the owner on 2026-10-05: "implement")
+- **Status:** `APPROVED` (2026-10-05) — implemented 2026-10-05; evidence in `artifacts/checkpoints/M08-S04.md` (plan, including ADR-016 rules D2–D3, approved by the owner on 2026-10-05: "implement")
 - **Prerequisites:** M08-S03 `APPROVED` (2026-10-05); ADR-010, ADR-011, ADR-012, ADR-015 `Accepted`.
 - **Manual work for the owner in this step:** none. Live Meta checks remain at M08-S07.
 

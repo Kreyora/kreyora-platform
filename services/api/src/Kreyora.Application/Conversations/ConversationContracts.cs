@@ -35,11 +35,53 @@ public interface IConversationQueryService
         CancellationToken cancellationToken = default);
 }
 
+/// <summary>Staff inbox operations (ADR-016/017). All require <c>conversations.write</c>.</summary>
 public interface IConversationInboxService
 {
     /// <summary>Resets the staff unread count. Idempotent.</summary>
     Task<Result<ConversationDetailItem>> MarkReadAsync(
         string conversationId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Human takeover: automation stops and queued automation messages are cancelled atomically. Audited.</summary>
+    Task<Result<ConversationDetailItem>> TakeOverAsync(string conversationId, CancellationToken cancellationToken = default);
+
+    /// <summary>Explicit hand-back to automation. Audited.</summary>
+    Task<Result<ConversationDetailItem>> ReleaseAsync(string conversationId, CancellationToken cancellationToken = default);
+
+    /// <summary>Assigns to an active member of the same tenant. Audited.</summary>
+    Task<Result<ConversationDetailItem>> AssignAsync(string conversationId, string userId, CancellationToken cancellationToken = default);
+
+    Task<Result<ConversationDetailItem>> UnassignAsync(string conversationId, CancellationToken cancellationToken = default);
+
+    /// <summary>Replaces the label set (≤ 20 labels, ≤ 48 characters, case-insensitive de-duplication).</summary>
+    Task<Result<ConversationDetailItem>> SetLabelsAsync(string conversationId, IReadOnlyList<string> labels, CancellationToken cancellationToken = default);
+
+    /// <summary>Resolve, reopen, close, mark or unmark spam. Invalid transitions return 409. Audited.</summary>
+    Task<Result<ConversationDetailItem>> ChangeStatusAsync(string conversationId, ConversationStatusAction action, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Replies into a conversation through the durable outbox (ADR-017).</summary>
+public interface IConversationReplyService
+{
+    /// <summary>
+    /// Staff reply: records a pending timeline message and the outbox message atomically; an automated
+    /// conversation is taken over in the same transaction. Same idempotency key → same message.
+    /// </summary>
+    Task<Result<MessageItem>> SendStaffReplyAsync(
+        string conversationId,
+        string text,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Automation (M09) placeholder: enqueues an automation message, refused while a human has taken over.
+    /// Automation messages enter the timeline only when the provider accepts them. No HTTP endpoint.
+    /// </summary>
+    Task<Result<string>> EnqueueAutomationReplyAsync(
+        string conversationId,
+        string text,
+        string idempotencyKey,
         CancellationToken cancellationToken = default);
 }
 
@@ -117,10 +159,20 @@ public sealed record MessageItem(
     MessageDeliveryStatus? DeliveryStatus,
     DateTimeOffset OccurredAt,
     bool IsRedacted,
-    IReadOnlyList<MessageReactionSummary> Reactions);
+    IReadOnlyList<MessageReactionSummary> Reactions,
+    bool IsPending = false,
+    string? ActorUserId = null);
 
 /// <summary>Messages in chronological order; <see cref="NextBeforeMessageId"/> pages to older messages.</summary>
 public sealed record MessagePage(IReadOnlyList<MessageItem> Items, string? NextBeforeMessageId);
+
+public sealed record StaffReplyRequest(string Text);
+
+public sealed record AssignConversationRequest(string UserId);
+
+public sealed record SetConversationLabelsRequest(IReadOnlyList<string> Labels);
+
+public sealed record ChangeConversationStatusRequest(ConversationStatusAction Action);
 
 public sealed record IdentityErasureResult(
     string CustomerChannelIdentityId,
