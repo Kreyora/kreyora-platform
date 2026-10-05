@@ -6,7 +6,7 @@
 - **Step:** 06 — Unified inbox frontend integration
 - **Author:** Claude (planning)
 - **Date:** 2026-10-05
-- **Status:** `REVIEW` — implemented 2026-10-05 (checkpoint `artifacts/checkpoints/M08-S06.md`); was `IN PROGRESS` — approved by the owner on 2026-10-05 ("ok implement"): decisions Q1–Q4 as recommended
+- **Status:** `APPROVED` 2026-10-05 (merged `fa91a38`); was `REVIEW` — implemented 2026-10-05 (checkpoint `artifacts/checkpoints/M08-S06.md`); was `IN PROGRESS` — approved by the owner on 2026-10-05 ("ok implement"): decisions Q1–Q4 as recommended
 - **Prerequisites:** M08-S05 `APPROVED` (merged to `master` at `50faeac`); ADR-015/016/017 `Accepted`.
 - **Manual work for the owner in this step:** review the UI screenshots, and optionally click through the inbox locally. No Meta or account actions.
 

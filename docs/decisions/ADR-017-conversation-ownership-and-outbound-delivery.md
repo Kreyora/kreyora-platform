@@ -94,3 +94,14 @@ M08-S05 requires authorized staff replies through the durable outbox, assignment
 - Meta adds idempotent sends, or changes window or tag rules.
 - M09 needs automation-specific ownership states.
 - Internal notes are approved.
+
+## Correction note (2026-10-05, M08-S07) — appended
+
+The Context section above cites "error 1545041" for the 24-hour window. Meta's Send API error reference (accessed 2026-10-05) lists the outside-window errors as `10 / 2018278` ("This message is sent outside of allowed window") and `2534022`. It lists `551 / 1545041` as "This person isn't available right now."
+
+M08-S07 corrected the Instagram client:
+
+- Both outside-window errors map to the stable `window_closed` reason code, with the raw Meta code kept in the diagnostic message.
+- 1545041 is reported as "not available".
+
+The decision itself is unchanged: the local gate still enforces the window before any send. See `docs/architecture/INSTAGRAM_PRODUCTION_READINESS.md` R12.

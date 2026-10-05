@@ -302,7 +302,7 @@ public sealed class WebhookProcessingIntegrationTests : IClassFixture<PostgresFi
         services.AddSingleton<ITenantContextAccessor>(accessor);
         services.AddSingleton<ITenantPermissionAuthorizer>(authorizer);
         services.AddSingleton<IAuditEventService>(audit);
-        services.AddSingleton<IChannelProviderRegistry>(new ChannelProviderRegistry([new SimulatorChannelProvider()]));
+        services.AddSingleton<IChannelProviderRegistry>(new ChannelProviderRegistry([new SimulatorChannelProvider(acceptsFixedTestSignature: true)]));
         services.AddSingleton<IWebhookProcessingService, WebhookProcessingService>();
         services.AddSingleton<ITimeProvider, SystemTimeProvider>();
         services.AddLogging();
@@ -329,7 +329,7 @@ public sealed class WebhookProcessingIntegrationTests : IClassFixture<PostgresFi
 
     private static WebhookProcessingService CreateProcessingService(AppDbContext db, ITenantContextAccessor accessor)
     {
-        var registry = new ChannelProviderRegistry([new SimulatorChannelProvider()]);
+        var registry = new ChannelProviderRegistry([new SimulatorChannelProvider(acceptsFixedTestSignature: true)]);
         var authorizer = new TenantPermissionAuthorizer(accessor);
         var audit = new AuditEventService(db, accessor, new Correlation("wh-proc-test"), authorizer);
         return new WebhookProcessingService(

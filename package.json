@@ -10,6 +10,11 @@
     "test": "pnpm --filter @kreyora/web test",
     "test:watch": "pnpm --filter @kreyora/web test:watch",
     "generate:api": "pnpm --filter @kreyora/web generate:api",
-    "ci:frontend": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "ci:frontend": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "sandbox": "node scripts/sandbox/run.mjs",
+    "sandbox:connect": "node scripts/sandbox/instagram-connection.mjs",
+    "sandbox:ctl": "node scripts/sandbox/ctl.mjs",
+    "sandbox:evidence": "node scripts/sandbox/evidence.mjs",
+    "test:sandbox-tools": "node --test \"scripts/sandbox/*.test.mjs\""
   }
 }

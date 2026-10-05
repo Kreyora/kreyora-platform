@@ -313,3 +313,11 @@ Root `task.md` was retired on 2026-10-05: it duplicated status from `docs/contex
 
 - **Q1 (product intent) — decided 2026-10-05:** accept `Degraded`/`Expired`; acknowledge (200) and do not store `Disabled`/`Revoked`/`Pending`.
 - **Q2 (account access, needed at sandbox time — next):** ability to switch the Meta app to Published/Live and subscribe the Page via `subscribed_apps`.
+
+## Correction (2026-10-06, M08-S07) — appended
+
+"Manual sandbox prerequisites" item 3 lists `messaging_seen` among the Page `subscribed_apps` fields. Meta rejects it there: it isn't a Page field, and read receipts come through the app-level `instagram` webhook field.
+
+The working Page call was `POST /{page-id}/subscribed_apps?subscribed_fields=messages,message_reactions`. Item 2 must be done in the app's main **Webhooks** product (object `instagram`), not the "API setup with Instagram business login" page, which signs with a different secret.
+
+See `docs/architecture/INSTAGRAM_PRODUCTION_READINESS.md` L2–L3.
