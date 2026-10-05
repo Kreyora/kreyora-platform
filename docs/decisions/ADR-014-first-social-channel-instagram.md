@@ -48,3 +48,11 @@ Adopt **Instagram Messaging (Messenger API for Instagram)** as the first channel
 ## Supersession conditions
 
 - Owner selects a different provider; sandbox evidence contradicts the matrix; Meta publishes materially different pricing/window/permission terms.
+
+## Status note (2026-10-05)
+
+This ADR was accepted by the project owner on 2026-09-22 (see the note at the top). The "Decision (proposed)", "No adapter code in S01" and S01 consequence wording is historical text from the M08-S01 draft and is kept unchanged.
+
+Two items listed under Validation evidence as acceptance requirements were **not** met when the ADR was accepted and remain outstanding: an observed sandbox webhook and an App Review plan. They are tracked in M08-S03 (manual sandbox checklist) and M08-S07.
+
+The "non-expiring long-lived PAT" statement is a documentation claim (source S4, accessed 2026-09-22) still to be confirmed against current Meta documentation and observed token behavior. Webhook routing, ownership, and event identity for this channel are governed by ADR-015.

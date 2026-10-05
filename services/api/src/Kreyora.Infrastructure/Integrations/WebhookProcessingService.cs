@@ -106,11 +106,13 @@ public sealed partial class WebhookProcessingService(
                 ev.ConnectionId,
                 ev.Id,
                 ev.Channel,
-                ev.ReceivedAt);
+                ev.ReceivedAt,
+                connection.ExternalAccountId);
 
             var envelopes = await provider.NormalizeInboundAsync(rawPayload, cancellationToken);
 
             var normalizedCount = 0;
+            var batchKeys = new HashSet<string>(StringComparer.Ordinal);
             foreach (var envelope in envelopes)
             {
                 if (envelope.SchemaVersion != NormalizedInboundEnvelope.CurrentSchemaVersion)
@@ -120,15 +122,27 @@ public sealed partial class WebhookProcessingService(
                 }
 
                 var providerMessageId = ExtractProviderMessageId(envelope.Payload);
-                if (!string.IsNullOrWhiteSpace(providerMessageId))
+
+                // Event identity (ADR-015): provider key when supplied, else the M07 legacy key (provider
+                // message ID). Without either, the event is not deduplicated (unique row identity).
+                var identity = envelope.DeduplicationKey ?? providerMessageId;
+                string? deduplicationKey = null;
+                if (!string.IsNullOrWhiteSpace(identity))
                 {
+                    deduplicationKey = InboundEvent.HashIdentity(identity);
+                    if (!batchKeys.Add(deduplicationKey))
+                    {
+                        LogDuplicateMessageSkipped(logger, providerMessageId ?? envelope.EventId, ev.ConnectionId, ev.Id);
+                        continue;
+                    }
+
                     var exists = await dbContext.InboundEvents
                         .IgnoreQueryFilters()
-                        .AnyAsync(i => i.ConnectionId == ev.ConnectionId && i.ProviderMessageId == providerMessageId, cancellationToken);
+                        .AnyAsync(i => i.ConnectionId == ev.ConnectionId && i.DeduplicationKey == deduplicationKey, cancellationToken);
 
                     if (exists)
                     {
-                        LogDuplicateMessageSkipped(logger, providerMessageId, ev.ConnectionId, ev.Id);
+                        LogDuplicateMessageSkipped(logger, providerMessageId ?? envelope.EventId, ev.ConnectionId, ev.Id);
                         continue;
                     }
                 }
@@ -145,7 +159,8 @@ public sealed partial class WebhookProcessingService(
                     envelope.SchemaVersion,
                     eventType,
                     payloadJson,
-                    envelope.OccurredAt);
+                    envelope.OccurredAt,
+                    deduplicationKey);
 
                 dbContext.InboundEvents.Add(inbound);
                 normalizedCount++;
@@ -181,6 +196,14 @@ public sealed partial class WebhookProcessingService(
         catch (Exception ex)
         {
             var classification = WebhookFailureClassifier.Classify(ex);
+
+            // Discard every pending change from the failed attempt (e.g. inbound rows that violated a
+            // constraint) so recording the failure cannot fail the same way and strand the event in Processing.
+            dbContext.ChangeTracker.Clear();
+            ev = await dbContext.WebhookEvents
+                .IgnoreQueryFilters()
+                .FirstAsync(e => e.Id == webhookEventId, cancellationToken);
+
             var retryPolicy = new WebhookRetryPolicy(ev.MaxAttempts);
             ev.RecordFailure(ex.Message, classification, DateTimeOffset.UtcNow, retryPolicy);
 

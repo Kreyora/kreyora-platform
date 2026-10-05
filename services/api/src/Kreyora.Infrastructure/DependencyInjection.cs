@@ -86,10 +86,13 @@ public static class DependencyInjection
             .BindConfiguration(SecretEncryptionOptions.SectionName);
         services.AddSingleton<ISecretEncryptionService, AesGcmSecretEncryptionService>();
         services.AddSingleton<IChannelProvider, SimulatorChannelProvider>();
+        services.AddSingleton<IChannelProvider, InstagramChannelProvider>();
         services.AddScoped<IChannelProviderRegistry, ChannelProviderRegistry>();
 
         services.AddOptions<InstagramGraphOptions>()
             .BindConfiguration(InstagramGraphOptions.SectionName);
+        services.AddOptions<InstagramWebhookOptions>()
+            .BindConfiguration(InstagramWebhookOptions.SectionName);
         services.AddHttpClient<IInstagramGraphClient, InstagramGraphClient>(
             (serviceProvider, httpClient) =>
             {

@@ -2,19 +2,26 @@ using Kreyora.Application.Integrations;
 using Kreyora.Application.Integrations.Instagram;
 using Kreyora.Domain.Integrations;
 using Kreyora.Infrastructure.Integrations;
+using Kreyora.Infrastructure.Integrations.Instagram;
+using Microsoft.Extensions.Options;
 
 namespace Kreyora.ContractTests.Integrations.Instagram;
 
 public sealed class InstagramProviderContractTests
 {
     [Fact]
-    public void Registry_HasNoInstagramAdapter_Yet()
+    public void Registry_ResolvesInstagramAdapter_WithAppLevelWebhookContract()
     {
-        var registry = new ChannelProviderRegistry(Array.Empty<IChannelProvider>());
+        // Replaces the S01 "no adapter yet" assertion: M08-S03 registers the Instagram adapter.
+        var registry = new ChannelProviderRegistry(new IChannelProvider[]
+        {
+            new InstagramChannelProvider(Options.Create(new InstagramWebhookOptions()))
+        });
 
-        Assert.False(registry.TryGetProvider(ChannelType.Instagram, out var provider));
-        Assert.Null(provider);
-        Assert.Throws<NotSupportedException>(() => registry.GetProvider(ChannelType.Instagram));
+        Assert.True(registry.TryGetProvider(ChannelType.Instagram, out var provider));
+        Assert.IsType<InstagramChannelProvider>(provider);
+        Assert.False(provider!.UsesConnectionSecretForSignature);
+        Assert.Equal(200, provider.AcknowledgementStatusCode);
     }
 
     [Fact]

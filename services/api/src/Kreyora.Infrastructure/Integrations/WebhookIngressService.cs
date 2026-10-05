@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Kreyora.Application.Integrations;
@@ -49,6 +50,18 @@ public sealed partial class WebhookIngressService(
     [LoggerMessage(Level = LogLevel.Information, Message = "Webhook event {EventId} (provider: {ProviderEventId}) persisted for connection {ConnectionId} in {ElapsedMs}ms. Correlation: {CorrelationId}")]
     private static partial void LogEventPersisted(ILogger logger, string eventId, string providerEventId, string connectionId, long elapsedMs, string correlationId);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Signed webhook account does not match connection '{ConnectionId}'. Correlation: {CorrelationId}")]
+    private static partial void LogAccountMismatch(ILogger logger, string connectionId, string correlationId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Verified '{Channel}' webhook entries for unknown account (hash {AccountHash}) acknowledged and dropped. Correlation: {CorrelationId}")]
+    private static partial void LogUnknownAccountIgnored(ILogger logger, ChannelType channel, string accountHash, string correlationId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Verified webhook for connection '{ConnectionId}' in status {Status} acknowledged and not stored. Correlation: {CorrelationId}")]
+    private static partial void LogConnectionStatusIgnored(ILogger logger, string connectionId, ChannelConnectionStatus status, string correlationId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Verified '{Channel}' webhook had no routable account entries; acknowledged and dropped. Correlation: {CorrelationId}")]
+    private static partial void LogUnroutableIgnored(ILogger logger, ChannelType channel, string correlationId);
+
     public async Task<WebhookIngressResult> HandleWebhookAsync(
         WebhookIngressCommand command,
         CancellationToken cancellationToken = default)
@@ -78,6 +91,11 @@ public sealed partial class WebhookIngressService(
             return WebhookIngressResult.NotFound($"Provider for channel '{command.Channel}' not found");
         }
 
+        if (!provider.UsesConnectionSecretForSignature)
+        {
+            return await HandleAppSignedWebhookAsync(provider, command, correlationId, sw, cancellationToken);
+        }
+
         // 4. Resolve connection
         ChannelConnection? connection = null;
         if (!string.IsNullOrWhiteSpace(command.ConnectionId))
@@ -94,29 +112,8 @@ public sealed partial class WebhookIngressService(
         }
         else
         {
-            // Try resolving by external account ID from header or body
-            var externalAccountId = command.Headers.GetValueOrDefault("X-External-Account-Id") ??
-                                    command.Headers.GetValueOrDefault("X-Account-Id");
-
-            if (string.IsNullOrWhiteSpace(externalAccountId))
-            {
-                try
-                {
-                    using var doc = JsonDocument.Parse(command.RawBody);
-                    if (doc.RootElement.TryGetProperty("account_id", out var accProp))
-                    {
-                        externalAccountId = accProp.GetString();
-                    }
-                    else if (doc.RootElement.TryGetProperty("external_account_id", out var extProp))
-                    {
-                        externalAccountId = extProp.GetString();
-                    }
-                }
-                catch
-                {
-                    // ignore JSON parse error here
-                }
-            }
+            // Signed payload identity first (provider hook), then routing headers, then legacy body fields.
+            var externalAccountId = ResolveLegacyExternalAccountId(provider, command);
 
             if (!string.IsNullOrWhiteSpace(externalAccountId))
             {
@@ -178,6 +175,14 @@ public sealed partial class WebhookIngressService(
             }
 
             return WebhookIngressResult.InvalidSignature(validationResult.FailureReason ?? "Invalid signature");
+        }
+
+        // 7b. The account named by the validated request must be the resolved connection's account (ADR-015).
+        if (!string.IsNullOrWhiteSpace(validationResult.ExternalAccountId)
+            && !string.Equals(validationResult.ExternalAccountId, connection.ExternalAccountId, StringComparison.Ordinal))
+        {
+            LogAccountMismatch(logger, connection.Id, correlationId);
+            return WebhookIngressResult.AccountMismatch("Webhook account does not match the addressed connection");
         }
 
         // 8. Extract ProviderEventId
@@ -271,6 +276,7 @@ public sealed partial class WebhookIngressService(
                 return WebhookChallengeResult.NotFound($"ChannelConnection '{command.ConnectionId}' not found");
             }
 
+            // M07 semantics. App-level providers (Instagram) ignore this and use their own verify token.
             if (connection.EncryptedCredentials != null)
             {
                 secret = encryptionService.Decrypt(connection.EncryptedCredentials);
@@ -297,4 +303,266 @@ public sealed partial class WebhookIngressService(
 
         return WebhookChallengeResult.Invalid(result.FailureReason ?? "Challenge verification failed");
     }
+
+    /// <summary>
+    /// App-signed providers (ADR-015): authenticate the whole delivery with the app secret before reading
+    /// any connection data, split it per provider account, route each slice through globally unique
+    /// account ownership, apply the connection-status policy, and persist all slices atomically.
+    /// </summary>
+    private async Task<WebhookIngressResult> HandleAppSignedWebhookAsync(
+        IChannelProvider provider,
+        WebhookIngressCommand command,
+        string correlationId,
+        Stopwatch sw,
+        CancellationToken cancellationToken)
+    {
+        var ackStatus = provider.AcknowledgementStatusCode;
+
+        var validationResult = await provider.ValidateWebhookAsync(
+            new WebhookValidationRequest(
+                command.Method,
+                command.Path,
+                command.Headers,
+                command.QueryParameters,
+                command.RawBody,
+                Secret: null),
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            LogValidationFailed(logger, command.ConnectionId ?? "(app)", validationResult.FailureReason, correlationId);
+            if (validationResult.FailureReason?.Contains("replay", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return WebhookIngressResult.ReplayWindowExpired(validationResult.FailureReason);
+            }
+
+            return WebhookIngressResult.InvalidSignature(validationResult.FailureReason ?? "Invalid signature");
+        }
+
+        var providerEventId = validationResult.ProviderEventId ?? "evt_" + Guid.NewGuid().ToString("N");
+        var rawBodyString = Encoding.UTF8.GetString(command.RawBody);
+        var slices = SplitVerifiedBody(provider, command.RawBody);
+
+        var targets = new List<(ChannelConnection Connection, string RawBody)>();
+        if (!string.IsNullOrWhiteSpace(command.ConnectionId))
+        {
+            var addressed = await dbContext.ChannelConnections
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == command.ConnectionId && c.Channel == command.Channel, cancellationToken);
+
+            if (addressed == null)
+            {
+                LogConnectionNotFound(logger, command.ConnectionId, correlationId);
+                return WebhookIngressResult.NotFound($"ChannelConnection '{command.ConnectionId}' not found");
+            }
+
+            if (slices.Count == 0)
+            {
+                // Signed but unparseable/entry-less body addressed to one connection: keep it for the DLQ.
+                targets.Add((addressed, rawBodyString));
+            }
+            else if (slices.Any(slice => !string.Equals(slice.ExternalAccountId, addressed.ExternalAccountId, StringComparison.Ordinal)))
+            {
+                LogAccountMismatch(logger, addressed.Id, correlationId);
+                return WebhookIngressResult.AccountMismatch("Webhook account does not match the addressed connection");
+            }
+            else
+            {
+                targets.AddRange(slices.Select(slice => (addressed, slice.RawBody)));
+            }
+        }
+        else
+        {
+            if (slices.Count == 0)
+            {
+                LogUnroutableIgnored(logger, command.Channel, correlationId);
+                return WebhookIngressResult.Ignored(ackStatus, "No routable account entries");
+            }
+
+            var accounts = slices.Select(slice => slice.ExternalAccountId).Distinct(StringComparer.Ordinal).ToList();
+            var owners = await dbContext.ChannelConnections
+                .IgnoreQueryFilters()
+                .Where(c => c.Channel == command.Channel && accounts.Contains(c.ExternalAccountId))
+                .ToListAsync(cancellationToken);
+
+            foreach (var slice in slices)
+            {
+                var owner = owners.FirstOrDefault(c => string.Equals(c.ExternalAccountId, slice.ExternalAccountId, StringComparison.Ordinal));
+                if (owner == null)
+                {
+                    LogUnknownAccountIgnored(logger, command.Channel, HashForLog(slice.ExternalAccountId), correlationId);
+                    continue;
+                }
+
+                targets.Add((owner, slice.RawBody));
+            }
+        }
+
+        // Connection-status policy (owner decision 2026-10-05): inbound customer messages are kept while a
+        // seller repairs credentials; deliberately disabled, revoked, or never-activated connections store nothing.
+        var accepted = new List<(ChannelConnection Connection, string RawBody)>();
+        foreach (var target in targets)
+        {
+            if (AcceptsInbound(target.Connection.Status))
+            {
+                accepted.Add(target);
+            }
+            else
+            {
+                LogConnectionStatusIgnored(logger, target.Connection.Id, target.Connection.Status, correlationId);
+            }
+        }
+
+        if (accepted.Count == 0)
+        {
+            return WebhookIngressResult.Ignored(ackStatus, "No accepting connection for this delivery");
+        }
+
+        var connectionIds = accepted.Select(t => t.Connection.Id).Distinct(StringComparer.Ordinal).ToList();
+        var existing = await FindExistingEventsAsync(connectionIds, providerEventId, cancellationToken);
+        var fresh = accepted.Where(t => !existing.ContainsKey(t.Connection.Id)).ToList();
+        if (fresh.Count == 0)
+        {
+            sw.Stop();
+            LogDuplicateDetected(logger, providerEventId, connectionIds[0], sw.ElapsedMilliseconds);
+            return WebhookIngressResult.Duplicate(existing[connectionIds[0]], ackStatus);
+        }
+
+        var headersJson = JsonSerializer.Serialize(command.Headers);
+        var created = fresh
+            .Select(t => WebhookEvent.Create(
+                tenantId: t.Connection.TenantId,
+                connectionId: t.Connection.Id,
+                channel: command.Channel,
+                providerEventId: providerEventId,
+                eventType: null,
+                occurredAt: command.ReceivedAt,
+                receivedAt: command.ReceivedAt,
+                correlationId: correlationId,
+                headers: headersJson,
+                rawPayload: t.RawBody))
+            .ToList();
+
+        try
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            foreach (var tenantGroup in created.GroupBy(e => e.TenantId, StringComparer.Ordinal))
+            {
+                using (tenantContext.BeginScope(new TenantContext(tenantGroup.Key, null, null, null)))
+                {
+                    dbContext.WebhookEvents.AddRange(tenantGroup);
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                }
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // Concurrent identical delivery won the unique index: the transaction rolled back; answer idempotently.
+            foreach (var ev in created)
+            {
+                dbContext.Entry(ev).State = EntityState.Detached;
+            }
+
+            var raced = await FindExistingEventsAsync(connectionIds, providerEventId, cancellationToken);
+            if (connectionIds.All(raced.ContainsKey))
+            {
+                sw.Stop();
+                LogDuplicateDetected(logger, providerEventId, connectionIds[0], sw.ElapsedMilliseconds);
+                return WebhookIngressResult.Duplicate(raced[connectionIds[0]], ackStatus);
+            }
+
+            throw;
+        }
+
+        sw.Stop();
+        foreach (var ev in created)
+        {
+            LogEventPersisted(logger, ev.Id, providerEventId, ev.ConnectionId, sw.ElapsedMilliseconds, correlationId);
+        }
+
+        return WebhookIngressResult.Accepted(created[0].Id, ackStatus);
+    }
+
+    private async Task<Dictionary<string, string>> FindExistingEventsAsync(
+        IReadOnlyCollection<string> connectionIds,
+        string providerEventId,
+        CancellationToken cancellationToken) =>
+        await dbContext.WebhookEvents
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(e => connectionIds.Contains(e.ConnectionId) && e.ProviderEventId == providerEventId)
+            .ToDictionaryAsync(e => e.ConnectionId, e => e.Id, StringComparer.Ordinal, cancellationToken);
+
+    private static IReadOnlyList<WebhookAccountSlice> SplitVerifiedBody(IChannelProvider provider, byte[] rawBody)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(rawBody);
+            var slices = provider.SplitByAccount(document);
+            if (slices != null)
+            {
+                return slices;
+            }
+
+            var accountId = provider.ResolveExternalAccountId(document);
+            return string.IsNullOrWhiteSpace(accountId)
+                ? Array.Empty<WebhookAccountSlice>()
+                : [new WebhookAccountSlice(accountId, Encoding.UTF8.GetString(rawBody))];
+        }
+        catch (JsonException)
+        {
+            return Array.Empty<WebhookAccountSlice>();
+        }
+    }
+
+    private static string? ResolveLegacyExternalAccountId(IChannelProvider provider, WebhookIngressCommand command)
+    {
+        JsonDocument? document = null;
+        try
+        {
+            document = JsonDocument.Parse(command.RawBody);
+        }
+        catch (JsonException)
+        {
+            // Unparseable body: only routing headers can identify the account.
+        }
+
+        using (document)
+        {
+            if (document != null && provider.ResolveExternalAccountId(document) is { Length: > 0 } signedAccount)
+            {
+                return signedAccount;
+            }
+
+            var headerAccount = command.Headers.GetValueOrDefault("X-External-Account-Id") ??
+                                command.Headers.GetValueOrDefault("X-Account-Id");
+            if (!string.IsNullOrWhiteSpace(headerAccount))
+            {
+                return headerAccount;
+            }
+
+            if (document?.RootElement.ValueKind == JsonValueKind.Object)
+            {
+                if (document.RootElement.TryGetProperty("account_id", out var accProp) && accProp.ValueKind == JsonValueKind.String)
+                {
+                    return accProp.GetString();
+                }
+
+                if (document.RootElement.TryGetProperty("external_account_id", out var extProp) && extProp.ValueKind == JsonValueKind.String)
+                {
+                    return extProp.GetString();
+                }
+            }
+
+            return null;
+        }
+    }
+
+    private static bool AcceptsInbound(ChannelConnectionStatus status) =>
+        status is ChannelConnectionStatus.Active or ChannelConnectionStatus.Degraded or ChannelConnectionStatus.Expired;
+
+    private static string HashForLog(string value) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)))[..12];
 }

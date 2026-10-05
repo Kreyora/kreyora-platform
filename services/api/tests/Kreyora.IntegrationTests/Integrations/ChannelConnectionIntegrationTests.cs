@@ -81,18 +81,20 @@ public sealed class ChannelConnectionIntegrationTests : IClassFixture<PostgresFi
 
         var service = CreateService(db, accessor);
 
+        // WhatsApp, not Instagram: Instagram creation now requires live Graph validation (ADR-015, M08-S03),
+        // which this redaction test does not exercise.
         var createResult = await service.CreateConnectionAsync(new CreateChannelConnectionRequest(
-            Channel: ChannelType.Instagram,
-            ExternalAccountId: "ig_page_12345",
-            DisplayName: "Brand Instagram",
-            PlainTextSecret: "super_secret_ig_token"));
+            Channel: ChannelType.WhatsApp,
+            ExternalAccountId: "wa_redact_12345",
+            DisplayName: "Brand WhatsApp",
+            PlainTextSecret: "super_secret_wa_token"));
 
         Assert.True(createResult.IsSuccess);
 
         var getResult = await service.GetConnectionByIdAsync(createResult.Value!.Id);
         Assert.True(getResult.IsSuccess);
         Assert.NotNull(getResult.Value);
-        Assert.Equal("Brand Instagram", getResult.Value.DisplayName);
+        Assert.Equal("Brand WhatsApp", getResult.Value.DisplayName);
         Assert.True(getResult.Value.HasCredentials);
         Assert.Equal("v1", getResult.Value.KeyVersion);
         Assert.Equal(ChannelConnectionStatus.Active, getResult.Value.Status);

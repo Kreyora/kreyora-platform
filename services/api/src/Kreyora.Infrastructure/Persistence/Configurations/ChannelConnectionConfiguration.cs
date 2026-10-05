@@ -44,7 +44,8 @@ public sealed class ChannelConnectionConfiguration : IEntityTypeConfiguration<Ch
 
         builder.HasAlternateKey(c => new { c.TenantId, c.Id });
 
-        builder.HasIndex(c => new { c.TenantId, c.Channel, c.ExternalAccountId }).IsUnique();
+        // One owning connection per external account across all tenants (ADR-015, amends ADR-010).
+        builder.HasIndex(c => new { c.Channel, c.ExternalAccountId }).IsUnique();
         builder.HasIndex(c => new { c.TenantId, c.StoreId });
         builder.HasIndex(c => new { c.TenantId, c.Status });
 
