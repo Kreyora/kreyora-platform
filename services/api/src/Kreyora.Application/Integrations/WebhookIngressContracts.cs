@@ -25,6 +25,19 @@ public sealed record WebhookIngressResult(
     public static WebhookIngressResult Success(string eventId, bool isDuplicate = false, string? responseBody = null) =>
         new(true, isDuplicate ? 200 : 202, eventId, isDuplicate, null, responseBody ?? (isDuplicate ? "{\"status\":\"duplicate\"}" : "{\"status\":\"accepted\"}"));
 
+    public static WebhookIngressResult Accepted(string eventId, int statusCode) =>
+        new(true, statusCode, eventId, false, null, "{\"status\":\"accepted\"}");
+
+    public static WebhookIngressResult Duplicate(string eventId, int statusCode) =>
+        new(true, statusCode, eventId, true, null, "{\"status\":\"duplicate\"}");
+
+    /// <summary>Verified delivery acknowledged without persistence (unknown account or ignored connection status).</summary>
+    public static WebhookIngressResult Ignored(int statusCode, string reason) =>
+        new(true, statusCode, null, false, reason, "{\"status\":\"ignored\"}");
+
+    public static WebhookIngressResult AccountMismatch(string reason) =>
+        new(false, 403, null, false, reason, "{\"error\":\"account_mismatch\"}");
+
     public static WebhookIngressResult InvalidSignature(string reason) =>
         new(false, 401, null, false, reason, "{\"error\":\"invalid_signature\"}");
 

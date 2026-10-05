@@ -57,3 +57,6 @@ We adopt a dual-phase retention policy: **30-day raw payload retention with auto
 
 - Legal requirements mandating shorter (e.g. 7 days) or longer (e.g. 90 days) retention periods in specific operating jurisdictions.
 
+## Amendment note (2026-10-05)
+
+Amended by [ADR-015](ADR-015-social-account-ownership-fanout-and-event-identity.md): for providers that split multi-account deliveries (Instagram), `RawPayload` stores the per-account slice of a delivery whose signature was verified at ingress, not the byte-identical request body. Retention, purge, and access rules above are unchanged.

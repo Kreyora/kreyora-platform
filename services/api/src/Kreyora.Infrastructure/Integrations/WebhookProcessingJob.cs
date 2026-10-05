@@ -17,6 +17,9 @@ public sealed partial class WebhookProcessingJob(
 {
     private const int DefaultBatchSize = 50;
 
+    /// <summary>An event still in Processing after this long is treated as abandoned and retried.</summary>
+    public static readonly TimeSpan ProcessingLease = TimeSpan.FromMinutes(15);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Processed {Count} webhook events for tenant {TenantId}")]
     private static partial void LogProcessed(ILogger logger, int count, string tenantId);
 
@@ -59,10 +62,13 @@ public sealed partial class WebhookProcessingJob(
         var clock = services.GetRequiredService<ITimeProvider>();
         var now = clock.UtcNow;
 
+        var staleProcessingBefore = now - ProcessingLease;
         var candidateEventIds = await dbContext.WebhookEvents
             .Where(e => e.TenantId == tenantId &&
                         (e.ProcessingStatus == WebhookProcessingStatus.Received ||
-                         (e.ProcessingStatus == WebhookProcessingStatus.Failed && e.NextRetryAt <= now)))
+                         (e.ProcessingStatus == WebhookProcessingStatus.Failed && e.NextRetryAt <= now) ||
+                         // Reclaim events stranded in Processing by a crash or an unrecorded failure.
+                         (e.ProcessingStatus == WebhookProcessingStatus.Processing && e.ModifiedAt < staleProcessingBefore)))
             .OrderBy(e => e.ReceivedAt)
             .Take(DefaultBatchSize)
             .Select(e => e.Id)

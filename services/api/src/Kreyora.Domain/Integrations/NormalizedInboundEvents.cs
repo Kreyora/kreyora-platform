@@ -21,6 +21,12 @@ public sealed record NormalizedInboundEnvelope(
 {
     public const string CurrentSchemaVersion = "v1";
 
+    /// <summary>
+    /// Optional provider-defined event identity used for inbound idempotency (ADR-011 optional v1 field,
+    /// ADR-015). When null, processing falls back to the payload's provider message ID.
+    /// </summary>
+    public string? DeduplicationKey { get; init; }
+
     public static NormalizedInboundEnvelope Create(
         string eventId,
         string tenantId,
@@ -28,7 +34,8 @@ public sealed record NormalizedInboundEnvelope(
         ChannelType channel,
         DateTimeOffset occurredAt,
         NormalizedInboundPayload payload,
-        string schemaVersion = CurrentSchemaVersion)
+        string schemaVersion = CurrentSchemaVersion,
+        string? deduplicationKey = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(eventId);
         ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
@@ -43,7 +50,10 @@ public sealed record NormalizedInboundEnvelope(
             channel,
             occurredAt,
             schemaVersion,
-            payload);
+            payload)
+        {
+            DeduplicationKey = string.IsNullOrWhiteSpace(deduplicationKey) ? null : deduplicationKey
+        };
     }
 }
 

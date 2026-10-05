@@ -63,10 +63,14 @@ public sealed record RawWebhookPayload(
     string ConnectionId,
     string? PayloadId = null,
     ChannelType? Channel = null,
-    DateTimeOffset? ReceivedAt = null)
+    DateTimeOffset? ReceivedAt = null,
+    string? ExternalAccountId = null)
 {
     public string Body => RawBody;
 }
+
+/// <summary>The part of a verified delivery that belongs to one provider account.</summary>
+public sealed record WebhookAccountSlice(string ExternalAccountId, string RawBody);
 
 public sealed record ChannelConnectionSnapshot(
     string ConnectionId,

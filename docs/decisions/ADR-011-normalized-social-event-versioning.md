@@ -60,3 +60,6 @@ We adopt a strongly-typed polymorphic envelope model with an explicit schema ver
 
 - Introduction of streaming or real-time binary protocols (e.g., WebRTC audio) requiring fundamentally non-JSON envelope representations.
 
+## Amendment note (2026-10-05)
+
+[ADR-015](ADR-015-social-account-ownership-fanout-and-event-identity.md) adds the optional envelope field `DeduplicationKey`. Per §3 above, this non-breaking optional field keeps `schemaVersion: "v1"`. Providers may use deterministic, provider-derived `EventId` values; the "canonical ULID" wording above describes the Simulator/M07 convention. The text above is unchanged.
