@@ -2,6 +2,7 @@ using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Audit;
 using Kreyora.Domain.Catalog;
 using Kreyora.Domain.Common;
+using Kreyora.Domain.Conversations;
 using Kreyora.Domain.Customers;
 using Kreyora.Domain.Integrations;
 using Kreyora.Domain.Inventory;
@@ -65,6 +66,11 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<InboundEvent> InboundEvents => Set<InboundEvent>();
     public DbSet<OutboundMessage> OutboundMessages => Set<OutboundMessage>();
     public DbSet<OutboundDeliveryAttempt> OutboundDeliveryAttempts => Set<OutboundDeliveryAttempt>();
+    public DbSet<CustomerChannelIdentity> CustomerChannelIdentities => Set<CustomerChannelIdentity>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<Message> Messages => Set<Message>();
+    public DbSet<MessageReaction> MessageReactions => Set<MessageReaction>();
+    public DbSet<ConversationLabel> ConversationLabels => Set<ConversationLabel>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -119,6 +125,11 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<InboundEvent>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<OutboundMessage>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<OutboundDeliveryAttempt>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<CustomerChannelIdentity>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<Conversation>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<Message>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<MessageReaction>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<ConversationLabel>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
