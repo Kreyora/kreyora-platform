@@ -3,29 +3,29 @@
 ## Active position
 
 - **Milestone:** 08 — First Validated Social Channel and Unified Inbox
-- **Step:** S03 — Real webhook validation and inbound normalization
-- **Status:** `REVIEW` (corrective build complete 2026-10-05)
-- **Plan state:** M08-S02 APPROVED 2026-09-22. M08-S03 original plan approved by the owner's "implement" instruction to Muse Spark (approval entry missing from the repo; recorded 2026-10-05 as documentation drift). S03 implementation reviewed 2026-10-05: findings B1–B5 confirmed and reproduced; corrective scope in `docs/plan/M08-S03_WEBHOOK_NORMALIZATION_PLAN.md` awaits owner approval.
+- **Step:** S04 — Customer identities, conversations, and messages
+- **Status:** `REVIEW` (implementation complete 2026-10-05)
+- **Plan state:** M08-S03 APPROVED 2026-10-05; its live Meta sandbox checklist is carried to M08-S07 by owner decision. ADR-015 accepted 2026-10-05.
 - **Active milestone file:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master`.
-- **Current checkpoint:** `artifacts/checkpoints/M08-S03.md` (REVIEW 2026-09-22; CHANGES REQUESTED 2026-10-05; REVIEW after corrective build 2026-10-05)
-- **Previous checkpoint:** `artifacts/checkpoints/M08-S02.md` (APPROVED 2026-09-22)
-- **Last approved state:** M08-S02 approved 2026-09-22 (M08-S01 and ADR-014 accepted 2026-09-22; Milestone 07 exit gate approved 2026-09-22).
+- **Branch:** `master`. The S03, S04 and repo reorganization work are uncommitted.
+- **Current checkpoint:** `artifacts/checkpoints/M08-S04.md` (REVIEW 2026-10-05)
+- **Previous checkpoint:** `artifacts/checkpoints/M08-S03.md` (APPROVED 2026-10-05)
+- **Last approved state:** M08-S03 approved 2026-10-05.
 
 ## Current objective
 
-M08-S03 corrective build complete (ADR-015). Awaiting owner review of `artifacts/checkpoints/M08-S03.md` and the manual Dev-mode sandbox webhook checklist. No M08-S04 work until S03 is approved.
+M08-S04 implementation complete (ADR-016). Awaiting owner review of `artifacts/checkpoints/M08-S04.md`. No M08-S05 work until S04 is approved.
 
 ## Next permitted action
 
-Owner review of the S03 checkpoint; manual sandbox run (publish the app, webhook callback + verify token, `subscribed_apps`, tester DM). Tunnel, Meta configuration changes, and live credentials each require separate authorization.
+Owner review of `artifacts/checkpoints/M08-S04.md`. Manual work: none required.
 
 ## Next prohibited action
 
-- Starting Milestone 08 Step 04 before M08-S03 approval.
+- Starting M08-S05 before M08-S04 approval.
 - Opening a tunnel, changing Meta configuration, or using live credentials without separate authorization.
 - Committing, pushing, deploying, or contacting external services without authorization.
 
@@ -33,6 +33,10 @@ Owner review of the S03 checkpoint; manual sandbox run (publish the app, webhook
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-05 | Completed M08-S04 implementation: channel identities, conversations, messages, reactions, labels (ADR-016 accepted); atomic ingestion from webhook processing; read-only inbox API + mark-read; owner erasure service; additive migration `AddConversationsMessagesAndChannelIdentities`; OpenAPI/TS regenerated (fixed snapshot drift since M05-S05, additive only). Full backend suite 671 passed / 0 failed; EF clean; frontend CI green; Docker back to baseline. Status -> `REVIEW`. | Claude |
+| 2026-10-05 | Project owner approved the M08-S04 plan, including ADR-016 rules D2–D3 ("implement"). Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-05 | Graphify code graph refreshed at the S03 approval boundary (7,299 nodes, 19,633 edges, 314 communities). Drafted the M08-S04 plan `docs/plan/M08-S04_CONVERSATIONS_MESSAGES_PLAN.md` (plan only; no S04 code). | Claude |
+| 2026-10-05 | Project owner approved M08-S03 (`artifacts/checkpoints/M08-S03.md`); live Meta sandbox checklist carried to M08-S07. Position set to M08-S04 PLANNING (plan only). | Project owner / Claude |
 | 2026-10-05 | Repo organization (owner request): `AGENTS.md` made the single shared agent-instruction file (stale `.Codex/rules` paths fixed); `CLAUDE.md` now imports it via `@AGENTS.md`. Root `task.md` retired; its S03 checklist moved verbatim into `docs/plan/M08-S03_WEBHOOK_NORMALIZATION_PLAN.md` § "Build checklist". Step plans are now the only per-step handoff. No step status changed. | Project owner / Claude |
 | 2026-10-05 | Completed the M08-S03 corrective build: ADR-015 (accepted), app-level verify token, payload-first routing + account match, mandatory Instagram validation, global account ownership, per-account fan-out, event-level dedup keys, failure recovery + stale-Processing reclaim, migration `20261005052230_HardenChannelOwnershipAndInboundEventIdentity`. Full backend suite 637 passed / 0 skipped / 0 failed; EF clean; frontend CI green; Testcontainers cleanup verified. Status -> `REVIEW`. | Claude |
 | 2026-10-05 | Project owner approved the S03 corrective scope (C1–C6), the ADR-015 direction, and the recommended Q1 inbound policy. Status -> `IN PROGRESS` (corrective implementation). | Project owner / Claude |

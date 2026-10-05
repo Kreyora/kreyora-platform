@@ -621,6 +621,496 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/integrations/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    storeId?: string;
+                    channel?: components["schemas"]["ChannelType"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChannelConnectionDto"][];
+                        "application/json": components["schemas"]["ChannelConnectionDto"][];
+                        "text/json": components["schemas"]["ChannelConnectionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateChannelConnectionRequest"];
+                    "text/json": components["schemas"]["CreateChannelConnectionRequest"];
+                    "application/*+json": components["schemas"]["CreateChannelConnectionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChannelConnectionDto"];
+                        "application/json": components["schemas"]["ChannelConnectionDto"];
+                        "text/json": components["schemas"]["ChannelConnectionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/connections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChannelConnectionDto"];
+                        "application/json": components["schemas"]["ChannelConnectionDto"];
+                        "text/json": components["schemas"]["ChannelConnectionDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateChannelConnectionRequest"];
+                    "text/json": components["schemas"]["UpdateChannelConnectionRequest"];
+                    "application/*+json": components["schemas"]["UpdateChannelConnectionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChannelConnectionDto"];
+                        "application/json": components["schemas"]["ChannelConnectionDto"];
+                        "text/json": components["schemas"]["ChannelConnectionDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": boolean;
+                        "application/json": boolean;
+                        "text/json": boolean;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/connections/{id}/rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RotateSecretRequestBody"];
+                    "text/json": components["schemas"]["RotateSecretRequestBody"];
+                    "application/*+json": components["schemas"]["RotateSecretRequestBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChannelConnectionDto"];
+                        "application/json": components["schemas"]["ChannelConnectionDto"];
+                        "text/json": components["schemas"]["ChannelConnectionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/connections/{id}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": null | components["schemas"]["DisableConnectionRequestBody"];
+                    "text/json": null | components["schemas"]["DisableConnectionRequestBody"];
+                    "application/*+json": null | components["schemas"]["DisableConnectionRequestBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChannelConnectionDto"];
+                        "application/json": components["schemas"]["ChannelConnectionDto"];
+                        "text/json": components["schemas"]["ChannelConnectionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/connections/{id}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChannelConnectionDto"];
+                        "application/json": components["schemas"]["ChannelConnectionDto"];
+                        "text/json": components["schemas"]["ChannelConnectionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/connections/{id}/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConnectionHealthResult"];
+                        "application/json": components["schemas"]["ConnectionHealthResult"];
+                        "text/json": components["schemas"]["ConnectionHealthResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    status?: components["schemas"]["ConversationStatus"];
+                    connectionId?: string;
+                    unreadOnly?: boolean;
+                    assignedTo?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfConversationSummaryItem"];
+                        "application/json": components["schemas"]["PagedResultOfConversationSummaryItem"];
+                        "text/json": components["schemas"]["PagedResultOfConversationSummaryItem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationDetailItem"];
+                        "application/json": components["schemas"]["ConversationDetailItem"];
+                        "text/json": components["schemas"]["ConversationDetailItem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    before?: string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MessagePage"];
+                        "application/json": components["schemas"]["MessagePage"];
+                        "text/json": components["schemas"]["MessagePage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/conversations/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConversationDetailItem"];
+                        "application/json": components["schemas"]["ConversationDetailItem"];
+                        "text/json": components["schemas"]["ConversationDetailItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/store/delivery-rules": {
         parameters: {
             query?: never;
@@ -750,6 +1240,291 @@ export interface paths {
             };
         };
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/diagnostics/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["IntegrationOverviewDto"];
+                        "application/json": components["schemas"]["IntegrationOverviewDto"];
+                        "text/json": components["schemas"]["IntegrationOverviewDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/connections/{id}/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConnectionDiagnosticsDto"];
+                        "application/json": components["schemas"]["ConnectionDiagnosticsDto"];
+                        "text/json": components["schemas"]["ConnectionDiagnosticsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/connections/{id}/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    status?: components["schemas"]["WebhookProcessingStatus"];
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfWebhookEventDto"];
+                        "application/json": components["schemas"]["PagedResultOfWebhookEventDto"];
+                        "text/json": components["schemas"]["PagedResultOfWebhookEventDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/webhooks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WebhookEventDetailDto"];
+                        "application/json": components["schemas"]["WebhookEventDetailDto"];
+                        "text/json": components["schemas"]["WebhookEventDetailDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/simulator/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SimulatorScenarioRequest"];
+                    "text/json": components["schemas"]["SimulatorScenarioRequest"];
+                    "application/*+json": components["schemas"]["SimulatorScenarioRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SimulatorScenarioResult"];
+                        "application/json": components["schemas"]["SimulatorScenarioResult"];
+                        "text/json": components["schemas"]["SimulatorScenarioResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/webhooks/dead-letter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    channel?: components["schemas"]["ChannelType"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfWebhookDeadLetterDto"];
+                        "application/json": components["schemas"]["PagedResultOfWebhookDeadLetterDto"];
+                        "text/json": components["schemas"]["PagedResultOfWebhookDeadLetterDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/webhooks/{id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WebhookReplayResult"];
+                        "application/json": components["schemas"]["WebhookReplayResult"];
+                        "text/json": components["schemas"]["WebhookReplayResult"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1678,6 +2453,835 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    status?: components["schemas"]["NotificationStatus"];
+                    channel?: components["schemas"]["NotificationChannel"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfNotificationSummary"];
+                        "application/json": components["schemas"]["PagedResultOfNotificationSummary"];
+                        "text/json": components["schemas"]["PagedResultOfNotificationSummary"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/notifications/dead-letter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfNotificationSummary"];
+                        "application/json": components["schemas"]["PagedResultOfNotificationSummary"];
+                        "text/json": components["schemas"]["PagedResultOfNotificationSummary"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/notifications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationDetail"];
+                        "application/json": components["schemas"]["NotificationDetail"];
+                        "text/json": components["schemas"]["NotificationDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/notifications/{id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationDetail"];
+                        "application/json": components["schemas"]["NotificationDetail"];
+                        "text/json": components["schemas"]["NotificationDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    status?: components["schemas"]["OrderStatus"];
+                    paymentStatus?: components["schemas"]["PaymentStatus"];
+                    fulfilmentStatus?: components["schemas"]["FulfilmentStatus"];
+                    paymentMethod?: components["schemas"]["OrderPaymentMethod"];
+                    source?: components["schemas"]["OrderSource"];
+                    search?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfOrderSummaryItem"];
+                        "application/json": components["schemas"]["PagedResultOfOrderSummaryItem"];
+                        "text/json": components["schemas"]["PagedResultOfOrderSummaryItem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OrderDetailItem"];
+                        "application/json": components["schemas"]["OrderDetailItem"];
+                        "text/json": components["schemas"]["OrderDetailItem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OrderActionEvaluation"][];
+                        "application/json": components["schemas"]["OrderActionEvaluation"][];
+                        "text/json": components["schemas"]["OrderActionEvaluation"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ExecuteOrderActionBody"];
+                    "text/json": components["schemas"]["ExecuteOrderActionBody"];
+                    "application/*+json": components["schemas"]["ExecuteOrderActionBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OrderOperationResult"];
+                        "application/json": components["schemas"]["OrderOperationResult"];
+                        "text/json": components["schemas"]["OrderOperationResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OrderActivityItem"][];
+                        "application/json": components["schemas"]["OrderActivityItem"][];
+                        "text/json": components["schemas"]["OrderActivityItem"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OrderNotificationItem"][];
+                        "application/json": components["schemas"]["OrderNotificationItem"][];
+                        "text/json": components["schemas"]["OrderNotificationItem"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    status?: components["schemas"]["OutboundMessageStatus"];
+                    channel?: components["schemas"]["ChannelType"];
+                    connectionId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfOutboundMessageDto"];
+                        "application/json": components["schemas"]["PagedResultOfOutboundMessageDto"];
+                        "text/json": components["schemas"]["PagedResultOfOutboundMessageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["QueueOutboundMessageRequest"];
+                    "text/json": components["schemas"]["QueueOutboundMessageRequest"];
+                    "application/*+json": components["schemas"]["QueueOutboundMessageRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OutboundMessageResult"];
+                        "application/json": components["schemas"]["OutboundMessageResult"];
+                        "text/json": components["schemas"]["OutboundMessageResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/messages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OutboundMessageDto"];
+                        "application/json": components["schemas"]["OutboundMessageDto"];
+                        "text/json": components["schemas"]["OutboundMessageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/messages/{id}/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OutboundDeliveryAttemptDto"][];
+                        "application/json": components["schemas"]["OutboundDeliveryAttemptDto"][];
+                        "text/json": components["schemas"]["OutboundDeliveryAttemptDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/messages/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OutboundMessageResult"];
+                        "application/json": components["schemas"]["OutboundMessageResult"];
+                        "text/json": components["schemas"]["OutboundMessageResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/messages/{id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OutboundMessageResult"];
+                        "application/json": components["schemas"]["OutboundMessageResult"];
+                        "text/json": components["schemas"]["OutboundMessageResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/integrations/messages/dead-letter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    channel?: components["schemas"]["ChannelType"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfOutboundDeadLetterDto"];
+                        "application/json": components["schemas"]["PagedResultOfOutboundDeadLetterDto"];
+                        "text/json": components["schemas"]["PagedResultOfOutboundDeadLetterDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{orderId}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    orderId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaymentAttemptItem"][];
+                        "application/json": components["schemas"]["PaymentAttemptItem"][];
+                        "text/json": components["schemas"]["PaymentAttemptItem"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{orderId}/payments/{attemptId}/proof/initiate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    orderId: string;
+                    attemptId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["InitiateProofUploadBody"];
+                    "text/json": components["schemas"]["InitiateProofUploadBody"];
+                    "application/*+json": components["schemas"]["InitiateProofUploadBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaymentProofItem"];
+                        "application/json": components["schemas"]["PaymentProofItem"];
+                        "text/json": components["schemas"]["PaymentProofItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/payments/proofs/{proofId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    proofId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        file?: components["schemas"]["IFormFile"];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaymentProofItem"];
+                        "application/json": components["schemas"]["PaymentProofItem"];
+                        "text/json": components["schemas"]["PaymentProofItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/payments/proofs/{proofId}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    proofId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/permissions": {
         parameters: {
             query?: never;
@@ -2553,6 +4157,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/store/{storeId}/payment-configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    storeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StorePaymentConfigurationItem"];
+                        "application/json": components["schemas"]["StorePaymentConfigurationItem"];
+                        "text/json": components["schemas"]["StorePaymentConfigurationItem"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    storeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateStorePaymentConfigurationBody"];
+                    "text/json": components["schemas"]["UpdateStorePaymentConfigurationBody"];
+                    "application/*+json": components["schemas"]["UpdateStorePaymentConfigurationBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StorePaymentConfigurationItem"];
+                        "application/json": components["schemas"]["StorePaymentConfigurationItem"];
+                        "text/json": components["schemas"]["StorePaymentConfigurationItem"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/support-access-grants": {
         parameters: {
             query?: never;
@@ -2658,6 +4330,116 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhooks/{channel}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    channel: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    channel: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhooks/{channel}/{connectionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    channel: string;
+                    connectionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    channel: string;
+                    connectionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2781,6 +4563,7 @@ export interface components {
             displayName: string;
             email: string;
         };
+        AutomationMode: number;
         CatalogProduct: {
             id: string;
             tenantId: string;
@@ -2814,7 +4597,142 @@ export interface components {
         ChangeMembershipRoleRequest: {
             role: components["schemas"]["TenantRole"];
         };
+        ChannelCapabilities: {
+            canReceiveText: boolean;
+            canReceiveMedia: boolean;
+            canSendText: boolean;
+            canSendMedia: boolean;
+            canSendLinkPreview: boolean;
+            requiresTemplatesOutsideWindow: boolean;
+            supportsReactions: boolean;
+            supportsDeliveryReceipts: boolean;
+            supportsReadReceipts: boolean;
+            enforces24HourWindow: boolean;
+            supportsTokenRefresh: boolean;
+            requiresSignatureVerification: boolean;
+        };
+        ChannelConnectionDto: {
+            id: string;
+            tenantId: string;
+            storeId: null | string;
+            channel: components["schemas"]["ChannelType"];
+            externalAccountId: string;
+            displayName: string;
+            status: components["schemas"]["ChannelConnectionStatus"];
+            hasCredentials: boolean;
+            keyVersion: null | string;
+            /** Format: date-time */
+            tokenExpiresAt: null | string;
+            /** Format: date-time */
+            refreshTokenExpiresAt: null | string;
+            /** Format: date-time */
+            lastRefreshedAt: null | string;
+            /** Format: date-time */
+            lastValidatedAt: null | string;
+            /** Format: date-time */
+            lastHealthCheckAt: null | string;
+            healthSummary: null | string;
+            healthDetails: null | string;
+            capabilities: components["schemas"]["ChannelCapabilities"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            modifiedAt: string;
+        };
+        ChannelConnectionStatus: number;
+        ChannelType: number;
         CommerceActorKind: number;
+        ConnectionDiagnosticsDto: {
+            connectionId: string;
+            channel: components["schemas"]["ChannelType"];
+            displayName: string;
+            status: components["schemas"]["ChannelConnectionStatus"];
+            isHealthy: boolean;
+            healthSummary: null | string;
+            lastErrorMessage: null | string;
+            /** Format: date-time */
+            lastHealthCheckAt: null | string;
+            /** Format: date-time */
+            tokenExpiresAt: null | string;
+            webhookUrl: string;
+            /** Format: int32 */
+            eventsProcessed24h: number | string;
+            /** Format: int32 */
+            eventsFailed24h: number | string;
+            /** Format: int32 */
+            deadLetterCount: number | string;
+            /** Format: date-time */
+            lastEventAt: null | string;
+        };
+        ConnectionHealthResult: {
+            isHealthy: boolean;
+            status: components["schemas"]["ChannelConnectionStatus"];
+            diagnosticMessage: null | string;
+            /** Format: date-time */
+            checkedAt: string;
+            newStatus?: components["schemas"]["ChannelConnectionStatus"];
+        };
+        ConversationDetailItem: {
+            id: string;
+            connectionId: string;
+            storeId: null | string;
+            channel: components["schemas"]["ChannelType"];
+            status: components["schemas"]["ConversationStatus"];
+            automationMode: components["schemas"]["AutomationMode"];
+            isAutomationActive: boolean;
+            customer: components["schemas"]["CustomerIdentitySummary"];
+            /** Format: int32 */
+            unreadCount: number | string;
+            labels: string[];
+            assignedUserId: null | string;
+            /** Format: date-time */
+            assignedAt: null | string;
+            /** Format: date-time */
+            lastMessageAt: null | string;
+            /** Format: date-time */
+            lastCustomerMessageAt: null | string;
+            /** Format: date-time */
+            customerLastReadAt: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            modifiedAt: string;
+        };
+        ConversationStatus: number;
+        ConversationSummaryItem: {
+            id: string;
+            connectionId: string;
+            channel: components["schemas"]["ChannelType"];
+            status: components["schemas"]["ConversationStatus"];
+            customerLabel: string;
+            lastMessagePreview: null | string;
+            /** Format: date-time */
+            lastMessageAt: null | string;
+            /** Format: int32 */
+            unreadCount: number | string;
+            labels: string[];
+            assignedUserId: null | string;
+            /** Format: date-time */
+            assignedAt: null | string;
+            isAutomationActive: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            modifiedAt: string;
+        };
+        CreateChannelConnectionRequest: {
+            channel: components["schemas"]["ChannelType"];
+            externalAccountId: string;
+            displayName: string;
+            storeId?: null | string;
+            plainTextSecret?: null | string;
+            webhookVerificationToken?: null | string;
+            /** Format: date-time */
+            tokenExpiresAt?: null | string;
+            /** Format: date-time */
+            refreshTokenExpiresAt?: null | string;
+            instagram?: null | components["schemas"]["InstagramConnectOptions"];
+        };
         CreateProductRequest: {
             title: string;
             description: null | string;
@@ -2843,6 +4761,17 @@ export interface components {
         CursorPageOfAuditEventItem: {
             items: components["schemas"]["AuditEventItem"][];
             nextCursor: null | string;
+        };
+        CustomerIdentitySummary: {
+            id: string;
+            channel: components["schemas"]["ChannelType"];
+            customerLabel: string;
+            /** Format: date-time */
+            firstSeenAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
+            customerId: null | string;
+            isErased: boolean;
         };
         DeliveryFeeType: number;
         DeliveryRuleInput: {
@@ -2895,11 +4824,22 @@ export interface components {
             municipality: null | string;
             locality: null | string;
         };
+        DisableConnectionRequestBody: {
+            reason?: null | string;
+        };
         EffectivePermissionsResponse: {
             tenantId: string;
             role: null | string;
             isReadOnlySupport: boolean;
             permissions: string[];
+        };
+        ExecuteOrderActionBody: {
+            action: components["schemas"]["OrderAction"];
+            reason: null | string;
+            /** Format: uint32 */
+            expectedVersion: number | string;
+            paymentAttemptId?: null | string;
+            providerReference?: null | string;
         };
         FulfilmentStatus: number;
         GrantMembershipRequest: {
@@ -2912,6 +4852,36 @@ export interface components {
             contentType: string;
             /** Format: int64 */
             byteSize: number | string;
+        };
+        InitiateProofUploadBody: {
+            contentType: string;
+            /** Format: int64 */
+            byteSize: number | string;
+            customerNote?: null | string;
+        };
+        InstagramConnectOptions: {
+            pageId: string;
+            instagramAccountId: string;
+        };
+        IntegrationOverviewDto: {
+            /** Format: int32 */
+            totalConnections: number | string;
+            /** Format: int32 */
+            activeConnections: number | string;
+            /** Format: int32 */
+            degradedConnections: number | string;
+            /** Format: int32 */
+            expiredConnections: number | string;
+            /** Format: int32 */
+            eventsProcessed24h: number | string;
+            /** Format: int32 */
+            eventsFailed24h: number | string;
+            /** Format: int32 */
+            inboundDeadLetterCount: number | string;
+            /** Format: int32 */
+            outboundDeadLetterCount: number | string;
+            /** Format: date-time */
+            computedAt: string;
         };
         InventoryBalance: {
             id: string;
@@ -3010,11 +4980,446 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        MessageDeliveryStatus: number;
+        MessageDirection: number;
+        MessageItem: {
+            id: string;
+            conversationId: string;
+            direction: components["schemas"]["MessageDirection"];
+            origin: components["schemas"]["MessageOrigin"];
+            kind: components["schemas"]["MessageKind"];
+            text: null | string;
+            mediaUrl: null | string;
+            mediaContentType: null | string;
+            deliveryStatus: null | components["schemas"]["MessageDeliveryStatus"];
+            /** Format: date-time */
+            occurredAt: string;
+            isRedacted: boolean;
+            reactions: components["schemas"]["MessageReactionSummary"][];
+        };
+        MessageKind: number;
+        MessageOrigin: number;
+        MessagePage: {
+            items: components["schemas"]["MessageItem"][];
+            nextBeforeMessageId: null | string;
+        };
+        MessageReactionSummary: {
+            emoji: string;
+            /** Format: int32 */
+            count: number | string;
+        };
+        NotificationChannel: number;
+        NotificationDeliveryAttemptSummary: {
+            id: string;
+            /** Format: int32 */
+            attemptNumber: number | string;
+            providerName: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt: null | string;
+            succeeded: boolean;
+            redactedError: null | string;
+            providerReference: null | string;
+        };
+        NotificationDetail: {
+            id: string;
+            tenantId: string;
+            sourceEventType: string;
+            sourceEventId: string;
+            templateCode: string;
+            /** Format: int32 */
+            templateVersion: number | string;
+            channel: components["schemas"]["NotificationChannel"];
+            recipientName: null | string;
+            recipientContactRedacted: string;
+            status: components["schemas"]["NotificationStatus"];
+            /** Format: int32 */
+            maxAttempts: number | string;
+            /** Format: int32 */
+            attemptCount: number | string;
+            /** Format: date-time */
+            nextRetryAt: null | string;
+            /** Format: date-time */
+            deliveredAt: null | string;
+            /** Format: date-time */
+            deadLetteredAt: null | string;
+            lastRedactedError: null | string;
+            idempotencyKey: string;
+            /** Format: date-time */
+            createdAt: string;
+            deliveryAttempts: components["schemas"]["NotificationDeliveryAttemptSummary"][];
+        };
+        NotificationStatus: number;
+        NotificationSummary: {
+            id: string;
+            tenantId: string;
+            sourceEventType: string;
+            sourceEventId: string;
+            templateCode: string;
+            /** Format: int32 */
+            templateVersion: number | string;
+            channel: components["schemas"]["NotificationChannel"];
+            recipientName: null | string;
+            recipientContactRedacted: string;
+            status: components["schemas"]["NotificationStatus"];
+            /** Format: int32 */
+            maxAttempts: number | string;
+            /** Format: int32 */
+            attemptCount: number | string;
+            /** Format: date-time */
+            nextRetryAt: null | string;
+            /** Format: date-time */
+            deliveredAt: null | string;
+            /** Format: date-time */
+            deadLetteredAt: null | string;
+            lastRedactedError: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        OrderAction: number;
+        OrderActionEvaluation: {
+            action: components["schemas"]["OrderAction"];
+            isAllowed: boolean;
+            denialReason: null | string;
+            requiresReason: boolean;
+            isDestructive: boolean;
+        };
+        OrderActivityItem: {
+            id: string;
+            action: string;
+            actorUserId: null | string;
+            /** Format: date-time */
+            occurredAt: string;
+            reason: null | string;
+            details: null | string;
+        };
+        OrderDetailItem: {
+            id: string;
+            orderNumber: string;
+            storeId: string;
+            checkoutSessionId: string;
+            status: components["schemas"]["OrderStatus"];
+            paymentStatus: components["schemas"]["PaymentStatus"];
+            fulfilmentStatus: components["schemas"]["FulfilmentStatus"];
+            paymentMethod: components["schemas"]["OrderPaymentMethod"];
+            source: components["schemas"]["OrderSource"];
+            customerName: string;
+            customerPhone: string;
+            customerEmail: null | string;
+            addressLine1: string;
+            addressLine2: null | string;
+            district: string;
+            municipality: null | string;
+            locality: null | string;
+            landmark: null | string;
+            /** Format: double */
+            merchandiseSubtotalNpr: number | string;
+            /** Format: double */
+            discountNpr: number | string;
+            /** Format: double */
+            deliveryFeeNpr: number | string;
+            /** Format: double */
+            taxNpr: number | string;
+            /** Format: double */
+            totalNpr: number | string;
+            currency: string;
+            deliveryRuleId: string;
+            deliveryRuleName: string;
+            estimatedEtaText: null | string;
+            codAvailable: boolean;
+            /** Format: uint32 */
+            rowVersion: number | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            modifiedAt: null | string;
+            items: components["schemas"]["OrderItemDetail"][];
+            paymentAttempts: components["schemas"]["PaymentAttemptItem"][];
+        };
+        OrderItemDetail: {
+            id: string;
+            productId: string;
+            productTitle: string;
+            variantId: string;
+            variantName: string;
+            /** Format: double */
+            unitPriceNpr: number | string;
+            /** Format: int32 */
+            quantity: number | string;
+            /** Format: double */
+            lineTotalNpr: number | string;
+            currency: string;
+        };
+        OrderNotificationItem: {
+            id: string;
+            templateCode: string;
+            channel: components["schemas"]["NotificationChannel"];
+            status: components["schemas"]["NotificationStatus"];
+            recipientContactRedacted: string;
+            /** Format: int32 */
+            attemptCount: number | string;
+            /** Format: date-time */
+            deliveredAt: null | string;
+            /** Format: date-time */
+            deadLetteredAt: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        OrderOperationResult: {
+            orderId: string;
+            orderNumber: string;
+            status: components["schemas"]["OrderStatus"];
+            paymentStatus: components["schemas"]["PaymentStatus"];
+            fulfilmentStatus: components["schemas"]["FulfilmentStatus"];
+            /** Format: uint32 */
+            rowVersion: number | string;
+            wasReplayed: boolean;
+        };
         OrderPaymentMethod: number;
+        OrderSource: number;
         OrderStatus: number;
+        OrderSummaryItem: {
+            id: string;
+            orderNumber: string;
+            status: components["schemas"]["OrderStatus"];
+            paymentStatus: components["schemas"]["PaymentStatus"];
+            fulfilmentStatus: components["schemas"]["FulfilmentStatus"];
+            paymentMethod: components["schemas"]["OrderPaymentMethod"];
+            source: components["schemas"]["OrderSource"];
+            customerName: string;
+            customerPhone: string;
+            customerEmail: null | string;
+            district: string;
+            /** Format: double */
+            totalNpr: number | string;
+            currency: string;
+            /** Format: int32 */
+            itemCount: number | string;
+            /** Format: uint32 */
+            rowVersion: number | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            modifiedAt: null | string;
+        };
+        OutboundDeadLetterDto: {
+            id: string;
+            tenantId: string;
+            connectionId: string;
+            channel: components["schemas"]["ChannelType"];
+            recipientChannelId: string;
+            idempotencyKey: string;
+            messageType: components["schemas"]["OutboundMessageType"];
+            contentSummary: null | string;
+            lastErrorMessage: null | string;
+            failureClassification: null | components["schemas"]["WebhookFailureClassification"];
+            /** Format: int32 */
+            attemptCount: number | string;
+            /** Format: int32 */
+            maxAttempts: number | string;
+            /** Format: date-time */
+            queuedAt: string;
+            /** Format: date-time */
+            deadLetteredAt: null | string;
+        };
+        OutboundDeliveryAttemptDto: {
+            id: string;
+            outboundMessageId: string;
+            /** Format: int32 */
+            attemptNumber: number | string;
+            channel: components["schemas"]["ChannelType"];
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt: null | string;
+            succeeded: boolean;
+            providerMessageId: null | string;
+            providerErrorCode: null | string;
+            providerErrorMessage: null | string;
+        };
+        OutboundMessageDto: {
+            id: string;
+            tenantId: string;
+            connectionId: string;
+            channel: components["schemas"]["ChannelType"];
+            conversationId: null | string;
+            recipientChannelId: string;
+            idempotencyKey: string;
+            messageType: components["schemas"]["OutboundMessageType"];
+            textContent: null | string;
+            mediaUrl: null | string;
+            mediaContentType: null | string;
+            caption: null | string;
+            templateCode: null | string;
+            templateParametersJson: null | string;
+            metadataJson: null | string;
+            status: components["schemas"]["OutboundMessageStatus"];
+            providerMessageId: null | string;
+            /** Format: int32 */
+            attemptCount: number | string;
+            /** Format: int32 */
+            maxAttempts: number | string;
+            /** Format: date-time */
+            nextRetryAt: null | string;
+            failureClassification: null | components["schemas"]["WebhookFailureClassification"];
+            lastErrorMessage: null | string;
+            /** Format: date-time */
+            queuedAt: string;
+            /** Format: date-time */
+            sentAt: null | string;
+            /** Format: date-time */
+            deliveredAt: null | string;
+            /** Format: date-time */
+            readAt: null | string;
+            /** Format: date-time */
+            failedAt: null | string;
+            /** Format: date-time */
+            deadLetteredAt: null | string;
+            /** Format: date-time */
+            cancelledAt: null | string;
+        };
+        OutboundMessageResult: {
+            succeeded: boolean;
+            outboundMessageId: null | string;
+            status: null | components["schemas"]["OutboundMessageStatus"];
+            errorMessage?: null | string;
+            /** @default false */
+            isIdempotentDuplicate: boolean;
+        };
+        OutboundMessageStatus: number;
+        OutboundMessageType: number;
+        PagedResultOfConversationSummaryItem: {
+            items: components["schemas"]["ConversationSummaryItem"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages?: number | string;
+            hasNextPage?: boolean;
+            hasPreviousPage?: boolean;
+        };
+        PagedResultOfNotificationSummary: {
+            items: components["schemas"]["NotificationSummary"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages?: number | string;
+            hasNextPage?: boolean;
+            hasPreviousPage?: boolean;
+        };
+        PagedResultOfOrderSummaryItem: {
+            items: components["schemas"]["OrderSummaryItem"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages?: number | string;
+            hasNextPage?: boolean;
+            hasPreviousPage?: boolean;
+        };
+        PagedResultOfOutboundDeadLetterDto: {
+            items: components["schemas"]["OutboundDeadLetterDto"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages?: number | string;
+            hasNextPage?: boolean;
+            hasPreviousPage?: boolean;
+        };
+        PagedResultOfOutboundMessageDto: {
+            items: components["schemas"]["OutboundMessageDto"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages?: number | string;
+            hasNextPage?: boolean;
+            hasPreviousPage?: boolean;
+        };
+        PagedResultOfWebhookDeadLetterDto: {
+            items: components["schemas"]["WebhookDeadLetterDto"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages?: number | string;
+            hasNextPage?: boolean;
+            hasPreviousPage?: boolean;
+        };
+        PagedResultOfWebhookEventDto: {
+            items: components["schemas"]["WebhookEventDto"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            totalPages?: number | string;
+            hasNextPage?: boolean;
+            hasPreviousPage?: boolean;
+        };
         PasswordResetRequestBody: {
             email: string;
         };
+        PaymentAttemptItem: {
+            id: string;
+            orderId: string;
+            method: components["schemas"]["OrderPaymentMethod"];
+            status: components["schemas"]["PaymentAttemptStatus"];
+            /** Format: double */
+            amountNpr: number | string;
+            currency: string;
+            internalReference: string;
+            providerReference: null | string;
+            /** Format: date-time */
+            verifiedAt: null | string;
+            verifiedByUserId: null | string;
+            /** Format: date-time */
+            rejectedAt: null | string;
+            rejectedByUserId: null | string;
+            rejectionReason: null | string;
+            /** Format: date-time */
+            collectedAt: null | string;
+            collectedByUserId: null | string;
+            proofs: components["schemas"]["PaymentProofItem"][];
+        };
+        PaymentAttemptStatus: number;
+        PaymentProofItem: {
+            id: string;
+            paymentAttemptId: string;
+            contentType: string;
+            /** Format: int64 */
+            byteSize: number | string;
+            status: components["schemas"]["PaymentProofStatus"];
+            customerNote: null | string;
+            /** Format: date-time */
+            uploadExpiresAt: string;
+            /** Format: date-time */
+            readyAt: null | string;
+        };
+        PaymentProofStatus: number;
         PaymentStatus: number;
         ProductPublishState: number;
         PublicationBody: {
@@ -3152,6 +5557,22 @@ export interface components {
             returnsPolicy: null | string;
             paymentPolicy: null | string;
         };
+        QueueOutboundMessageRequest: {
+            connectionId: string;
+            recipientChannelId: string;
+            idempotencyKey: string;
+            messageType: components["schemas"]["OutboundMessageType"];
+            textContent?: null | string;
+            mediaUrl?: null | string;
+            mediaContentType?: null | string;
+            caption?: null | string;
+            templateCode?: null | string;
+            templateParametersJson?: null | string;
+            metadataJson?: null | string;
+            conversationId?: null | string;
+            /** Format: int32 */
+            maxAttempts?: null | number | string;
+        };
         RegisterOwnerRequest: {
             displayName: string;
             email: string;
@@ -3180,10 +5601,30 @@ export interface components {
             token: string;
             newPassword: string;
         };
+        RotateSecretRequestBody: {
+            targetKeyVersion: string;
+        };
         SignInRequest: {
             email: string;
             password: string;
         };
+        SimulatorScenarioRequest: {
+            connectionId: string;
+            scenario: components["schemas"]["SimulatorScenarioType"];
+            /** Format: int32 */
+            latencyMs?: null | number | string;
+            customPayload?: null | string;
+        };
+        SimulatorScenarioResult: {
+            scenario: components["schemas"]["SimulatorScenarioType"];
+            succeeded: boolean;
+            summary: string;
+            generatedEventId: null | string;
+            correlationId: null | string;
+            /** Format: date-time */
+            executedAt: string;
+        };
+        SimulatorScenarioType: number;
         StockAdjustmentRequest: {
             variantId: string;
             type: components["schemas"]["StockMovementType"];
@@ -3251,6 +5692,14 @@ export interface components {
             activatedAt: null | string;
             /** Format: uint32 */
             version: number | string;
+        };
+        StorePaymentConfigurationItem: {
+            id: string;
+            storeId: string;
+            codEnabled: boolean;
+            merchantQrEnabled: boolean;
+            merchantQrInstructions: null | string;
+            merchantQrMediaAssetId: null | string;
         };
         StoreProductPublicationItem: {
             id: string;
@@ -3324,6 +5773,16 @@ export interface components {
             /** Format: uint32 */
             expectedVersion: number | string;
         };
+        UpdateChannelConnectionRequest: {
+            displayName?: null | string;
+            storeId?: null | string;
+            plainTextSecret?: null | string;
+            /** Format: date-time */
+            tokenExpiresAt?: null | string;
+            /** Format: date-time */
+            refreshTokenExpiresAt?: null | string;
+            instagram?: null | components["schemas"]["InstagramConnectOptions"];
+        };
         UpdateDeliveryRuleBody: {
             rule: components["schemas"]["DeliveryRuleInput"];
             /** Format: uint32 */
@@ -3341,9 +5800,92 @@ export interface components {
             /** Format: uint32 */
             expectedVersion: number | string;
         };
+        UpdateStorePaymentConfigurationBody: {
+            codEnabled: boolean;
+            merchantQrEnabled: boolean;
+            merchantQrInstructions?: null | string;
+            merchantQrMediaAssetId?: null | string;
+        };
         VersionBody: {
             /** Format: uint32 */
             expectedVersion: number | string;
+        };
+        WebhookDeadLetterDto: {
+            id: string;
+            tenantId: string;
+            connectionId: string;
+            channel: components["schemas"]["ChannelType"];
+            providerEventId: string;
+            eventType: null | string;
+            errorMessage: null | string;
+            failureClassification: null | components["schemas"]["WebhookFailureClassification"];
+            /** Format: int32 */
+            attemptCount: number | string;
+            /** Format: int32 */
+            maxAttempts: number | string;
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: date-time */
+            deadLetteredAt: null | string;
+            correlationId: string;
+        };
+        WebhookEventDetailDto: {
+            id: string;
+            connectionId: string;
+            channel: components["schemas"]["ChannelType"];
+            providerEventId: string;
+            eventType: null | string;
+            status: components["schemas"]["WebhookProcessingStatus"];
+            /** Format: int32 */
+            attemptCount: number | string;
+            /** Format: int32 */
+            maxAttempts: number | string;
+            failureClassification: null | components["schemas"]["WebhookFailureClassification"];
+            errorMessage: null | string;
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: date-time */
+            processedAt: null | string;
+            /** Format: date-time */
+            deadLetteredAt: null | string;
+            rawPayload: string;
+            isPayloadRedacted: boolean;
+            correlationId: string;
+        };
+        WebhookEventDto: {
+            id: string;
+            connectionId: string;
+            channel: components["schemas"]["ChannelType"];
+            providerEventId: string;
+            eventType: null | string;
+            status: components["schemas"]["WebhookProcessingStatus"];
+            /** Format: int32 */
+            attemptCount: number | string;
+            /** Format: int32 */
+            maxAttempts: number | string;
+            failureClassification: null | components["schemas"]["WebhookFailureClassification"];
+            errorMessage: null | string;
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: date-time */
+            receivedAt: string;
+            /** Format: date-time */
+            processedAt: null | string;
+            /** Format: date-time */
+            deadLetteredAt: null | string;
+        };
+        WebhookFailureClassification: number;
+        WebhookProcessingStatus: number;
+        WebhookReplayResult: {
+            succeeded: boolean;
+            webhookEventId: string;
+            status: components["schemas"]["WebhookProcessingStatus"];
+            idempotencyKey: string;
+            errorMessage?: null | string;
         };
         WorkspaceSummary: {
             tenantId: string;
