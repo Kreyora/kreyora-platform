@@ -1,6 +1,6 @@
 # ADR-019 — Knowledge retrieval architecture
 
-- **Status:** `Proposed` (owner acceptance at the M09-S03 checkpoint)
+- **Status:** `Accepted` (2026-10-06, with the M09-S03 approval; was `Proposed`)
 - **Date:** 2026-10-06
 - **Owner:** Platform Architect
 - **Reviewers:** Project Owner

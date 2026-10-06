@@ -38,6 +38,18 @@ public sealed class AiOptions
 
     /// <summary>Knowledge retrieval thresholds and budgets (ADR-019; tuned in S08).</summary>
     public AiRetrievalOptions Retrieval { get; set; } = new();
+
+    /// <summary>Read-tool limits (M09-S04).</summary>
+    public AiToolOptions Tools { get; set; } = new();
+}
+
+public sealed class AiToolOptions
+{
+    /// <summary>Deadline for one tool execution (Q9); the turn budget is S06.</summary>
+    public int TimeoutSeconds { get; set; } = 3;
+
+    /// <summary>Available quantity at or below which stock shows as low (Q3); exact counts are never shown.</summary>
+    public int LowStockThreshold { get; set; } = 3;
 }
 
 public sealed class AiEmbeddingOptions
@@ -204,6 +216,8 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
         if (retrieval.LexicalWeight is < 0 or > 1) yield return "Ai:Retrieval:LexicalWeight must be between 0 and 1.";
         if (retrieval.TopK is < 1 or > 20) yield return "Ai:Retrieval:TopK must be between 1 and 20.";
         if (retrieval.MaxCharacters is < 200 or > 20000) yield return "Ai:Retrieval:MaxCharacters must be between 200 and 20000.";
+        if (options.Tools.TimeoutSeconds is < 1 or > 30) yield return "Ai:Tools:TimeoutSeconds must be between 1 and 30.";
+        if (options.Tools.LowStockThreshold is < 0 or > 100) yield return "Ai:Tools:LowStockThreshold must be between 0 and 100.";
 
         if (options.Mode == AiMode.Live && !string.IsNullOrWhiteSpace(options.Embeddings.Provider))
         {

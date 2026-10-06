@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kreyora.WebApi.Controllers;
 
-/// <summary>Assistant settings, readiness and the approved knowledge library (M09-S02). No AI is invoked here.</summary>
+/// <summary>Assistant settings, readiness, the approved knowledge library (M09-S02/S03) and the read-tool console (M09-S04). No AI is invoked here.</summary>
 [ApiController, RequireTenantContext, ApiVersion("1.0")]
 [Route("v{version:apiVersion}/assistant")]
 public sealed class AssistantController(
@@ -18,7 +18,8 @@ public sealed class AssistantController(
     IKnowledgeService knowledge,
     IKnowledgeRetrievalService retrieval,
     IKnowledgeIndexScheduler indexScheduler,
-    ITenantContextAccessor tenantContext) : ControllerBase
+    ITenantContextAccessor tenantContext,
+    IAssistantToolConsoleService tools) : ControllerBase
 {
     private const long UploadRequestLimitBytes = KnowledgeText.MaxUploadBytes + 16 * 1024;
 
@@ -33,6 +34,16 @@ public sealed class AssistantController(
     [HttpGet("readiness"), Authorize(Policy = TenantPermissions.AiConfigurationRead)]
     public async Task<ActionResult<AssistantReadinessItem>> GetReadiness(CancellationToken cancellationToken = default) =>
         this.ToActionResult(await readiness.GetAsync(cancellationToken));
+
+    /// <summary>The read-tool registry: names, versions, descriptions, schemas, and which are on in the policy.</summary>
+    [HttpGet("tools"), Authorize(Policy = TenantPermissions.AiConfigurationRead)]
+    public async Task<ActionResult<AssistantToolCatalog>> ListTools(CancellationToken cancellationToken = default) =>
+        Ok(await tools.GetCatalogAsync(cancellationToken));
+
+    /// <summary>Runs one read tool as a seller preview (shop context, no customer). Returns exactly what the model would see.</summary>
+    [HttpPost("tools/{toolName}/preview"), Authorize(Policy = TenantPermissions.AiConfigurationWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<AssistantToolPreviewResult>> PreviewTool(string toolName, [FromBody] AssistantToolPreviewRequest request, CancellationToken cancellationToken = default) =>
+        this.ToActionResult(await tools.PreviewAsync(toolName, request, cancellationToken));
 
     [HttpGet("knowledge"), Authorize(Policy = TenantPermissions.AiConfigurationRead)]
     public async Task<ActionResult<IReadOnlyList<KnowledgeDocumentItem>>> ListKnowledge(CancellationToken cancellationToken = default) =>

@@ -94,6 +94,9 @@ public sealed record MediaMessageReceivedPayload(
 
     /// <summary>Optional v1 field: the customer an echo was sent to.</summary>
     public string? RecipientChannelId { get; init; }
+
+    /// <summary>Optional v1 field (M09-S04 Q6-A): a shared post/reel identifier as sent by the provider, e.g. <c>reel_video_id:123</c>.</summary>
+    public string? SharedPostId { get; init; }
 }
 
 public sealed record MessageStatusUpdatedPayload(

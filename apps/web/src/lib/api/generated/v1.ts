@@ -105,6 +105,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/assistant/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantToolCatalog"];
+                        "application/json": components["schemas"]["AssistantToolCatalog"];
+                        "text/json": components["schemas"]["AssistantToolCatalog"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/tools/{toolName}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    toolName: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AssistantToolPreviewRequest"];
+                    "text/json": components["schemas"]["AssistantToolPreviewRequest"];
+                    "application/*+json": components["schemas"]["AssistantToolPreviewRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantToolPreviewResult"];
+                        "application/json": components["schemas"]["AssistantToolPreviewResult"];
+                        "text/json": components["schemas"]["AssistantToolPreviewResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/assistant/knowledge": {
         parameters: {
             query?: never;
@@ -5468,6 +5550,43 @@ export interface components {
         };
         AssistantReplyStyle: number;
         AssistantTone: number;
+        AssistantToolCatalog: {
+            registryVersion: string;
+            tools: components["schemas"]["AssistantToolDescriptor"][];
+        };
+        AssistantToolDescriptor: {
+            name: string;
+            /** Format: int32 */
+            version: number | string;
+            description: string;
+            parametersSchema: components["schemas"]["JsonElement"];
+            enabledInPolicy: boolean;
+        };
+        AssistantToolPreviewRequest: {
+            arguments: null | components["schemas"]["JsonElement"];
+        };
+        AssistantToolPreviewResult: {
+            result: components["schemas"]["JsonElement"];
+            trace: components["schemas"]["AssistantToolTrace"];
+        };
+        AssistantToolTrace: {
+            registryVersion: string;
+            tool: string;
+            /** Format: int32 */
+            toolVersion: number | string;
+            callId: string;
+            conversationId: null | string;
+            sellerPreview: boolean;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: int64 */
+            durationMs: number | string;
+            outcome: string;
+            argumentFields: string[];
+            argumentsHash: string;
+            /** Format: int32 */
+            resultCount: number | string;
+        };
         AttachBody: {
             productId: string;
             /** Format: int32 */
@@ -5909,6 +6028,7 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        JsonElement: unknown;
         KnowledgeCategory: number;
         KnowledgeCitation: {
             documentId: string;

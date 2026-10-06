@@ -138,3 +138,36 @@ public sealed record OrderNotificationItem(
     DateTimeOffset? DeliveredAt,
     DateTimeOffset? DeadLetteredAt,
     DateTimeOffset CreatedAt);
+
+// ---- Customer order-status lookup for the assistant (M09-S04 Q4) -------------------------------------------------
+
+public enum OrderStatusLookupOutcome
+{
+    Found,
+    VerificationRequired,
+    NotVerified,
+    Locked
+}
+
+/// <summary>Minimal order status; never name, phone, address or totals.</summary>
+public sealed record CustomerOrderStatus(
+    string OrderNumber,
+    OrderStatus Status,
+    PaymentStatus PaymentStatus,
+    FulfilmentStatus FulfilmentStatus,
+    DateTimeOffset PlacedAt,
+    int ItemCount,
+    string? EtaText);
+
+public sealed record OrderStatusLookupRequest(string? CustomerId, string? ConversationId, string? OrderNumber, string? PhoneLast4);
+
+public sealed record OrderStatusLookupResult(OrderStatusLookupOutcome Outcome, IReadOnlyList<CustomerOrderStatus> Orders);
+
+/// <summary>
+/// Order status for a chat customer: orders linked to the customer, or one order proven by its number plus the last
+/// four digits of its phone. Wrong pairs answer uniformly; five failures per order in 24 hours lock chat lookups.
+/// </summary>
+public interface IOrderStatusLookupService
+{
+    Task<OrderStatusLookupResult> LookupAsync(OrderStatusLookupRequest request, CancellationToken cancellationToken = default);
+}
