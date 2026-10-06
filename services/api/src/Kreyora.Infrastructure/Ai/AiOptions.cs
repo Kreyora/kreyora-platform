@@ -32,6 +32,45 @@ public sealed class AiOptions
     public AiLimitsOptions Limits { get; set; } = new();
 
     public AiDataPolicyOptions DataPolicy { get; set; } = new();
+
+    /// <summary>Embedding model used to index approved knowledge (M09-S03, ADR-019).</summary>
+    public AiEmbeddingOptions Embeddings { get; set; } = new();
+
+    /// <summary>Knowledge retrieval thresholds and budgets (ADR-019; tuned in S08).</summary>
+    public AiRetrievalOptions Retrieval { get; set; } = new();
+}
+
+public sealed class AiEmbeddingOptions
+{
+    public string Provider { get; set; } = string.Empty;
+
+    public string Model { get; set; } = string.Empty;
+
+    /// <summary>Requested vector size (the provider's <c>dimensions</c> parameter).</summary>
+    public int Dimensions { get; set; } = 768;
+
+    public int BatchSize { get; set; } = 32;
+}
+
+public sealed class AiRetrievalOptions
+{
+    /// <summary>Combined score at or above which a passage is relevant.</summary>
+    public double RelevantThreshold { get; set; } = 0.62;
+
+    /// <summary>Combined score at or above which a passage is low-confidence (below: not returned).</summary>
+    public double LowConfidenceThreshold { get; set; } = 0.55;
+
+    /// <summary>Weight of the lexical-overlap boost added to cosine similarity.</summary>
+    public double LexicalWeight { get; set; } = 0.1;
+
+    /// <summary>Lexical-only fallback thresholds (share of query words found in the passage).</summary>
+    public double LexicalRelevantThreshold { get; set; } = 0.5;
+
+    public double LexicalLowConfidenceThreshold { get; set; } = 0.25;
+
+    public int TopK { get; set; } = 4;
+
+    public int MaxCharacters { get; set; } = 3000;
 }
 
 public sealed class AiProviderOptions
@@ -142,6 +181,44 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
                 && (!Uri.TryCreate(provider.BaseUrl, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps))
             {
                 yield return $"Ai:Providers:{providerName}:BaseUrl must be an absolute HTTPS URL.";
+            }
+        }
+
+        if (options.Embeddings.Dimensions is < 64 or > 4096)
+        {
+            yield return "Ai:Embeddings:Dimensions must be between 64 and 4096.";
+        }
+
+        if (options.Embeddings.BatchSize is < 1 or > 256)
+        {
+            yield return "Ai:Embeddings:BatchSize must be between 1 and 256.";
+        }
+
+        var retrieval = options.Retrieval;
+        if (retrieval.LowConfidenceThreshold < 0 || retrieval.RelevantThreshold > 1 || retrieval.LowConfidenceThreshold > retrieval.RelevantThreshold
+            || retrieval.LexicalLowConfidenceThreshold < 0 || retrieval.LexicalRelevantThreshold > 1 || retrieval.LexicalLowConfidenceThreshold > retrieval.LexicalRelevantThreshold)
+        {
+            yield return "Ai:Retrieval thresholds must be between 0 and 1, with the low-confidence threshold not above the relevant threshold.";
+        }
+
+        if (retrieval.LexicalWeight is < 0 or > 1) yield return "Ai:Retrieval:LexicalWeight must be between 0 and 1.";
+        if (retrieval.TopK is < 1 or > 20) yield return "Ai:Retrieval:TopK must be between 1 and 20.";
+        if (retrieval.MaxCharacters is < 200 or > 20000) yield return "Ai:Retrieval:MaxCharacters must be between 200 and 20000.";
+
+        if (options.Mode == AiMode.Live && !string.IsNullOrWhiteSpace(options.Embeddings.Provider))
+        {
+            if (!options.Providers.TryGetValue(options.Embeddings.Provider, out var embeddingProvider))
+            {
+                yield return $"Ai:Embeddings:Provider '{options.Embeddings.Provider}' is not configured under Ai:Providers.";
+            }
+            else if (string.IsNullOrWhiteSpace(embeddingProvider.ApiKey) || string.IsNullOrWhiteSpace(embeddingProvider.BaseUrl))
+            {
+                yield return $"Ai:Providers:{options.Embeddings.Provider} needs BaseUrl and ApiKey for embeddings in Live mode.";
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Embeddings.Model))
+            {
+                yield return "Ai:Embeddings:Model is required when an embedding provider is configured.";
             }
         }
 

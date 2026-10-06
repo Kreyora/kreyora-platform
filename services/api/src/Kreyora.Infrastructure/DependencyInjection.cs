@@ -121,6 +121,8 @@ public static class DependencyInjection
         services.AddSingleton<OpenAiCompatibleChatClient>();
         services.AddSingleton<FakeAiChatClient>();
         services.AddSingleton<IAiChatClient, ResilientAiChatClient>();
+        services.AddSingleton<OpenAiCompatibleEmbeddingClient>();
+        services.AddSingleton<IAiEmbeddingClient, AiEmbeddingClient>();
 
         var connectionString = configuration.GetValue<string>("Database:ConnectionString");
         if (string.IsNullOrWhiteSpace(connectionString))
@@ -216,6 +218,11 @@ public static class DependencyInjection
         services.AddScoped<KnowledgeService>();
         services.AddScoped<IKnowledgeService>(sp => sp.GetRequiredService<KnowledgeService>());
         services.AddScoped<IApprovedKnowledgeQuery>(sp => sp.GetRequiredService<KnowledgeService>());
+        // Retrieval and indexing (M09-S03, ADR-019).
+        services.AddScoped<IKnowledgeIndexingService, KnowledgeIndexingService>();
+        services.AddScoped<IKnowledgeRetrievalService, KnowledgeRetrievalService>();
+        services.AddScoped<IKnowledgeIndexScheduler, HangfireKnowledgeIndexScheduler>();
+        services.AddTransient<KnowledgeIndexingJob>();
         services.AddScoped<IIntegrationWorkScheduler, HangfireIntegrationWorkScheduler>();
         services.AddScoped<IConversationOutboundReconciler, ConversationOutboundReconciler>();
         services.AddScoped<IOutboundEnqueuer>(sp => (OutboundMessageService)sp.GetRequiredService<IOutboundMessageService>());
