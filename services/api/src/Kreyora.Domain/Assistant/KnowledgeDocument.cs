@@ -107,6 +107,10 @@ public sealed class KnowledgeDocumentVersion : BaseEntity, ITenantOwned
     public long? OriginalByteSize { get; private set; }
 
     public string? IdempotencyKey { get; private set; }
+
+    /// <summary>Text looks like instructions to an AI; the reviewer is warned before approving (M09-S03 Q8).</summary>
+    public bool HasSuspiciousInstructions { get; private set; }
+
     public string SubmittedByUserId { get; private set; } = string.Empty;
     public DateTimeOffset SubmittedAt { get; private set; }
     public string? ReviewedByUserId { get; private set; }
@@ -134,6 +138,7 @@ public sealed class KnowledgeDocumentVersion : BaseEntity, ITenantOwned
         OriginalFileName = originalFileName,
         OriginalByteSize = originalByteSize,
         IdempotencyKey = idempotencyKey,
+        HasSuspiciousInstructions = SuspiciousInstructionDetector.LooksSuspicious(normalizedText),
         SubmittedByUserId = submittedByUserId,
         SubmittedAt = now
     };
@@ -163,15 +168,18 @@ public sealed class KnowledgeDocumentVersion : BaseEntity, ITenantOwned
         State = KnowledgeVersionState.Superseded;
     }
 
-    /// <summary>Clears the text and returns the storage key to purge, if any.</summary>
+    /// <summary>
+    /// Clears the text and returns the storage key to purge, if any. The key is kept until
+    /// <see cref="ConfirmOriginalPurged"/> so a failed storage delete can be retried by the sweeper (M09-S03).
+    /// </summary>
     public string? MarkDeleted()
     {
         State = KnowledgeVersionState.Deleted;
         ContentText = null;
-        var key = OriginalObjectKey;
-        OriginalObjectKey = null;
-        return key;
+        return OriginalObjectKey;
     }
+
+    public void ConfirmOriginalPurged() => OriginalObjectKey = null;
 
     private void RequireState(KnowledgeVersionState expected, string action)
     {

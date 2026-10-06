@@ -75,6 +75,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<AssistantPolicy> AssistantPolicies => Set<AssistantPolicy>();
     public DbSet<KnowledgeDocument> KnowledgeDocuments => Set<KnowledgeDocument>();
     public DbSet<KnowledgeDocumentVersion> KnowledgeDocumentVersions => Set<KnowledgeDocumentVersion>();
+    public DbSet<KnowledgeChunk> KnowledgeChunks => Set<KnowledgeChunk>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -137,6 +138,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<AssistantPolicy>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<KnowledgeDocument>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<KnowledgeDocumentVersion>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<KnowledgeChunk>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

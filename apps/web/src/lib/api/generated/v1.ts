@@ -222,6 +222,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/assistant/knowledge/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["KnowledgeSearchRequest"];
+                    "text/json": components["schemas"]["KnowledgeSearchRequest"];
+                    "application/*+json": components["schemas"]["KnowledgeSearchRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeRetrievalResult"];
+                        "application/json": components["schemas"]["KnowledgeRetrievalResult"];
+                        "text/json": components["schemas"]["KnowledgeRetrievalResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge/reindex": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/assistant/knowledge/import-store-policies": {
         parameters: {
             query?: never;
@@ -5834,6 +5910,21 @@ export interface components {
             createdAt: string;
         };
         KnowledgeCategory: number;
+        KnowledgeCitation: {
+            documentId: string;
+            documentTitle: string;
+            category: components["schemas"]["KnowledgeCategory"];
+            versionId: string;
+            /** Format: int32 */
+            versionNumber: number | string;
+            /** Format: int32 */
+            chunkIndex: number | string;
+            /** Format: int32 */
+            charStart: number | string;
+            /** Format: int32 */
+            charEnd: number | string;
+            contentHash: string;
+        };
         KnowledgeDocumentItem: {
             id: string;
             title: string;
@@ -5848,6 +5939,29 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             modifiedAt: string;
+            indexStatus?: null | components["schemas"]["KnowledgeIndexStatus"];
+        };
+        KnowledgeIndexStatus: {
+            /** Format: int32 */
+            chunks: number | string;
+            /** Format: int32 */
+            indexed: number | string;
+        };
+        KnowledgePassage: {
+            text: string;
+            /** Format: double */
+            score: number | string;
+            citation: components["schemas"]["KnowledgeCitation"];
+            /** @default true */
+            untrusted: boolean;
+        };
+        KnowledgeRetrievalResult: {
+            confidence: components["schemas"]["RetrievalConfidence"];
+            mode: components["schemas"]["RetrievalMode"];
+            passages: components["schemas"]["KnowledgePassage"][];
+        };
+        KnowledgeSearchRequest: {
+            query: string;
         };
         KnowledgeSource: number;
         KnowledgeVersionDetail: {
@@ -5872,6 +5986,8 @@ export interface components {
             /** Format: date-time */
             reviewedAt: null | string;
             reviewNote: null | string;
+            /** @default false */
+            hasSuspiciousInstructions: boolean;
         };
         MediaAssetItem: {
             id: string;
@@ -6527,6 +6643,8 @@ export interface components {
             token: string;
             newPassword: string;
         };
+        RetrievalConfidence: number;
+        RetrievalMode: number;
         RotateSecretRequestBody: {
             targetKeyVersion: string;
         };
