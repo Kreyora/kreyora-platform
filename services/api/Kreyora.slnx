@@ -7,6 +7,9 @@
     <Project Path="src/Kreyora.ServiceDefaults/Kreyora.ServiceDefaults.csproj" />
     <Project Path="src/Kreyora.WebApi/Kreyora.WebApi.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Kreyora.AiEvaluation/Kreyora.AiEvaluation.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Kreyora.ArchitectureTests/Kreyora.ArchitectureTests.csproj" />
     <Project Path="tests/Kreyora.ContractTests/Kreyora.ContractTests.csproj" />

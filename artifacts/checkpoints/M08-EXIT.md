@@ -6,8 +6,8 @@
 - **Step:** M08 Exit Gate — Milestone Completion Review
 - **Date:** 2026-10-06
 - **Implementer:** Claude
-- **Branch / head:** `master` at `fa91a38` (S01–S06 merged) + uncommitted M08-S07 changes (commit/push needs owner authorization)
-- **Status:** `REVIEW`
+- **Branch / head:** `master` at `fd5a7ec` (S07 merged in PR #117; review written at `fa91a38` + uncommitted S07)
+- **Status:** `APPROVED` (2026-10-06; was `REVIEW`)
 
 ## Scope completed
 
@@ -113,3 +113,14 @@ Where live evidence is missing, the table says so.
 - **Next allowed prompt:** after approval, M09-S01 planning only (AI assistant). Implementation needs plan approval.
 
 The next milestone was not started as part of this review.
+
+## Approval (2026-10-06) — appended
+
+- **Reviewer:** Project owner
+- **Decision:** `APPROVED` ("okay approve the m08 exit gate and start the planning")
+- **Notes:** All six exit criteria accepted.
+  - **L-A carried to M09-S07:** live check that automation is suppressed after takeover, on the reused M08-S07 Instagram sandbox.
+  - **L-B accepted:** token expiry, reauthorization and replay rest on automated evidence. Running S07 S11–S13 live is optional.
+  - **Production connection stays `BLOCKED`.**
+  - **Owner security follow-ups (App Secret reset, app access) deferred by the owner**, who is reusing the sandbox. To be done before any real seller or customer use.
+- **Next allowed prompt:** M09-S01 planning (plan only).

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- M09-S01 opt-in evaluation harness (ADR-018). Not part of CI; runs only when invoked with a command.
+       Shares the WebApi user-secrets store so the owner's provider keys are read without copying them. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>kreyora-webapi-local-development-20260801</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kreyora.Infrastructure\Kreyora.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

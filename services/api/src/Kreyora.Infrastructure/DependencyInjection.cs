@@ -1,4 +1,5 @@
 using Kreyora.Application.Abstractions;
+using Kreyora.Application.Ai;
 using Kreyora.Application.Audit;
 using Kreyora.Application.Authentication;
 using Kreyora.Application.Authorization;
@@ -15,6 +16,7 @@ using Kreyora.Application.Notifications;
 using Kreyora.Application.Storefront;
 using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
+using Kreyora.Infrastructure.Ai;
 using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authentication;
 using Kreyora.Infrastructure.Authorization;
@@ -108,6 +110,15 @@ public static class DependencyInjection
                 httpClient.Timeout = TimeSpan.FromSeconds(
                     graphOptions.TimeoutSeconds <= 0 ? 15 : graphOptions.TimeoutSeconds);
             });
+
+        // AI boundary (M09-S01, ADR-018): disabled and fake by default; providers/profiles are configuration only.
+        services.AddOptions<AiOptions>().BindConfiguration(AiOptions.SectionName).ValidateOnStart();
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<AiOptions>, AiOptionsValidator>();
+        services.AddHttpClient(OpenAiCompatibleChatClient.HttpClientName,
+            httpClient => httpClient.Timeout = System.Threading.Timeout.InfiniteTimeSpan); // per-call deadlines
+        services.AddSingleton<OpenAiCompatibleChatClient>();
+        services.AddSingleton<FakeAiChatClient>();
+        services.AddSingleton<IAiChatClient, ResilientAiChatClient>();
 
         var connectionString = configuration.GetValue<string>("Database:ConnectionString");
         if (string.IsNullOrWhiteSpace(connectionString))

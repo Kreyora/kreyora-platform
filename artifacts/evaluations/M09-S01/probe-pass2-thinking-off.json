@@ -1,0 +1,139 @@
+{
+  "reasoningEffort": "none",
+  "results": [
+    {
+      "provider": "GoogleAiStudio",
+      "model": "gemini-3.5-flash-lite",
+      "textLatencyMs": 633,
+      "textOutputTokens": 0,
+      "tokensPerSecond": 0,
+      "textFailure": "InvalidRequest",
+      "toolLatencyMs": 551,
+      "toolCallValid": false,
+      "toolFailure": "InvalidRequest",
+      "probedAt": "2026-10-06T07:59:00.575617+00:00"
+    },
+    {
+      "provider": "GoogleAiStudio",
+      "model": "gemini-flash-lite-latest",
+      "textLatencyMs": 607,
+      "textOutputTokens": 0,
+      "tokensPerSecond": 0,
+      "textFailure": "InvalidRequest",
+      "toolLatencyMs": 562,
+      "toolCallValid": false,
+      "toolFailure": "InvalidRequest",
+      "probedAt": "2026-10-06T07:59:09.586422+00:00"
+    },
+    {
+      "provider": "GoogleAiStudio",
+      "model": "gemini-3.5-flash",
+      "textLatencyMs": 2048,
+      "textOutputTokens": 148,
+      "tokensPerSecond": 72.3,
+      "toolLatencyMs": 1875,
+      "toolCallValid": true,
+      "probedAt": "2026-10-06T07:59:19.900904+00:00"
+    },
+    {
+      "provider": "GoogleAiStudio",
+      "model": "gemini-3.6-flash",
+      "textLatencyMs": 2470,
+      "textOutputTokens": 126,
+      "tokensPerSecond": 51,
+      "toolLatencyMs": 4211,
+      "toolCallValid": false,
+      "toolFailure": "ProviderUnavailable",
+      "probedAt": "2026-10-06T07:59:31.238036+00:00"
+    },
+    {
+      "provider": "GoogleAiStudio",
+      "model": "gemini-3.7-flash",
+      "textLatencyMs": 5567,
+      "textOutputTokens": 0,
+      "tokensPerSecond": 0,
+      "textFailure": "ProviderUnavailable",
+      "toolLatencyMs": 4247,
+      "toolCallValid": true,
+      "probedAt": "2026-10-06T07:59:41.342139+00:00"
+    },
+    {
+      "provider": "GoogleAiStudio",
+      "model": "gemini-3.8-flash",
+      "textLatencyMs": 60006,
+      "textOutputTokens": 0,
+      "tokensPerSecond": 0,
+      "textFailure": "Timeout",
+      "toolLatencyMs": 9385,
+      "toolCallValid": true,
+      "probedAt": "2026-10-06T08:00:50.986773+00:00"
+    },
+    {
+      "provider": "GoogleAiStudio",
+      "model": "gemini-flash-latest",
+      "textLatencyMs": 18180,
+      "textOutputTokens": 10,
+      "tokensPerSecond": 0.6,
+      "toolLatencyMs": 2681,
+      "toolCallValid": true,
+      "probedAt": "2026-10-06T08:01:11.84967+00:00"
+    },
+    {
+      "provider": "OpenRouter",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "textLatencyMs": 2975,
+      "textOutputTokens": 157,
+      "tokensPerSecond": 52.8,
+      "toolLatencyMs": 598,
+      "toolCallValid": true,
+      "paidInputPerMillionUsd": 0.08,
+      "paidOutputPerMillionUsd": 0.45,
+      "probedAt": "2026-10-06T08:01:18.768699+00:00"
+    },
+    {
+      "provider": "OpenRouter",
+      "model": "dots-studio/dots-3-note-preview:free",
+      "textLatencyMs": 8574,
+      "textOutputTokens": 250,
+      "tokensPerSecond": 29.2,
+      "toolLatencyMs": 7192,
+      "toolCallValid": true,
+      "probedAt": "2026-10-06T08:01:38.435308+00:00"
+    },
+    {
+      "provider": "OpenRouter",
+      "model": "inclusionai/ling-3.0-flash-sante:free",
+      "textLatencyMs": 3511,
+      "textOutputTokens": 184,
+      "tokensPerSecond": 52.4,
+      "toolLatencyMs": 488,
+      "toolCallValid": false,
+      "toolFailure": "RateLimited",
+      "probedAt": "2026-10-06T08:01:43.42333+00:00"
+    },
+    {
+      "provider": "OpenRouter",
+      "model": "liquid/lfm-2.5-2.6b:free",
+      "textLatencyMs": 25,
+      "textOutputTokens": 0,
+      "tokensPerSecond": 0,
+      "textFailure": "InvalidRequest",
+      "toolLatencyMs": 22,
+      "toolCallValid": false,
+      "toolFailure": "InvalidRequest",
+      "probedAt": "2026-10-06T08:01:51.959766+00:00"
+    },
+    {
+      "provider": "OpenRouter",
+      "model": "nvidia/nemotron-3.5-lightning:free",
+      "textLatencyMs": 22849,
+      "textOutputTokens": 158,
+      "tokensPerSecond": 6.9,
+      "toolLatencyMs": 17921,
+      "toolCallValid": true,
+      "paidInputPerMillionUsd": 0.06,
+      "paidOutputPerMillionUsd": 0.16,
+      "probedAt": "2026-10-06T08:02:37.208168+00:00"
+    }
+  ]
+}

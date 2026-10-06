@@ -81,6 +81,21 @@ public class LayerDependencyTests
             $"Infrastructure must not reference WebApi. Offending types: {FormatTypes(result)}");
     }
 
+    [Fact]
+    public void ApplicationAiContract_ShouldNotDependOn_HttpOrProviderTypes()
+    {
+        // ADR-018: callers see profiles and typed failures only; providers, URLs and keys live in Infrastructure.
+        var result = Types.InAssembly(typeof(Application.ApplicationAssemblyMarker).Assembly)
+            .That()
+            .ResideInNamespace("Kreyora.Application.Ai")
+            .ShouldNot()
+            .HaveDependencyOnAny("System.Net.Http", "Microsoft.Extensions.Http", "Kreyora.Infrastructure")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful,
+            $"The AI contract must stay provider-neutral. Offending types: {FormatTypes(result)}");
+    }
+
     private static string FormatTypes(TestResult result)
     {
         if (result.FailingTypes == null || !result.FailingTypes.Any())
