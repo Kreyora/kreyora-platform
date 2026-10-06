@@ -4,6 +4,473 @@
  */
 
 export interface paths {
+    "/v1/assistant/policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantPolicyItem"];
+                        "application/json": components["schemas"]["AssistantPolicyItem"];
+                        "text/json": components["schemas"]["AssistantPolicyItem"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateAssistantPolicyRequest"];
+                    "text/json": components["schemas"]["UpdateAssistantPolicyRequest"];
+                    "application/*+json": components["schemas"]["UpdateAssistantPolicyRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantPolicyItem"];
+                        "application/json": components["schemas"]["AssistantPolicyItem"];
+                        "text/json": components["schemas"]["AssistantPolicyItem"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantReadinessItem"];
+                        "application/json": components["schemas"]["AssistantReadinessItem"];
+                        "text/json": components["schemas"]["AssistantReadinessItem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeDocumentItem"][];
+                        "application/json": components["schemas"]["KnowledgeDocumentItem"][];
+                        "text/json": components["schemas"]["KnowledgeDocumentItem"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateKnowledgeFromTextRequest"];
+                    "text/json": components["schemas"]["CreateKnowledgeFromTextRequest"];
+                    "application/*+json": components["schemas"]["CreateKnowledgeFromTextRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeDocumentItem"];
+                        "application/json": components["schemas"]["KnowledgeDocumentItem"];
+                        "text/json": components["schemas"]["KnowledgeDocumentItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        file?: components["schemas"]["IFormFile"];
+                    } & {
+                        title?: string;
+                    } & {
+                        category?: components["schemas"]["KnowledgeCategory"];
+                    } & {
+                        documentId?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeDocumentItem"];
+                        "application/json": components["schemas"]["KnowledgeDocumentItem"];
+                        "text/json": components["schemas"]["KnowledgeDocumentItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge/import-store-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeDocumentItem"][];
+                        "application/json": components["schemas"]["KnowledgeDocumentItem"][];
+                        "text/json": components["schemas"]["KnowledgeDocumentItem"][];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge/{documentId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Idempotency-Key"?: string;
+                };
+                path: {
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateKnowledgeVersionRequest"];
+                    "text/json": components["schemas"]["CreateKnowledgeVersionRequest"];
+                    "application/*+json": components["schemas"]["CreateKnowledgeVersionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeDocumentItem"];
+                        "application/json": components["schemas"]["KnowledgeDocumentItem"];
+                        "text/json": components["schemas"]["KnowledgeDocumentItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge/{documentId}/versions/{versionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    documentId: string;
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeVersionDetail"];
+                        "application/json": components["schemas"]["KnowledgeVersionDetail"];
+                        "text/json": components["schemas"]["KnowledgeVersionDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge/{documentId}/versions/{versionId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    documentId: string;
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeDocumentItem"];
+                        "application/json": components["schemas"]["KnowledgeDocumentItem"];
+                        "text/json": components["schemas"]["KnowledgeDocumentItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge/{documentId}/versions/{versionId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    documentId: string;
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RejectKnowledgeVersionRequest"];
+                    "text/json": components["schemas"]["RejectKnowledgeVersionRequest"];
+                    "application/*+json": components["schemas"]["RejectKnowledgeVersionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeDocumentItem"];
+                        "application/json": components["schemas"]["KnowledgeDocumentItem"];
+                        "text/json": components["schemas"]["KnowledgeDocumentItem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/knowledge/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["KnowledgeDocumentItem"];
+                        "application/json": components["schemas"]["KnowledgeDocumentItem"];
+                        "text/json": components["schemas"]["KnowledgeDocumentItem"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/audit-events": {
         parameters: {
             query?: never;
@@ -4877,6 +5344,54 @@ export interface components {
         AssignConversationRequest: {
             userId: string;
         };
+        AssistantPlatformCaps: {
+            /** Format: int32 */
+            maxToolSteps: number | string;
+            /** Format: int32 */
+            maxRepliesPerConversationPerHour: number | string;
+            /** Format: int32 */
+            maxOutputTokens: number | string;
+        };
+        AssistantPolicyItem: {
+            enabled: boolean;
+            replyStyle: components["schemas"]["AssistantReplyStyle"];
+            supportedLanguages: string[];
+            tone: components["schemas"]["AssistantTone"];
+            brandNote: null | string;
+            businessHours: components["schemas"]["DailyHours"][];
+            timeZone: string;
+            outsideHoursBehavior: components["schemas"]["OutsideHoursBehavior"];
+            unrecognizedMediaBehavior: components["schemas"]["UnrecognizedMediaBehavior"];
+            escalationKeywords: string[];
+            allowedTools: string[];
+            /** Format: int32 */
+            maxToolSteps: number | string;
+            /** Format: int32 */
+            maxRepliesPerConversationPerHour: number | string;
+            /** Format: int32 */
+            maxOutputTokens: number | string;
+            /** Format: date-time */
+            reviewedAt: null | string;
+            version: string;
+            fixedEscalationCategories: string[];
+            availableTools: string[];
+            platformCaps: components["schemas"]["AssistantPlatformCaps"];
+        };
+        AssistantReadinessCheck: {
+            code: string;
+            passed: boolean;
+            required: boolean;
+            detail: string;
+            blockers: string[];
+        };
+        AssistantReadinessItem: {
+            isActive: boolean;
+            sellerEnabled: boolean;
+            platformEnabled: boolean;
+            checks: components["schemas"]["AssistantReadinessCheck"][];
+        };
+        AssistantReplyStyle: number;
+        AssistantTone: number;
         AttachBody: {
             productId: string;
             /** Format: int32 */
@@ -5081,6 +5596,14 @@ export interface components {
             refreshTokenExpiresAt?: null | string;
             instagram?: null | components["schemas"]["InstagramConnectOptions"];
         };
+        CreateKnowledgeFromTextRequest: {
+            title: string;
+            category: components["schemas"]["KnowledgeCategory"];
+            text: string;
+        };
+        CreateKnowledgeVersionRequest: {
+            text: string;
+        };
         CreateProductRequest: {
             title: string;
             description: null | string;
@@ -5121,6 +5644,13 @@ export interface components {
             customerId: null | string;
             isErased: boolean;
         };
+        DailyHours: {
+            day: components["schemas"]["DayOfWeek"];
+            closed: boolean;
+            opens: null | string;
+            closes: null | string;
+        };
+        DayOfWeek: number;
         DeliveryFeeType: number;
         DeliveryRuleInput: {
             name: string;
@@ -5302,6 +5832,46 @@ export interface components {
             actorKind: components["schemas"]["CommerceActorKind"];
             /** Format: date-time */
             createdAt: string;
+        };
+        KnowledgeCategory: number;
+        KnowledgeDocumentItem: {
+            id: string;
+            title: string;
+            category: components["schemas"]["KnowledgeCategory"];
+            source: components["schemas"]["KnowledgeSource"];
+            storePolicyKind: null | components["schemas"]["StorePolicyKind"];
+            activeVersion: null | components["schemas"]["KnowledgeVersionSummary"];
+            pendingVersions: components["schemas"]["KnowledgeVersionSummary"][];
+            /** Format: int32 */
+            latestVersionNumber: number | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            modifiedAt: string;
+        };
+        KnowledgeSource: number;
+        KnowledgeVersionDetail: {
+            documentId: string;
+            documentTitle: string;
+            version: components["schemas"]["KnowledgeVersionSummary"];
+            text: null | string;
+        };
+        KnowledgeVersionState: number;
+        KnowledgeVersionSummary: {
+            id: string;
+            /** Format: int32 */
+            versionNumber: number | string;
+            state: components["schemas"]["KnowledgeVersionState"];
+            /** Format: int32 */
+            characterCount: number | string;
+            originalFileName: null | string;
+            submittedByUserId: string;
+            /** Format: date-time */
+            submittedAt: string;
+            reviewedByUserId: null | string;
+            /** Format: date-time */
+            reviewedAt: null | string;
+            reviewNote: null | string;
         };
         MediaAssetItem: {
             id: string;
@@ -5641,6 +6211,7 @@ export interface components {
         };
         OutboundMessageStatus: number;
         OutboundMessageType: number;
+        OutsideHoursBehavior: number;
         PagedResultOfConversationSummaryItem: {
             items: components["schemas"]["ConversationSummaryItem"][];
             /** Format: int32 */
@@ -5932,6 +6503,9 @@ export interface components {
             tenantDisplayName: string;
             tenantSlug: string;
         };
+        RejectKnowledgeVersionRequest: {
+            note: null | string;
+        };
         ReorderBody: {
             /** Format: int32 */
             sortOrder: number | string;
@@ -6059,6 +6633,7 @@ export interface components {
             merchantQrInstructions: null | string;
             merchantQrMediaAssetId: null | string;
         };
+        StorePolicyKind: number;
         StoreProductPublicationItem: {
             id: string;
             productId: string;
@@ -6130,6 +6705,26 @@ export interface components {
             threshold: number | string;
             /** Format: uint32 */
             expectedVersion: number | string;
+        };
+        UnrecognizedMediaBehavior: number;
+        UpdateAssistantPolicyRequest: {
+            enabled: boolean;
+            replyStyle: components["schemas"]["AssistantReplyStyle"];
+            supportedLanguages: string[];
+            tone: components["schemas"]["AssistantTone"];
+            brandNote: null | string;
+            businessHours: components["schemas"]["DailyHours"][];
+            outsideHoursBehavior: components["schemas"]["OutsideHoursBehavior"];
+            unrecognizedMediaBehavior: components["schemas"]["UnrecognizedMediaBehavior"];
+            escalationKeywords: string[];
+            allowedTools: string[];
+            /** Format: int32 */
+            maxToolSteps: number | string;
+            /** Format: int32 */
+            maxRepliesPerConversationPerHour: number | string;
+            /** Format: int32 */
+            maxOutputTokens: number | string;
+            version: string;
         };
         UpdateChannelConnectionRequest: {
             displayName?: null | string;
