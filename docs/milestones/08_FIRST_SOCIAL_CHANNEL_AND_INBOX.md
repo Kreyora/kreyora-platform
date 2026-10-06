@@ -81,3 +81,10 @@ Human takeover is a transactional conversation-state change checked by outbound 
 - Provider errors, token expiry, retries, DLQ, and replay are visible.
 - Production claims match actual approval status.
 
+
+## Milestone exit gate approval
+
+- **Status:** `APPROVED`
+- **Date:** 2026-10-06
+- **Approved by:** Project owner
+- **Evidence:** `artifacts/checkpoints/M08-EXIT.md` (`APPROVED`). All six exit criteria accepted. Limitation L-A (live automation suppression) is carried to M09-S07; L-B (token expiry and replay evidenced by automated tests) is accepted. The production connection remains classified `BLOCKED`.
