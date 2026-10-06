@@ -115,6 +115,94 @@
         }
       }
     },
+    "/v1/assistant/tools": {
+      "get": {
+        "tags": [
+          "Assistant"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantToolCatalog"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantToolCatalog"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantToolCatalog"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/tools/{toolName}/preview": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "toolName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantToolPreviewRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantToolPreviewRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantToolPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantToolPreviewResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantToolPreviewResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantToolPreviewResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/assistant/knowledge": {
       "get": {
         "tags": [
@@ -6776,6 +6864,166 @@
       "AssistantTone": {
         "type": "integer"
       },
+      "AssistantToolCatalog": {
+        "required": [
+          "registryVersion",
+          "tools"
+        ],
+        "type": "object",
+        "properties": {
+          "registryVersion": {
+            "type": "string"
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantToolDescriptor"
+            }
+          }
+        }
+      },
+      "AssistantToolDescriptor": {
+        "required": [
+          "name",
+          "version",
+          "description",
+          "parametersSchema",
+          "enabledInPolicy"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "description": {
+            "type": "string"
+          },
+          "parametersSchema": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "enabledInPolicy": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AssistantToolPreviewRequest": {
+        "required": [
+          "arguments"
+        ],
+        "type": "object",
+        "properties": {
+          "arguments": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          }
+        }
+      },
+      "AssistantToolPreviewResult": {
+        "required": [
+          "result",
+          "trace"
+        ],
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "trace": {
+            "$ref": "#/components/schemas/AssistantToolTrace"
+          }
+        }
+      },
+      "AssistantToolTrace": {
+        "required": [
+          "registryVersion",
+          "tool",
+          "toolVersion",
+          "callId",
+          "conversationId",
+          "sellerPreview",
+          "startedAt",
+          "durationMs",
+          "outcome",
+          "argumentFields",
+          "argumentsHash",
+          "resultCount"
+        ],
+        "type": "object",
+        "properties": {
+          "registryVersion": {
+            "type": "string"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "toolVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "callId": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sellerPreview": {
+            "type": "boolean"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "argumentFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "argumentsHash": {
+            "type": "string"
+          },
+          "resultCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "AttachBody": {
         "required": [
           "productId",
@@ -8638,6 +8886,7 @@
           }
         }
       },
+      "JsonElement": {},
       "KnowledgeCategory": {
         "type": "integer"
       },

@@ -62,7 +62,7 @@ public sealed partial class ConversationIngestionService(
                 await IngestMessageAsync(inboundEvent, connection, media.SenderChannelId, media.SenderName, media.MessageId, media.Timestamp,
                     (conversationId, receivedAt) => Message.CreateInboundMedia(
                         connection.TenantId, conversationId, connection.Id, inboundEvent.Id, media.MessageId, media.MediaUrl,
-                        media.ContentType, media.Caption, media.Timestamp, receivedAt),
+                        media.ContentType, media.Caption, media.Timestamp, receivedAt, media.SharedPostId),
                     cancellationToken);
                 break;
 

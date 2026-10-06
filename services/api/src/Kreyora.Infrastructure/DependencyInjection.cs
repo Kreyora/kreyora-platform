@@ -19,6 +19,7 @@ using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Ai;
 using Kreyora.Infrastructure.Assistant;
+using Kreyora.Infrastructure.Assistant.Tools;
 using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authentication;
 using Kreyora.Infrastructure.Authorization;
@@ -223,6 +224,20 @@ public static class DependencyInjection
         services.AddScoped<IKnowledgeRetrievalService, KnowledgeRetrievalService>();
         services.AddScoped<IKnowledgeIndexScheduler, HangfireKnowledgeIndexScheduler>();
         services.AddTransient<KnowledgeIndexingJob>();
+        // M09-S04 read tools: customer-facing queries, registry (singleton; each call gets its own scope), owner console.
+        services.AddScoped<ICustomerCatalogQuery, CustomerCatalogQuery>();
+        services.AddScoped<IDeliveryInfoQuery, DeliveryInfoQuery>();
+        services.AddScoped<IOrderStatusLookupService, OrderStatusLookupService>();
+        services.AddSingleton<IAssistantTool, SearchProductsTool>();
+        services.AddSingleton<IAssistantTool, CheckInventoryTool>();
+        services.AddSingleton<IAssistantTool, GetPriceTool>();
+        services.AddSingleton<IAssistantTool, GetShippingInfoTool>();
+        services.AddSingleton<IAssistantTool, GetOrderStatusTool>();
+        services.AddSingleton<IAssistantToolRegistry, AssistantToolRegistry>();
+        services.AddScoped<IAssistantToolContextFactory, AssistantToolContextFactory>();
+        services.AddScoped<IAssistantToolConsoleService, AssistantToolConsoleService>();
+        services.AddScoped<IProductReferenceResolver, ProductReferenceResolver>();
+        services.AddOptions<StorefrontLinkOptions>().BindConfiguration("PublicStorefront");
         services.AddScoped<IIntegrationWorkScheduler, HangfireIntegrationWorkScheduler>();
         services.AddScoped<IConversationOutboundReconciler, ConversationOutboundReconciler>();
         services.AddScoped<IOutboundEnqueuer>(sp => (OutboundMessageService)sp.GetRequiredService<IOutboundMessageService>());

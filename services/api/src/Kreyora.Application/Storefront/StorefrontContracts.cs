@@ -192,3 +192,71 @@ public sealed record PublicCatalogProduct(string Id, string Title, string? Descr
 public sealed record PublicCatalogVariant(string Id, string Name, IReadOnlyDictionary<string, string> Options, decimal PriceNpr, decimal? CompareAtPriceNpr);
 public sealed record PublicMediaAsset(string Id, string ContentType, string? AltText, int SortOrder);
 public sealed record PublicMediaReadContent(Stream Content, string ContentType, long ByteSize);
+
+// ---- Customer-facing read queries for the assistant (M09-S04) ----------------------------------------------------
+
+/// <summary>Stock as customers may see it: bands only, never exact counts (M09-S04 Q3).</summary>
+public enum CustomerAvailability
+{
+    InStock,
+    LowStock,
+    OutOfStock
+}
+
+public sealed record CustomerProductSummary(string ProductId, string Title, IReadOnlyDictionary<string, IReadOnlyList<string>> Options, decimal FromPriceNpr, bool Available);
+
+public sealed record CustomerVariant(
+    string VariantId,
+    string Name,
+    IReadOnlyDictionary<string, string> Options,
+    decimal PriceNpr,
+    decimal? CompareAtPriceNpr,
+    CustomerAvailability Availability,
+    bool? CanFulfil);
+
+public sealed record CustomerProduct(string ProductId, string Title, string Slug, IReadOnlyList<CustomerVariant> Variants);
+
+/// <summary>
+/// The published, visible catalog of one store as its public storefront shows it, with stock reduced to bands.
+/// Runs in the current tenant; unknown, unpublished, hidden or other-tenant IDs answer as missing.
+/// </summary>
+public interface ICustomerCatalogQuery
+{
+    Task<IReadOnlyList<CustomerProductSummary>> SearchAsync(string storeId, string query, int limit, int lowStockThreshold, CancellationToken cancellationToken = default);
+
+    Task<CustomerProduct?> GetProductAsync(string storeId, string productId, int? quantity, int lowStockThreshold, CancellationToken cancellationToken = default);
+
+    Task<CustomerProduct?> GetProductBySlugAsync(string storeId, string productSlug, int lowStockThreshold, CancellationToken cancellationToken = default);
+}
+
+public enum DeliveryInfoStatus
+{
+    Matched,
+    PlaceUnknown,
+    PlaceNotServed,
+    NeedsMoreDetail,
+    ItemsUnavailable
+}
+
+public sealed record DeliveryInfoItem(string VariantId, int Quantity);
+
+public sealed record DeliveryInfoResult(
+    DeliveryInfoStatus Status,
+    string? MatchedPlace,
+    decimal? FeeNpr,
+    decimal? BaseFeeNpr,
+    decimal? FreeAboveNpr,
+    decimal? MerchandiseSubtotalNpr,
+    string? EtaText,
+    bool CodAvailable,
+    bool QrAvailable,
+    IReadOnlyList<string> Suggestions);
+
+/// <summary>
+/// Delivery fee, ETA and payment options for a place the customer names (M09-S04 Q5): the shop's zone names at every
+/// level plus the built-in Nepal gazetteer. Item prices, when given, come from the published catalog, never the caller.
+/// </summary>
+public interface IDeliveryInfoQuery
+{
+    Task<DeliveryInfoResult> GetAsync(string storeId, string place, IReadOnlyList<DeliveryInfoItem>? items, CancellationToken cancellationToken = default);
+}

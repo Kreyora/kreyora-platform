@@ -3,25 +3,25 @@
 ## Active position
 
 - **Milestone:** 09 — Constrained AI Assistant, RAG, and Commerce Tools
-- **Step:** S03 — Tenant-isolated retrieval
-- **Status:** `REVIEW` (implemented 2026-10-06; awaiting owner review and ADR-019 acceptance)
+- **Step:** S04 — Read-only commerce tool registry
+- **Status:** `REVIEW` (implemented 2026-10-06; awaiting owner review)
 - **Plan state:** Milestone 08 complete (exit gate APPROVED 2026-10-06). M09 hard gates: provider ADR (S01) and approved data-processing terms before real customer content.
 - **Active milestone file:** `docs/milestones/09_AI_ASSISTANT_RAG_TOOLS.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master` at `ffcfa79` (M09-S01 and M09-S02 merged, PRs #119/#121).
-- **Current checkpoint:** `artifacts/checkpoints/M09-S03.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M09-S02.md` (APPROVED 2026-10-06)
-- **Last approved state:** M09-S02 approved 2026-10-06.
+- **Branch:** `master` at `836ab16` (M09-S01, S02 and S03 merged, PRs #119/#121/#123).
+- **Current checkpoint:** `artifacts/checkpoints/M09-S04.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M09-S03.md` (APPROVED 2026-10-06)
+- **Last approved state:** M09-S03 approved 2026-10-06; ADR-019 accepted.
 
 ## Current objective
 
-Owner review of M09-S03 (tenant-isolated retrieval) and the decision on ADR-019.
+Owner review of M09-S04 (read-only commerce tool registry): tool schemas, authorization boundary, result minimization, traces, gazetteer.
 
 ## Next permitted action
 
-Await the owner's decision on `M09-S03.md` and ADR-019. After approval: M09-S04 planning (plan only). Do not start S04 automatically.
+Await the owner's decision on `M09-S04.md`. After approval: M09-S05 planning (plan only). Do not start S05 automatically.
 
 ## Next prohibited action
 
@@ -32,6 +32,10 @@ Await the owner's decision on `M09-S03.md` and ADR-019. After approval: M09-S04 
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-06 | Completed M09-S04: versioned allowlisted read-tool registry (`kreyora-read-tools.v1`; strict schemas, per-call scope + 3 s deadline, envelope + values-free trace); SearchProducts / CheckInventory (bands) / GetPrice / GetShippingInfo (zones + 77-district gazetteer, server-priced items) / GetOrderStatus (linked or order number + phone suffix, 5-failure lockout, audited); storefront-link resolver; shared-post identifier capture (Q6-A); tool list + preview API; harness on real schemas; additive migration `AddAssistantReadTools`; OpenAPI regenerated (additive). Backend 1,019 passed / 0 failed; EF clean; `pnpm ci:frontend` green; Docker at baseline. Status -> `REVIEW`. | Claude |
+| 2026-10-06 | Project owner approved the M09-S04 plan ("ok implement"): Q1–Q9 as recommended (Q6-A: storefront links now, Instagram shared-post matching after the S07 live capture). Graphify refreshed at this approval boundary (9,644 nodes, 25,802 edges, 425 communities; built from `836ab16`). Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-06 | Drafted the M09-S04 plan `docs/plan/M09-S04_READ_TOOL_REGISTRY_PLAN.md` (plan only): versioned allowlisted registry with strict schemas, timeouts and traces; five read tools on existing application data with minimized results; order status via linked customer or order number + phone suffix with lockout; place gazetteer; storefront-link resolver; Instagram shared-post matching proposed after the S07 live capture. Found: chat customers are not yet linked to orders (`CustomerChannelIdentity.CustomerId` never set). Decisions Q1–Q9 pending. | Claude |
+| 2026-10-06 | Project owner approved M09-S03 ("approved start the next planning"); ADR-019 accepted. S03 merged (`836ab16`, PR #123). Position set to M09-S04 planning (plan only). | Project owner / Claude |
 | 2026-10-06 | Completed M09-S03: ADR-019 `Proposed` (`real[]` vectors, in-app ranking after the SQL tenant/approval filter, pgvector trigger); provider-neutral embedding boundary + OpenAI-compatible client + offline fake (kill switch honored); `knowledge_chunks` with version metadata and exact citations; approval-time chunking; indexing job/sweeper/reindex with storage purge retry; retrieval with thresholds, top-k, character budget and lexical fallback; suspicious-instruction flag; search/reindex routes; additive migration `AddKnowledgeChunks`; OpenAPI regenerated (additive). Backend 953 passed / 0 failed (one existing timing-sensitive M07 test failed once, passed on rerun); EF clean; `pnpm ci:frontend` green; Docker at baseline. Status -> `REVIEW`. | Claude |
 | 2026-10-06 | Project owner approved the M09-S03 plan ("ok implement"): Q1–Q8 as recommended. M09-S01/S02 confirmed merged (`ffcfa79`). Status -> `IN PROGRESS`. | Project owner / Claude |
 | 2026-10-06 | Graphify refreshed at the S02 approval boundary (9,319 nodes, 24,971 edges, 419 communities). Embedding probe (synthetic, owner's free key): `gemini-embedding-001`/`-2` available via the OpenAI-compatible endpoint, 3,072 dims; Romanized delivery question vs English FAQ 0.81 (wrong doc 0.51–0.55). Drafted the M09-S03 plan `docs/plan/M09-S03_TENANT_ISOLATED_RETRIEVAL_PLAN.md` (plan only): `real[]` vectors + in-app ranking after the tenant/approval filter (ADR-019 to accept), embedding boundary + offline fake, chunks with version metadata, indexing job/sweeper/reindex, citations, threshold, lexical fallback. Decisions Q1–Q8 pending. | Claude |

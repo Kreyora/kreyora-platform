@@ -26,6 +26,7 @@ public sealed class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.Property(e => e.Text);
         builder.Property(e => e.MediaUrl);
         builder.Property(e => e.MediaContentType).HasMaxLength(Message.MediaContentTypeMaxLength);
+        builder.Property(e => e.SharedPostId).HasMaxLength(Message.SharedPostIdMaxLength);
         builder.Property(e => e.DeliveryStatus).HasConversion<string>().HasMaxLength(16);
         builder.Property(e => e.OccurredAt).IsRequired();
         builder.Property(e => e.ReceivedAt).IsRequired();

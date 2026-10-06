@@ -78,20 +78,20 @@ public sealed class EvaluationHarnessTests
     }
 
     [Fact]
-    public void Inventory_ReportsOutOfStockVariants_AndNoRestockDate()
+    public void Inventory_ReportsOutOfStockVariants_AsBandsWithoutCounts()
     {
-        var result = JsonDocument.Parse(Tools.Execute("CheckInventory", """{"productId":"P-KURTA-RED","variant":"M"}""")).RootElement;
+        var result = JsonDocument.Parse(Tools.Execute("CheckInventory", """{"productId":"P-KURTA-RED","variantId":"M"}""")).RootElement;
 
         var variant = Assert.Single(result.GetProperty("variants").EnumerateArray());
-        Assert.False(variant.GetProperty("inStock").GetBoolean());
-        Assert.Equal(JsonValueKind.Null, result.GetProperty("restockDate").ValueKind);
+        Assert.Equal("out_of_stock", variant.GetProperty("availability").GetString());
+        Assert.False(variant.TryGetProperty("quantity", out _));
     }
 
     [Fact]
     public void Shipping_ForAnUnservedCity_SaysSo_AndUnknownProductsAndBadJsonAreErrors()
     {
-        Assert.Contains("\"served\":false", Tools.Execute("GetShippingInfo", """{"city":"Jumla"}"""));
-        Assert.Contains("\"cashOnDelivery\":false", Tools.Execute("GetShippingInfo", """{"city":"Chitwan"}"""));
+        Assert.Contains("\"served\":false", Tools.Execute("GetShippingInfo", """{"place":"Jumla"}"""));
+        Assert.Contains("\"cashOnDelivery\":false", Tools.Execute("GetShippingInfo", """{"place":"Chitwan"}"""));
         Assert.Contains("error", Tools.Execute("GetPrice", """{"productId":"NOPE"}"""));
         Assert.Contains("error", Tools.Execute("GetPrice", "{not json"));
     }
@@ -100,7 +100,7 @@ public sealed class EvaluationHarnessTests
 
     [Theory]
     [InlineData("GetPrice", """{"productId":"P-KURTA-RED"}""", true)]
-    [InlineData("GetPrice", """{"variant":"L"}""", false)]
+    [InlineData("GetPrice", """{"variantId":"L"}""", false)]
     [InlineData("GetPrice", """{"productId":""}""", false)]
     [InlineData("GetPrice", "{oops", false)]
     [InlineData("GetOrderStatus", "", true)]
