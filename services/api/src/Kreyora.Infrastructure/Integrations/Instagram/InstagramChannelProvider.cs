@@ -443,7 +443,8 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
                     occurredAt)
                 {
                     IsEcho = isEcho,
-                    RecipientChannelId = echoRecipient
+                    RecipientChannelId = echoRecipient,
+                    SharedPostId = SharedPostIdentifier(payload)
                 });
             }
         }
@@ -580,6 +581,29 @@ public sealed partial class InstagramChannelProvider : IChannelProvider
             {
                 return null;
             }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The first <c>*_id</c> field of an attachment payload (for example a shared reel's <c>reel_video_id</c>), kept as
+    /// <c>name:value</c> without interpretation. Which fields Meta sends for shared posts is verified live in M09-S07
+    /// before any product matching uses them (M09-S04 Q6-A).
+    /// </summary>
+    public static string? SharedPostIdentifier(JsonElement payload)
+    {
+        if (payload.ValueKind != JsonValueKind.Object) return null;
+        foreach (var property in payload.EnumerateObject())
+        {
+            if (!property.Name.EndsWith("_id", StringComparison.Ordinal)) continue;
+            var value = property.Value.ValueKind switch
+            {
+                JsonValueKind.String => property.Value.GetString(),
+                JsonValueKind.Number => property.Value.GetRawText(),
+                _ => null
+            };
+            if (!string.IsNullOrWhiteSpace(value)) return $"{property.Name}:{value}";
         }
 
         return null;

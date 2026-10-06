@@ -33,6 +33,7 @@ public sealed class Message : BaseEntity, ITenantOwned
 {
     public const int ProviderMessageIdMaxLength = 512;
     public const int MediaContentTypeMaxLength = 64;
+    public const int SharedPostIdMaxLength = 128;
 
     private Message() { }
 
@@ -49,6 +50,12 @@ public sealed class Message : BaseEntity, ITenantOwned
     public string? Text { get; private set; }
     public string? MediaUrl { get; private set; }
     public string? MediaContentType { get; private set; }
+
+    /// <summary>
+    /// Identifier of a shared post/reel exactly as the provider sent it (e.g. <c>reel_video_id:123</c>); stored, not
+    /// interpreted, until product matching is built from a verified live payload (M09-S04 Q6-A).
+    /// </summary>
+    public string? SharedPostId { get; private set; }
     public DateTimeOffset OccurredAt { get; private set; }
     public DateTimeOffset ReceivedAt { get; private set; }
     public MessageDeliveryStatus? DeliveryStatus { get; private set; }
@@ -84,12 +91,15 @@ public sealed class Message : BaseEntity, ITenantOwned
         string mediaContentType,
         string? caption,
         DateTimeOffset occurredAt,
-        DateTimeOffset receivedAt)
+        DateTimeOffset receivedAt,
+        string? sharedPostId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(providerMessageId);
         var message = CreateCore(tenantId, conversationId, connectionId, providerMessageId, MessageDirection.Inbound, MessageOrigin.Customer, MessageKind.Media, occurredAt, receivedAt);
         message.InboundEventId = Optional(inboundEventId);
         message.ApplyMedia(mediaUrl, mediaContentType, caption);
+        message.SharedPostId = string.IsNullOrWhiteSpace(sharedPostId) ? null
+            : sharedPostId.Length > SharedPostIdMaxLength ? sharedPostId[..SharedPostIdMaxLength] : sharedPostId;
         return message;
     }
 
@@ -226,6 +236,7 @@ public sealed class Message : BaseEntity, ITenantOwned
 
         Text = null;
         MediaUrl = null;
+        SharedPostId = null;
         RedactedAt = now;
         return true;
     }

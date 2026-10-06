@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Kreyora.Application.Ai;
+using Kreyora.Application.Assistant;
+using Kreyora.Infrastructure.Assistant.Tools;
 
 namespace Kreyora.AiEvaluation;
 
@@ -11,18 +13,11 @@ namespace Kreyora.AiEvaluation;
 /// </summary>
 public sealed class FakeTools(FakeCatalog catalog)
 {
+    /// <summary>The real M09-S04 registry schemas (so evaluation exercises the production contract) plus EscalateToHuman.</summary>
     public static readonly IReadOnlyList<AiToolDefinition> Definitions =
     [
-        new("SearchProducts", "Search the shop's catalog by words in the product name or category. Returns matching products with their ids.",
-            """{"type":"object","properties":{"query":{"type":"string","description":"Search words, any language"}},"required":["query"]}"""),
-        new("CheckInventory", "Current stock for a product, per size/color variant.",
-            """{"type":"object","properties":{"productId":{"type":"string"},"variant":{"type":"string","description":"Optional size or color"}},"required":["productId"]}"""),
-        new("GetPrice", "Current price in NPR for a product, per variant.",
-            """{"type":"object","properties":{"productId":{"type":"string"},"variant":{"type":"string","description":"Optional size or color"}},"required":["productId"]}"""),
-        new("GetShippingInfo", "Delivery fee, delivery time and whether cash on delivery (COD) or QR payment is available for a city.",
-            """{"type":"object","properties":{"city":{"type":"string"}},"required":["city"]}"""),
-        new("GetOrderStatus", "Status of the current customer's own orders. Only this customer's orders are visible.",
-            """{"type":"object","properties":{"orderNumber":{"type":"string","description":"Optional, e.g. KR-1042"}}}"""),
+        .. new IAssistantTool[] { new SearchProductsTool(), new CheckInventoryTool(), new GetPriceTool(), new GetShippingInfoTool(), new GetOrderStatusTool() }
+            .Select(t => new AiToolDefinition(t.Name, t.Description, t.ParametersSchema)),
         new("EscalateToHuman", "Hand the conversation to a human team member (complaints, refunds, exchanges, custom requests, safety questions, or when the customer asks for a person).",
             """{"type":"object","properties":{"reason":{"type":"string"}},"required":["reason"]}"""),
     ];
@@ -48,9 +43,9 @@ public sealed class FakeTools(FakeCatalog catalog)
         return name switch
         {
             "SearchProducts" => Search(Text(args, "query")),
-            "CheckInventory" => Inventory(Text(args, "productId"), Text(args, "variant")),
-            "GetPrice" => Price(Text(args, "productId"), Text(args, "variant")),
-            "GetShippingInfo" => Shipping(Text(args, "city")),
+            "CheckInventory" => Inventory(Text(args, "productId"), Text(args, "variantId"), Text(args, "quantity")),
+            "GetPrice" => Price(Text(args, "productId"), Text(args, "variantId")),
+            "GetShippingInfo" => Shipping(Text(args, "place")),
             "GetOrderStatus" => Orders(Text(args, "orderNumber")),
             "EscalateToHuman" => JsonSerializer.Serialize(new { escalated = true, message = "A team member has been notified and will reply." }),
             _ => Error($"Unknown tool {name}.")
@@ -70,13 +65,20 @@ public sealed class FakeTools(FakeCatalog catalog)
         return JsonSerializer.Serialize(new { results = matches.Count > 0 ? matches : catalog.Products.Select(p => new { productId = p.Id, name = p.Name, nameNe = p.NameNe, category = p.Category }).ToList(), exactMatch = matches.Count > 0 });
     }
 
-    private string Inventory(string? productId, string? variant) =>
+    // Same minimization as the real tool: stock bands and "can fulfil", never exact counts.
+    private string Inventory(string? productId, string? variant, string? quantity) =>
         WithProduct(productId, product => JsonSerializer.Serialize(new
         {
             productId = product.Id,
             name = product.Name,
-            variants = Variants(product, variant).Select(v => new { sku = v.Sku, size = v.Size, color = v.Color, inStock = v.Stock > 0, quantity = v.Stock }),
-            restockDate = (string?)null
+            variants = Variants(product, variant).Select(v => new
+            {
+                variantId = v.Sku,
+                size = v.Size,
+                color = v.Color,
+                availability = v.Stock <= 0 ? "out_of_stock" : v.Stock <= 3 ? "low_stock" : "in_stock",
+                canFulfil = int.TryParse(quantity, NumberStyles.Integer, CultureInfo.InvariantCulture, out var wanted) ? v.Stock >= wanted : (bool?)null
+            })
         }));
 
     private string Price(string? productId, string? variant) =>
@@ -85,7 +87,7 @@ public sealed class FakeTools(FakeCatalog catalog)
             productId = product.Id,
             name = product.Name,
             currency = "NPR",
-            variants = Variants(product, variant).Select(v => new { sku = v.Sku, size = v.Size, color = v.Color, priceNpr = v.PriceNpr })
+            variants = Variants(product, variant).Select(v => new { variantId = v.Sku, size = v.Size, color = v.Color, priceNpr = v.PriceNpr })
         }));
 
     private string Shipping(string? city)
