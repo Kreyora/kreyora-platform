@@ -1,3 +1,4 @@
+using Kreyora.Domain.Assistant;
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Audit;
 using Kreyora.Domain.Catalog;
@@ -71,6 +72,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<MessageReaction> MessageReactions => Set<MessageReaction>();
     public DbSet<ConversationLabel> ConversationLabels => Set<ConversationLabel>();
+    public DbSet<AssistantPolicy> AssistantPolicies => Set<AssistantPolicy>();
+    public DbSet<KnowledgeDocument> KnowledgeDocuments => Set<KnowledgeDocument>();
+    public DbSet<KnowledgeDocumentVersion> KnowledgeDocumentVersions => Set<KnowledgeDocumentVersion>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -130,6 +134,9 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<Message>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<MessageReaction>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<ConversationLabel>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<AssistantPolicy>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<KnowledgeDocument>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<KnowledgeDocumentVersion>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

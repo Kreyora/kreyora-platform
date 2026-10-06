@@ -20,7 +20,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
-| ADR-018 | AI provider, model selection, data policy, fallback and disable | `Proposed` | 2026-10-06 | — |
+| ADR-018 | AI provider, model selection, data policy, fallback and disable | `Accepted` | 2026-10-06 | — |
 | ADR-017 | Conversation ownership, takeover invariant, and outbound delivery semantics | `Accepted` | 2026-10-05 | — |
 | ADR-016 | Conversation identity and inbound lifecycle rules | `Accepted` | 2026-10-05 | — |
 | ADR-015 | Social account ownership, webhook account fan-out, and inbound event identity | `Accepted` | 2026-10-05 | — |
@@ -43,7 +43,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
-| ADR-018 | AI provider, model selection, data policy, fallback and disable | `Proposed` | 2026-10-06 | — |
+| ADR-018 | AI provider, model selection, data policy, fallback and disable | `Accepted` | 2026-10-06 | — |
 | ADR-017 | Conversation ownership, takeover invariant, and outbound delivery semantics | `Accepted` | 2026-10-05 | — |
 | ADR-016 | Conversation identity and inbound lifecycle rules | `Accepted` | 2026-10-05 | — |
 | ADR-015 | Social account ownership, webhook account fan-out, and inbound event identity | `Accepted` | 2026-10-05 | — |

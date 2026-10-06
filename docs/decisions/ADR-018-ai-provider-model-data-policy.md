@@ -1,6 +1,6 @@
 # ADR-018 — AI provider, model selection, data policy, fallback and disable
 
-- **Status:** `Proposed` (owner acceptance at the M09-S01 checkpoint)
+- **Status:** `Accepted` (2026-10-06, with the M09-S01 approval)
 - **Date:** 2026-10-06
 - **Owner:** Platform Architect
 - **Reviewers:** Project Owner

@@ -10,6 +10,591 @@
     }
   ],
   "paths": {
+    "/v1/assistant/policy": {
+      "get": {
+        "tags": [
+          "Assistant"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPolicyItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPolicyItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPolicyItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Assistant"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssistantPolicyRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssistantPolicyRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssistantPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPolicyItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPolicyItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPolicyItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/readiness": {
+      "get": {
+        "tags": [
+          "Assistant"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantReadinessItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantReadinessItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantReadinessItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge": {
+      "get": {
+        "tags": [
+          "Assistant"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKnowledgeFromTextRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKnowledgeFromTextRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKnowledgeFromTextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge/upload": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "allOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "$ref": "#/components/schemas/IFormFile"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "category": {
+                        "$ref": "#/components/schemas/KnowledgeCategory"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "documentId": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge/import-store-policies": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge/{documentId}/versions": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKnowledgeVersionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKnowledgeVersionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKnowledgeVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge/{documentId}/versions/{versionId}": {
+      "get": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeVersionDetail"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeVersionDetail"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeVersionDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge/{documentId}/versions/{versionId}/approve": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge/{documentId}/versions/{versionId}/reject": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectKnowledgeVersionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectKnowledgeVersionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectKnowledgeVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge/{documentId}": {
+      "delete": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/audit-events": {
       "get": {
         "tags": [
@@ -5911,6 +6496,225 @@
           }
         }
       },
+      "AssistantPlatformCaps": {
+        "required": [
+          "maxToolSteps",
+          "maxRepliesPerConversationPerHour",
+          "maxOutputTokens"
+        ],
+        "type": "object",
+        "properties": {
+          "maxToolSteps": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxRepliesPerConversationPerHour": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxOutputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "AssistantPolicyItem": {
+        "required": [
+          "enabled",
+          "replyStyle",
+          "supportedLanguages",
+          "tone",
+          "brandNote",
+          "businessHours",
+          "timeZone",
+          "outsideHoursBehavior",
+          "unrecognizedMediaBehavior",
+          "escalationKeywords",
+          "allowedTools",
+          "maxToolSteps",
+          "maxRepliesPerConversationPerHour",
+          "maxOutputTokens",
+          "reviewedAt",
+          "version",
+          "fixedEscalationCategories",
+          "availableTools",
+          "platformCaps"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "replyStyle": {
+            "$ref": "#/components/schemas/AssistantReplyStyle"
+          },
+          "supportedLanguages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tone": {
+            "$ref": "#/components/schemas/AssistantTone"
+          },
+          "brandNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "businessHours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyHours"
+            }
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "outsideHoursBehavior": {
+            "$ref": "#/components/schemas/OutsideHoursBehavior"
+          },
+          "unrecognizedMediaBehavior": {
+            "$ref": "#/components/schemas/UnrecognizedMediaBehavior"
+          },
+          "escalationKeywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxToolSteps": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxRepliesPerConversationPerHour": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxOutputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "reviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          },
+          "fixedEscalationCategories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "availableTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "platformCaps": {
+            "$ref": "#/components/schemas/AssistantPlatformCaps"
+          }
+        }
+      },
+      "AssistantReadinessCheck": {
+        "required": [
+          "code",
+          "passed",
+          "required",
+          "detail",
+          "blockers"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AssistantReadinessItem": {
+        "required": [
+          "isActive",
+          "sellerEnabled",
+          "platformEnabled",
+          "checks"
+        ],
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean"
+          },
+          "sellerEnabled": {
+            "type": "boolean"
+          },
+          "platformEnabled": {
+            "type": "boolean"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantReadinessCheck"
+            }
+          }
+        }
+      },
+      "AssistantReplyStyle": {
+        "type": "integer"
+      },
+      "AssistantTone": {
+        "type": "integer"
+      },
       "AttachBody": {
         "required": [
           "productId",
@@ -6762,6 +7566,36 @@
           }
         }
       },
+      "CreateKnowledgeFromTextRequest": {
+        "required": [
+          "title",
+          "category",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/KnowledgeCategory"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateKnowledgeVersionRequest": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        }
+      },
       "CreateProductRequest": {
         "required": [
           "title",
@@ -6923,6 +7757,38 @@
             "type": "boolean"
           }
         }
+      },
+      "DailyHours": {
+        "required": [
+          "day",
+          "closed",
+          "opens",
+          "closes"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "closed": {
+            "type": "boolean"
+          },
+          "opens": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "closes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DayOfWeek": {
+        "type": "integer"
       },
       "DeliveryFeeType": {
         "type": "integer"
@@ -7708,6 +8574,183 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "KnowledgeCategory": {
+        "type": "integer"
+      },
+      "KnowledgeDocumentItem": {
+        "required": [
+          "id",
+          "title",
+          "category",
+          "source",
+          "storePolicyKind",
+          "activeVersion",
+          "pendingVersions",
+          "latestVersionNumber",
+          "createdAt",
+          "modifiedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/KnowledgeCategory"
+          },
+          "source": {
+            "$ref": "#/components/schemas/KnowledgeSource"
+          },
+          "storePolicyKind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StorePolicyKind"
+              }
+            ]
+          },
+          "activeVersion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/KnowledgeVersionSummary"
+              }
+            ]
+          },
+          "pendingVersions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeVersionSummary"
+            }
+          },
+          "latestVersionNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "KnowledgeSource": {
+        "type": "integer"
+      },
+      "KnowledgeVersionDetail": {
+        "required": [
+          "documentId",
+          "documentTitle",
+          "version",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string"
+          },
+          "documentTitle": {
+            "type": "string"
+          },
+          "version": {
+            "$ref": "#/components/schemas/KnowledgeVersionSummary"
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "KnowledgeVersionState": {
+        "type": "integer"
+      },
+      "KnowledgeVersionSummary": {
+        "required": [
+          "id",
+          "versionNumber",
+          "state",
+          "characterCount",
+          "originalFileName",
+          "submittedByUserId",
+          "submittedAt",
+          "reviewedByUserId",
+          "reviewedAt",
+          "reviewNote"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "state": {
+            "$ref": "#/components/schemas/KnowledgeVersionState"
+          },
+          "characterCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "originalFileName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "submittedByUserId": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedByUserId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "reviewNote": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -9179,6 +10222,9 @@
       "OutboundMessageType": {
         "type": "integer"
       },
+      "OutsideHoursBehavior": {
+        "type": "integer"
+      },
       "PagedResultOfConversationSummaryItem": {
         "required": [
           "items",
@@ -10464,6 +11510,20 @@
           }
         }
       },
+      "RejectKnowledgeVersionRequest": {
+        "required": [
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "ReorderBody": {
         "required": [
           "sortOrder",
@@ -11025,6 +12085,9 @@
           }
         }
       },
+      "StorePolicyKind": {
+        "type": "integer"
+      },
       "StoreProductPublicationItem": {
         "required": [
           "id",
@@ -11349,6 +12412,102 @@
               "string"
             ],
             "format": "uint32"
+          }
+        }
+      },
+      "UnrecognizedMediaBehavior": {
+        "type": "integer"
+      },
+      "UpdateAssistantPolicyRequest": {
+        "required": [
+          "enabled",
+          "replyStyle",
+          "supportedLanguages",
+          "tone",
+          "brandNote",
+          "businessHours",
+          "outsideHoursBehavior",
+          "unrecognizedMediaBehavior",
+          "escalationKeywords",
+          "allowedTools",
+          "maxToolSteps",
+          "maxRepliesPerConversationPerHour",
+          "maxOutputTokens",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "replyStyle": {
+            "$ref": "#/components/schemas/AssistantReplyStyle"
+          },
+          "supportedLanguages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tone": {
+            "$ref": "#/components/schemas/AssistantTone"
+          },
+          "brandNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "businessHours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyHours"
+            }
+          },
+          "outsideHoursBehavior": {
+            "$ref": "#/components/schemas/OutsideHoursBehavior"
+          },
+          "unrecognizedMediaBehavior": {
+            "$ref": "#/components/schemas/UnrecognizedMediaBehavior"
+          },
+          "escalationKeywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedTools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxToolSteps": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxRepliesPerConversationPerHour": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxOutputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "version": {
+            "type": "string"
           }
         }
       },
@@ -11870,6 +13029,9 @@
     }
   },
   "tags": [
+    {
+      "name": "Assistant"
+    },
     {
       "name": "AuditEvents"
     },

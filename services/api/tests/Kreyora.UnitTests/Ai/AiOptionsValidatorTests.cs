@@ -112,7 +112,7 @@ public sealed class AiOptionsValidatorTests
     [Theory]
     [InlineData(0, 800)]
     [InlineData(121, 800)]
-    [InlineData(30, 8)]
+    [InlineData(30, 40)]
     [InlineData(30, 9000)]
     public void Limits_AreBounded(int timeoutSeconds, int maxOutputTokens)
     {
