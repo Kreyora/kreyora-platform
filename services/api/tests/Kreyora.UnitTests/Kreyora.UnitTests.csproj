@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Kreyora.Domain\Kreyora.Domain.csproj" />
     <ProjectReference Include="..\..\src\Kreyora.Application\Kreyora.Application.csproj" />
     <ProjectReference Include="..\..\src\Kreyora.Infrastructure\Kreyora.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\tools\Kreyora.AiEvaluation\Kreyora.AiEvaluation.csproj" />
   </ItemGroup>
 
 </Project>

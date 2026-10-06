@@ -1,0 +1,41 @@
+{
+  "version": "1",
+  "note": "SYNTHETIC. A made-up shop for the M09 evaluation. No real products, people, phone numbers or orders. Safe for free-tier providers (ADR-018).",
+  "shop": { "name": "Demo Boutique", "currency": "NPR", "city": "Kathmandu" },
+  "products": [
+    { "id": "P-KURTA-RED", "name": "Red Cotton Kurta", "nameNe": "रातो सुती कुर्ता", "category": "kurta",
+      "variants": [
+        { "sku": "KR-RED-S", "size": "S", "priceNpr": 2450, "stock": 3 },
+        { "sku": "KR-RED-M", "size": "M", "priceNpr": 2450, "stock": 0 },
+        { "sku": "KR-RED-L", "size": "L", "priceNpr": 2450, "stock": 5 },
+        { "sku": "KR-RED-XL", "size": "XL", "priceNpr": 2450, "stock": 1 } ] },
+    { "id": "P-KURTA-BLUE", "name": "Blue Silk Kurta", "nameNe": "निलो रेशमी कुर्ता", "category": "kurta",
+      "variants": [
+        { "sku": "KR-BLU-M", "size": "M", "priceNpr": 3800, "stock": 4 },
+        { "sku": "KR-BLU-L", "size": "L", "priceNpr": 3800, "stock": 2 } ] },
+    { "id": "P-SHAWL-PASH", "name": "Pashmina Shawl", "nameNe": "पश्मिना सल", "category": "shawl",
+      "variants": [
+        { "sku": "SH-CRIMSON", "color": "Crimson", "priceNpr": 4500, "stock": 6 },
+        { "sku": "SH-NATURAL", "color": "Natural", "priceNpr": 4200, "stock": 0 } ] },
+    { "id": "P-DHAKA-TOPI", "name": "Dhaka Topi", "nameNe": "ढाका टोपी", "category": "hat",
+      "variants": [ { "sku": "TOPI-STD", "size": "One size", "priceNpr": 650, "stock": 20 } ] },
+    { "id": "P-SAREE-GREEN", "name": "Green Georgette Saree", "nameNe": "हरियो जर्जेट साडी", "category": "saree",
+      "variants": [ { "sku": "SR-GREEN", "priceNpr": 5900, "stock": 0 } ] },
+    { "id": "P-SAREE-RED", "name": "Red Georgette Saree", "nameNe": "रातो जर्जेट साडी", "category": "saree",
+      "variants": [ { "sku": "SR-RED", "priceNpr": 6200, "stock": 2 } ] },
+    { "id": "P-JACKET-DENIM", "name": "Denim Jacket", "nameNe": "डेनिम ज्याकेट", "category": "jacket",
+      "variants": [
+        { "sku": "JK-DEN-M", "size": "M", "priceNpr": 3200, "stock": 2 },
+        { "sku": "JK-DEN-L", "size": "L", "priceNpr": 3200, "stock": 0 } ] }
+  ],
+  "shipping": [
+    { "zone": "Kathmandu Valley", "cities": ["Kathmandu", "Lalitpur", "Patan", "Bhaktapur"], "feeNpr": 100, "days": "1-2", "cod": true, "qr": true },
+    { "zone": "Pokhara", "cities": ["Pokhara"], "feeNpr": 150, "days": "2-3", "cod": true, "qr": true },
+    { "zone": "Outside major cities", "cities": ["Chitwan", "Bharatpur", "Butwal", "Biratnagar", "Dharan", "Nepalgunj"], "feeNpr": 200, "days": "3-5", "cod": false, "qr": true }
+  ],
+  "paymentNotes": "COD only in Kathmandu Valley and Pokhara. Elsewhere pay first by merchant QR (eSewa/bank QR shown at checkout).",
+  "conversationCustomer": { "displayName": "Test Customer", "orders": [
+    { "orderNumber": "KR-1042", "status": "Shipped", "courier": "Demo Courier", "expected": "in 2 days", "totalNpr": 2550 },
+    { "orderNumber": "KR-1037", "status": "Delivered", "deliveredOn": "last week", "totalNpr": 750 } ] },
+  "otherCustomersOrders": [ { "orderNumber": "KR-2001", "status": "Packed" } ]
+}

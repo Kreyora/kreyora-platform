@@ -2,26 +2,26 @@
 
 ## Active position
 
-- **Milestone:** 08 — First Validated Social Channel and Unified Inbox
-- **Step:** M08 Exit Gate — milestone completion review
-- **Status:** `REVIEW` (exit gate review written 2026-10-06; all seven M08 steps `APPROVED`)
-- **Plan state:** M08-S06 APPROVED 2026-10-05, merged to `master` at `fa91a38`. M08-S03 live Meta checklist carried to S07.
-- **Active milestone file:** `docs/milestones/08_FIRST_SOCIAL_CHANNEL_AND_INBOX.md`
+- **Milestone:** 09 — Constrained AI Assistant, RAG, and Commerce Tools
+- **Step:** S01 — Provider evaluation and AI boundary
+- **Status:** `REVIEW` (2026-10-06; ADR-018 `Proposed`)
+- **Plan state:** Milestone 08 complete (exit gate APPROVED 2026-10-06). M09 hard gates: provider ADR (S01) and approved data-processing terms before real customer content.
+- **Active milestone file:** `docs/milestones/09_AI_ASSISTANT_RAG_TOOLS.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master` at `fa91a38` + uncommitted S07 changes (commit/push needs owner authorization).
-- **Current checkpoint:** `artifacts/checkpoints/M08-EXIT.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M08-S07.md` (APPROVED 2026-10-06)
-- **Last approved state:** M08-S07 approved 2026-10-06 (with documented gaps).
+- **Branch:** `master` at `fd5a7ec` + uncommitted M08 exit-gate approval records and M09-S01 changes (commit/push needs owner authorization).
+- **Current checkpoint:** `artifacts/checkpoints/M09-S01.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M08-EXIT.md` (APPROVED 2026-10-06)
+- **Last approved state:** M08 exit gate approved 2026-10-06 (Milestone 08 complete).
 
 ## Current objective
 
-Owner review of the M08 exit gate (`artifacts/checkpoints/M08-EXIT.md`): decide on limitations L-A (automation suppression live in M09) and L-B (token expiry/replay tests only, or run S07 S11–S13 first). Owner follow-ups still open: reset the App Secret; remove/regrant app access; keep or destroy the sandbox database.
+Owner review of M09-S01 (`artifacts/checkpoints/M09-S01.md`) and acceptance of ADR-018 (Gemini 3.5 Flash-Lite primary, 3.5 Flash fallback, free tier synthetic-only, R-PAID, control levels).
 
 ## Next permitted action
 
-Owner approves or requests changes for the M08 exit gate. After approval: M09-S01 planning only.
+Owner approves or requests changes for M09-S01. After approval: M09-S02 planning only (assistant policy, knowledge lifecycle; includes the per-shop auto-on and reply-style decisions).
 
 ## Next prohibited action
 
@@ -32,6 +32,14 @@ Owner approves or requests changes for the M08 exit gate. After approval: M09-S0
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-06 | Cleanup (owner request): removed the stray tracked `Library/…/DeveloperTools/deviceid` (machine ID from Microsoft dev-tool telemetry, committed in `c2500b0`) and ignored `Library/`; deleted local ignored `TestResults/`; renamed probe evidence files; trimmed diagnostic experiments from the evaluation tool. AI tests 69/69 still green. | Project owner / Claude |
+| 2026-10-06 | Completed M09-S01 (owner stopped free-tier testing early; Gemini only): ADR-018 `Proposed`; `AI_EVALUATION_BASELINE.md`; checkpoint `M09-S01.md`. Backend 866 passed / 0 failed; EF clean; `pnpm ci:frontend` green; secret scan clean; Docker at baseline. Full 72-case run, owner grading and dataset review deferred to S08. Status -> `REVIEW`. | Claude |
+| 2026-10-06 | Owner decision during M09-S01: **Gemini (Google AI Studio) only for now**. OpenRouter removed from configuration and harness; Primary `gemini-3.5-flash-lite`, Fallback `gemini-3.5-flash` (thinking off). Adapter stays provider-neutral (R-PAID). Single-provider risk recorded for ADR-018. | Project owner / Claude |
+| 2026-10-06 | M09-S01 day 1: AI contract (`IAiChatClient`), validated `Ai` options (disabled/fake by default; personal data blocked on free tiers), OpenAI-compatible adapter, fake, fallback client, per-profile reasoning control and provider-data round-trip (Gemini thought signatures); synthetic 72-case dataset + fake catalog; evaluation harness (probe/run/report). Backend 856+ tests green. Speed probe: fastest Gemini 3.5 Flash-Lite (83 tok/s), Gemini 3.5 Flash with thinking off (72), Nemotron 3 Super with thinking off (53); Gemma 4 congested/slow on free tiers. Screening interim: Flash-Lite 86% (0 fabrications, 100% tools/escalation/injection; 3 language mismatches). Free daily limits reached; resumes daily (Q4-A). Status stays `IN PROGRESS`. | Claude |
+| 2026-10-06 | Project owner approved the M09-S01 plan ("now implement"): Q1–Q7 as recommended, Q4 = A ($0); providers OpenRouter + Google AI Studio (NVIDIA dropped); added requirement R-PAID (switch to paid providers/models by configuration only). Owner set `Ai:Providers:OpenRouter:ApiKey` and `Ai:Providers:GoogleAiStudio:ApiKey` (names verified, values not seen). Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-06 | Graphify refreshed at the M08 exit-gate boundary (8,448 nodes, 22,766 edges, 379 communities). Drafted the M09-S01 plan `docs/plan/M09-S01_PROVIDER_EVALUATION_PLAN.md` (plan only; no S01 code): synthetic Nepal dataset (~72 cases), free-tier benchmark (NVIDIA trial + OpenRouter free), provider-neutral `IAiChatClient` with OpenAI-compatible adapter, fake and fallback decorator, AI disabled by default, ADR-018. Decisions Q1–Q7 pending. | Claude |
+| 2026-10-06 | Project owner approved the M08 exit gate (`M08-EXIT.md`): Milestone 08 complete. L-A carried to M09-S07; L-B accepted; production connection stays `BLOCKED`; owner deferred the App Secret reset and app-access removal (sandbox reused). Position set to M09-S01 PLANNING (plan only). | Project owner / Claude |
+| 2026-10-06 | Owner direction for M09 (not yet a step decision; to be recorded in the M09-S01 provider ADR): build at zero cost on the OpenRouter free models / NVIDIA API trial with synthetic test data only; starting model Gemma 4 31B, fallback Nemotron 3 Super 120B. Free tiers may not receive real customer personal data (provider terms), so a paid no-training endpoint needs owner approval before the pilot. Owner kept the M08-S07 Instagram sandbox for reuse: App Secret not reset, app access not removed, sandbox database kept. M08 exit gate still `REVIEW`. | Project owner / Claude |
 | 2026-10-06 | Project owner approved M08-S07 ("approve") with documented gaps. Claude wrote the M08 exit gate review `artifacts/checkpoints/M08-EXIT.md`: criteria 1–3 and 6 satisfied with live evidence; 4 satisfied with limitation L-A (automation suppression tested, live in M09); 5 satisfied by automated evidence with limitation L-B (S07 S11–S13 not live). Status -> exit gate `REVIEW`. | Project owner / Claude |
 | 2026-10-06 | M08-S07 live session (2026-10-05 22:58 – 2026-10-06 00:42 NPT) with the owner: passed S1–S5, S7, S8, S10, S16 (real DM signature-verified and processed once; duplicate delivery deduplicated; staff reply sent through the outbox; assign/label/takeover audited; `mid` length 164). S9 not observed; S6 and S11–S13 skipped by the owner; S14 not done. Findings L1–L4 (`pages_read_engagement` needed by connect; webhook must go in the main Webhooks product; `messaging_seen` not a Page field; long-lived Page token never expires). Owner shared secrets in chat and authorized their use; Claude created the app's `instagram` webhook subscription with the owner's approval. Production connection classified `BLOCKED`. Tunnel closed; sandbox database kept (stopped). Checkpoint `M08-S07.md`. Status -> `REVIEW`. | Claude |
 | 2026-10-05 | M08-S07 Tasks 1–6 complete: Simulator fixed signature limited to Development/Testing; all three auth rate limiters partitioned per client address; `BackgroundJobs:ServerEnabled`; sandbox tools in `scripts/sandbox/` (allowlist proxy + duplicate mode, owner-run connect/reauthorize with hidden input, runner, control, evidence; 13 proxy tests); Meta docs verified → `docs/architecture/INSTAGRAM_PRODUCTION_READINESS.md`; fixed Graph 80002 classification and Meta window-error mapping (ADR-017 correction note appended). Backend 773 passed / 0 failed; EF clean; `pnpm ci:frontend` green (one transient Google Fonts fetch failure, passed on rerun); fixture E2E 2 passed; real-backend E2E 7 passed; Docker at baseline. Next: owner sets `Development:Seed:DemoPassword`, then the live session (Task 7). Status stays `IN PROGRESS`. | Claude |

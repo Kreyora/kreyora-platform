@@ -86,3 +86,9 @@ graphify-out/
 
 # Docker
 docker-compose.override.yml
+
+# M09 AI evaluation: raw per-case benchmark results stay local (synthetic, regenerable); summaries are committed.
+artifacts/evaluations/**/runs/
+
+# Tool state written into a home folder (e.g. .NET/VS Code telemetry deviceid); never part of the project.
+Library/

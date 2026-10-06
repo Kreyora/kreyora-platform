@@ -15,6 +15,10 @@
     "sandbox:connect": "node scripts/sandbox/instagram-connection.mjs",
     "sandbox:ctl": "node scripts/sandbox/ctl.mjs",
     "sandbox:evidence": "node scripts/sandbox/evidence.mjs",
-    "test:sandbox-tools": "node --test \"scripts/sandbox/*.test.mjs\""
+    "test:sandbox-tools": "node --test \"scripts/sandbox/*.test.mjs\"",
+    "ai:probe": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- probe",
+    "ai:screen": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- run --set screening --models \"GoogleAiStudio:gemini-3.5-flash-lite,GoogleAiStudio:gemini-3.5-flash@none\"",
+    "ai:report": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- report",
+    "ai:full": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- run --set full --models \"GoogleAiStudio:gemini-3.5-flash-lite,GoogleAiStudio:gemini-3.5-flash@none\""
   }
 }
