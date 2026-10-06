@@ -46,6 +46,7 @@ public sealed class KnowledgeDocumentVersionConfiguration : IEntityTypeConfigura
         builder.Property(v => v.SubmittedByUserId).IsRequired().HasMaxLength(450);
         builder.Property(v => v.ReviewedByUserId).HasMaxLength(450);
         builder.Property(v => v.ReviewNote).HasMaxLength(KnowledgeDocumentVersion.ReviewNoteMaxLength);
+        builder.HasAlternateKey(v => new { v.TenantId, v.Id });
 
         builder.HasOne<KnowledgeDocument>()
             .WithMany()
@@ -61,5 +62,32 @@ public sealed class KnowledgeDocumentVersionConfiguration : IEntityTypeConfigura
         builder.HasIndex(v => new { v.TenantId, v.IdempotencyKey }).IsUnique().HasFilter("idempotency_key IS NOT NULL");
         builder.HasIndex(v => new { v.TenantId, v.State });
         builder.Property<uint>("xmin").HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+    }
+}
+
+public sealed class KnowledgeChunkConfiguration : IEntityTypeConfiguration<KnowledgeChunk>
+{
+    public void Configure(EntityTypeBuilder<KnowledgeChunk> builder)
+    {
+        builder.ToTable("knowledge_chunks");
+        builder.HasKey(c => c.Id);
+        builder.Property(c => c.Id).HasMaxLength(26);
+        builder.Property(c => c.TenantId).IsRequired().HasMaxLength(26);
+        builder.Property(c => c.DocumentId).IsRequired().HasMaxLength(26);
+        builder.Property(c => c.VersionId).IsRequired().HasMaxLength(26);
+        builder.Property(c => c.Text).IsRequired().HasColumnType("text");
+        builder.Property(c => c.ContentHash).IsRequired().HasMaxLength(64);
+        builder.Property(c => c.Embedding).HasColumnType("real[]");
+        builder.Property(c => c.EmbeddingModel).HasMaxLength(128);
+
+        builder.HasOne<KnowledgeDocumentVersion>()
+            .WithMany()
+            .HasForeignKey(c => new { c.TenantId, c.VersionId })
+            .HasPrincipalKey(v => new { v.TenantId, v.Id })
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(c => new { c.VersionId, c.ChunkIndex }).IsUnique();
+        builder.HasIndex(c => new { c.TenantId, c.VersionId });
     }
 }

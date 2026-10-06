@@ -6,7 +6,7 @@
 - **Step:** 02 — Assistant policy and approved knowledge lifecycle
 - **Author:** Claude (planning)
 - **Date:** 2026-10-06
-- **Status:** `REVIEW` (2026-10-06, checkpoint `artifacts/checkpoints/M09-S02.md`); was `IN PROGRESS` — approved by the owner on 2026-10-06 ("ok implement"): Q1–Q8 as recommended, plus media decisions M1–M3
+- **Status:** `APPROVED` 2026-10-06; was `REVIEW` (2026-10-06, checkpoint `artifacts/checkpoints/M09-S02.md`); was `IN PROGRESS` — approved by the owner on 2026-10-06 ("ok implement"): Q1–Q8 as recommended, plus media decisions M1–M3
 - **Prerequisites:** M09-S01 `APPROVED` (2026-10-06); ADR-018 `Accepted`.
 - **Manual work for the owner in this step:**
   - answer the decisions below;

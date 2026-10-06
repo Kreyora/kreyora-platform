@@ -21,8 +21,8 @@ RAG is limited to approved seller FAQ, delivery, returns, and brand material. Ap
 | Step | Description | Status |
 |---:|---|---|
 | 01 | Provider evaluation and AI boundary | `APPROVED` |
-| 02 | Assistant policy and approved knowledge lifecycle | `REVIEW` |
-| 03 | Tenant-isolated retrieval | `NOT STARTED` |
+| 02 | Assistant policy and approved knowledge lifecycle | `APPROVED` |
+| 03 | Tenant-isolated retrieval | `REVIEW` |
 | 04 | Read-only commerce tool registry | `NOT STARTED` |
 | 05 | Controlled write tools | `NOT STARTED` |
 | 06 | Bounded orchestration, budgets, and action logs | `NOT STARTED` |

@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Kreyora.Application.Assistant;
 using Kreyora.Application.Authorization;
+using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Assistant;
 using Kreyora.WebApi.Tenancy;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,10 @@ namespace Kreyora.WebApi.Controllers;
 public sealed class AssistantController(
     IAssistantPolicyService policies,
     IAssistantReadinessService readiness,
-    IKnowledgeService knowledge) : ControllerBase
+    IKnowledgeService knowledge,
+    IKnowledgeRetrievalService retrieval,
+    IKnowledgeIndexScheduler indexScheduler,
+    ITenantContextAccessor tenantContext) : ControllerBase
 {
     private const long UploadRequestLimitBytes = KnowledgeText.MaxUploadBytes + 16 * 1024;
 
@@ -54,6 +58,22 @@ public sealed class AssistantController(
         ArgumentNullException.ThrowIfNull(file);
         await using var stream = file.OpenReadStream();
         return this.ToActionResult(await knowledge.UploadAsync(new KnowledgeUpload(file.FileName, stream, title, category, documentId), idempotencyKey, cancellationToken));
+    }
+
+    /// <summary>Test console: which approved passages would the assistant see for this question (ADR-019)?</summary>
+    [HttpPost("knowledge/search"), Authorize(Policy = TenantPermissions.AiConfigurationRead), ValidateAntiForgeryToken]
+    public async Task<ActionResult<KnowledgeRetrievalResult>> Search([FromBody] KnowledgeSearchRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return Ok(await retrieval.RetrieveAsync(request.Query, cancellationToken));
+    }
+
+    /// <summary>Queues re-embedding of this workspace's knowledge (e.g. after a model change).</summary>
+    [HttpPost("knowledge/reindex"), Authorize(Policy = TenantPermissions.AiConfigurationWrite), ValidateAntiForgeryToken]
+    public ActionResult Reindex()
+    {
+        indexScheduler.ScheduleTenantReindex(tenantContext.RequireCurrent().TenantId);
+        return Accepted();
     }
 
     [HttpPost("knowledge/import-store-policies"), Authorize(Policy = TenantPermissions.AiConfigurationWrite), ValidateAntiForgeryToken]

@@ -109,7 +109,11 @@ public sealed record KnowledgeVersionSummary(
     DateTimeOffset SubmittedAt,
     string? ReviewedByUserId,
     DateTimeOffset? ReviewedAt,
-    string? ReviewNote);
+    string? ReviewNote,
+    bool HasSuspiciousInstructions = false);
+
+/// <summary>Index state of the active version: chunks exist at approval; vectors follow (ADR-019).</summary>
+public sealed record KnowledgeIndexStatus(int Chunks, int Indexed);
 
 public sealed record KnowledgeDocumentItem(
     string Id,
@@ -121,7 +125,8 @@ public sealed record KnowledgeDocumentItem(
     IReadOnlyList<KnowledgeVersionSummary> PendingVersions,
     int LatestVersionNumber,
     DateTimeOffset CreatedAt,
-    DateTimeOffset ModifiedAt);
+    DateTimeOffset ModifiedAt,
+    KnowledgeIndexStatus? IndexStatus = null);
 
 public sealed record KnowledgeVersionDetail(string DocumentId, string DocumentTitle, KnowledgeVersionSummary Version, string? Text);
 
@@ -164,3 +169,62 @@ public interface IApprovedKnowledgeQuery
     /// <summary>Active versions of non-deleted documents in the current workspace. Nothing else is ever returned.</summary>
     Task<IReadOnlyList<ApprovedKnowledgeItem>> GetActiveAsync(CancellationToken cancellationToken = default);
 }
+
+// ---- Retrieval (M09-S03, ADR-019) ---------------------------------------------------------------------------
+
+/// <summary>Queues embedding work after commit (Hangfire in production; no-op when jobs are unavailable).</summary>
+public interface IKnowledgeIndexScheduler
+{
+    void ScheduleVersionIndexing(string tenantId, string versionId);
+
+    void ScheduleTenantReindex(string tenantId);
+}
+
+/// <summary>Embeds a version's chunks and maintains the index (missing vectors, model changes, orphans).</summary>
+public interface IKnowledgeIndexingService
+{
+    /// <summary>Embeds chunks of the given version that lack a vector for the configured model; returns how many were embedded.</summary>
+    Task<int> IndexVersionAsync(string versionId, CancellationToken cancellationToken = default);
+
+    /// <summary>Current tenant: embeds missing/outdated chunks, removes orphan chunks, retries pending original-file purges.</summary>
+    Task<KnowledgeIndexMaintenance> MaintainAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Current tenant: clears every vector and re-embeds (the reindex workflow, e.g. after a model change).</summary>
+    Task<KnowledgeIndexMaintenance> ReindexAsync(CancellationToken cancellationToken = default);
+}
+
+public sealed record KnowledgeIndexMaintenance(int Embedded, int OrphanChunksRemoved, int OriginalsPurged, bool EmbeddingAvailable);
+
+public enum RetrievalConfidence
+{
+    None,
+    Low,
+    High
+}
+
+public enum RetrievalMode
+{
+    /// <summary>Embedding similarity plus a small lexical boost.</summary>
+    Hybrid,
+    /// <summary>Embeddings unavailable (AI disabled, provider failure, not indexed): lexical overlap only.</summary>
+    LexicalFallback
+}
+
+/// <summary>Exact source of a passage: <c>version.ContentText[CharStart..CharEnd]</c>.</summary>
+public sealed record KnowledgeCitation(string DocumentId, string DocumentTitle, KnowledgeCategory Category, string VersionId, int VersionNumber, int ChunkIndex, int CharStart, int CharEnd, string ContentHash);
+
+/// <param name="Untrusted">Always true: passages are reference data, never instructions (S06 wraps them as quoted data).</param>
+public sealed record KnowledgePassage(string Text, double Score, KnowledgeCitation Citation, bool Untrusted = true);
+
+public sealed record KnowledgeRetrievalResult(RetrievalConfidence Confidence, RetrievalMode Mode, IReadOnlyList<KnowledgePassage> Passages);
+
+public interface IKnowledgeRetrievalService
+{
+    /// <summary>
+    /// Approved passages of the current workspace for a customer message. Tenant and approval state are filtered in SQL
+    /// before any ranking; nothing is returned below the low-confidence threshold.
+    /// </summary>
+    Task<KnowledgeRetrievalResult> RetrieveAsync(string query, CancellationToken cancellationToken = default);
+}
+
+public sealed record KnowledgeSearchRequest(string Query);

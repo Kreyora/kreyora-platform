@@ -163,6 +163,8 @@ public sealed class AssistantDomainTests
 
         Assert.Equal("tenants/x/assistant-knowledge/d/v.txt", key);
         Assert.Null(version.ContentText);
+        Assert.Equal(key, version.OriginalObjectKey); // kept until the purge is confirmed (retryable)
+        version.ConfirmOriginalPurged();
         Assert.Null(version.OriginalObjectKey);
         Assert.True(document.IsDeleted);
         Assert.Null(document.ActiveVersionId);

@@ -291,6 +291,67 @@
         }
       }
     },
+    "/v1/assistant/knowledge/search": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeSearchRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeSearchRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeRetrievalResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeRetrievalResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeRetrievalResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/knowledge/reindex": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/assistant/knowledge/import-store-policies": {
       "post": {
         "tags": [
@@ -8580,6 +8641,69 @@
       "KnowledgeCategory": {
         "type": "integer"
       },
+      "KnowledgeCitation": {
+        "required": [
+          "documentId",
+          "documentTitle",
+          "category",
+          "versionId",
+          "versionNumber",
+          "chunkIndex",
+          "charStart",
+          "charEnd",
+          "contentHash"
+        ],
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string"
+          },
+          "documentTitle": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/KnowledgeCategory"
+          },
+          "versionId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chunkIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "charStart": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "charEnd": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "contentHash": {
+            "type": "string"
+          }
+        }
+      },
       "KnowledgeDocumentItem": {
         "required": [
           "id",
@@ -8648,6 +8772,102 @@
           "modifiedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "indexStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/KnowledgeIndexStatus"
+              }
+            ]
+          }
+        }
+      },
+      "KnowledgeIndexStatus": {
+        "required": [
+          "chunks",
+          "indexed"
+        ],
+        "type": "object",
+        "properties": {
+          "chunks": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "indexed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "KnowledgePassage": {
+        "required": [
+          "text",
+          "score",
+          "citation"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "citation": {
+            "$ref": "#/components/schemas/KnowledgeCitation"
+          },
+          "untrusted": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "KnowledgeRetrievalResult": {
+        "required": [
+          "confidence",
+          "mode",
+          "passages"
+        ],
+        "type": "object",
+        "properties": {
+          "confidence": {
+            "$ref": "#/components/schemas/RetrievalConfidence"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/RetrievalMode"
+          },
+          "passages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgePassage"
+            }
+          }
+        }
+      },
+      "KnowledgeSearchRequest": {
+        "required": [
+          "query"
+        ],
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
           }
         }
       },
@@ -8751,6 +8971,10 @@
               "null",
               "string"
             ]
+          },
+          "hasSuspiciousInstructions": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -11608,6 +11832,12 @@
             "type": "string"
           }
         }
+      },
+      "RetrievalConfidence": {
+        "type": "integer"
+      },
+      "RetrievalMode": {
+        "type": "integer"
       },
       "RotateSecretRequestBody": {
         "required": [

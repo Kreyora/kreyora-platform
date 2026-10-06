@@ -22,7 +22,8 @@ public sealed class KnowledgeService(
     ITenantKeyBuilder tenantKeys,
     IPrivateObjectStorage storage,
     IAuditEventService auditEvents,
-    ITimeProvider timeProvider) : IKnowledgeService, IApprovedKnowledgeQuery
+    ITimeProvider timeProvider,
+    IKnowledgeIndexScheduler? indexScheduler = null) : IKnowledgeService, IApprovedKnowledgeQuery
 {
     private static readonly Dictionary<StorePolicyKind, (string Title, KnowledgeCategory Category)> StorePolicyDocuments =
         new()
@@ -237,11 +238,14 @@ public sealed class KnowledgeService(
             if (document!.ActiveVersionId is { } previousId && await FindVersionAsync(documentId, previousId, cancellationToken) is { State: KnowledgeVersionState.Active } previous)
             {
                 previous.Supersede();
+                await RemoveChunksAsync(previous.Id, cancellationToken); // superseded content leaves the index with it
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
 
             version.Approve(UserId(), now);
             document.Activate(version.Id);
+            // Chunks exist from the moment of approval (lexical retrieval works at once); embeddings follow asynchronously.
+            dbContext.KnowledgeChunks.AddRange(KnowledgeChunker.Chunk(version.ContentText!).Select(span => KnowledgeChunk.Create(version, span)));
             await auditEvents.AppendAsync(Audit("assistant.knowledge.approved", document, version), cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
@@ -253,6 +257,7 @@ public sealed class KnowledgeService(
                 "This document was changed by someone else. Refresh and try again.", 409);
         }
 
+        indexScheduler?.ScheduleVersionIndexing(document.TenantId, version.Id);
         return Result<KnowledgeDocumentItem>.Success((await ToItemsAsync([document], cancellationToken))[0]);
     }
 
@@ -294,8 +299,16 @@ public sealed class KnowledgeService(
 
         var tenantId = TenantId();
         var versions = await dbContext.KnowledgeDocumentVersions.Where(v => v.TenantId == tenantId && v.DocumentId == documentId).ToListAsync(cancellationToken);
-        var keys = versions.Select(v => v.MarkDeleted()).OfType<string>().ToList();
+        foreach (var version in versions)
+        {
+            version.MarkDeleted(); // clears text; the storage key stays until the purge is confirmed
+        }
+
         document.MarkDeleted(timeProvider.UtcNow);
+        foreach (var version in versions)
+        {
+            await RemoveChunksAsync(version.Id, cancellationToken);
+        }
         var item = Item(document, null, []);
 
         try
@@ -310,16 +323,45 @@ public sealed class KnowledgeService(
                 "This document was changed by someone else. Refresh and try again.", 409);
         }
 
-        // Text is already cleared in the database; now purge the uploaded originals.
-        foreach (var key in keys)
-        {
-            await storage.DeleteIfExistsAsync(key, cancellationToken);
-        }
-
+        // Text and chunks are already gone from the database; now purge the uploaded originals. A failed delete keeps
+        // the key on the version so the indexing sweeper retries it (closes the M09-S02 known issue).
+        await PurgeOriginalsAsync(versions.Where(v => v.OriginalObjectKey is not null).ToList(), cancellationToken);
         return Result<KnowledgeDocumentItem>.Success(item);
     }
 
     // ---- helpers -------------------------------------------------------------------------------------------
+
+    private async Task RemoveChunksAsync(string versionId, CancellationToken cancellationToken)
+    {
+        var tenantId = TenantId();
+        dbContext.KnowledgeChunks.RemoveRange(await dbContext.KnowledgeChunks.Where(c => c.TenantId == tenantId && c.VersionId == versionId).ToListAsync(cancellationToken));
+    }
+
+    /// <summary>Deletes stored originals and confirms each purge; failures stay pending for the sweeper.</summary>
+    internal async Task<int> PurgeOriginalsAsync(IReadOnlyList<KnowledgeDocumentVersion> versions, CancellationToken cancellationToken)
+    {
+        var purged = 0;
+        foreach (var version in versions)
+        {
+            try
+            {
+                await storage.DeleteIfExistsAsync(version.OriginalObjectKey!, cancellationToken);
+                version.ConfirmOriginalPurged();
+                purged++;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Left pending: OriginalObjectKey stays set and the sweeper retries.
+            }
+        }
+
+        if (purged > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return purged;
+    }
 
     private async Task<Result<KnowledgeDocumentItem>> SubmitAsync(
         KnowledgeDocument document,
@@ -383,9 +425,18 @@ public sealed class KnowledgeService(
             .Where(v => v.TenantId == tenantId && ids.Contains(v.DocumentId)
                 && (v.State == KnowledgeVersionState.Active || v.State == KnowledgeVersionState.PendingReview))
             .ToListAsync(cancellationToken);
-        return documents.Select(d => Item(d,
-            versions.FirstOrDefault(v => v.DocumentId == d.Id && v.State == KnowledgeVersionState.Active),
-            versions.Where(v => v.DocumentId == d.Id && v.State == KnowledgeVersionState.PendingReview).OrderBy(v => v.VersionNumber).ToList())).ToList();
+        var activeIds = versions.Where(v => v.State == KnowledgeVersionState.Active).Select(v => v.Id).ToList();
+        var index = await dbContext.KnowledgeChunks.AsNoTracking()
+            .Where(c => c.TenantId == tenantId && activeIds.Contains(c.VersionId))
+            .GroupBy(c => c.VersionId)
+            .Select(g => new { VersionId = g.Key, Chunks = g.Count(), Indexed = g.Count(c => c.Embedding != null) })
+            .ToDictionaryAsync(x => x.VersionId, x => new KnowledgeIndexStatus(x.Chunks, x.Indexed), cancellationToken);
+        return documents.Select(d =>
+        {
+            var active = versions.FirstOrDefault(v => v.DocumentId == d.Id && v.State == KnowledgeVersionState.Active);
+            var item = Item(d, active, versions.Where(v => v.DocumentId == d.Id && v.State == KnowledgeVersionState.PendingReview).OrderBy(v => v.VersionNumber).ToList());
+            return active is not null && index.TryGetValue(active.Id, out var status) ? item with { IndexStatus = status } : item;
+        }).ToList();
     }
 
     private static KnowledgeDocumentItem Item(KnowledgeDocument d, KnowledgeDocumentVersion? active, IReadOnlyList<KnowledgeDocumentVersion> pending) =>
@@ -393,7 +444,8 @@ public sealed class KnowledgeService(
             [.. pending.Select(Summary)], d.LatestVersionNumber, d.CreatedAt, d.ModifiedAt);
 
     private static KnowledgeVersionSummary Summary(KnowledgeDocumentVersion v) =>
-        new(v.Id, v.VersionNumber, v.State, v.CharacterCount, v.OriginalFileName, v.SubmittedByUserId, v.SubmittedAt, v.ReviewedByUserId, v.ReviewedAt, v.ReviewNote);
+        new(v.Id, v.VersionNumber, v.State, v.CharacterCount, v.OriginalFileName, v.SubmittedByUserId, v.SubmittedAt, v.ReviewedByUserId, v.ReviewedAt, v.ReviewNote,
+            v.HasSuspiciousInstructions);
 
     private static AuditEventWrite Audit(string action, KnowledgeDocument document, KnowledgeDocumentVersion version) =>
         new(action, "knowledge_document", document.Id,

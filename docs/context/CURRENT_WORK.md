@@ -3,25 +3,25 @@
 ## Active position
 
 - **Milestone:** 09 — Constrained AI Assistant, RAG, and Commerce Tools
-- **Step:** S02 — Assistant policy and approved knowledge lifecycle
-- **Status:** `REVIEW` (2026-10-06)
+- **Step:** S03 — Tenant-isolated retrieval
+- **Status:** `REVIEW` (implemented 2026-10-06; awaiting owner review and ADR-019 acceptance)
 - **Plan state:** Milestone 08 complete (exit gate APPROVED 2026-10-06). M09 hard gates: provider ADR (S01) and approved data-processing terms before real customer content.
 - **Active milestone file:** `docs/milestones/09_AI_ASSISTANT_RAG_TOOLS.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master` at `fd5a7ec` + uncommitted M08 exit-gate approval records and M09-S01 changes (commit/push needs owner authorization).
-- **Current checkpoint:** `artifacts/checkpoints/M09-S02.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M09-S01.md` (APPROVED 2026-10-06)
-- **Last approved state:** M09-S01 approved 2026-10-06 (ADR-018 accepted).
+- **Branch:** `master` at `ffcfa79` (M09-S01 and M09-S02 merged, PRs #119/#121).
+- **Current checkpoint:** `artifacts/checkpoints/M09-S03.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M09-S02.md` (APPROVED 2026-10-06)
+- **Last approved state:** M09-S02 approved 2026-10-06.
 
 ## Current objective
 
-Owner review of M09-S02 (`artifacts/checkpoints/M09-S02.md`): safe defaults, readiness checks, approval workflow, data handling.
+Owner review of M09-S03 (tenant-isolated retrieval) and the decision on ADR-019.
 
 ## Next permitted action
 
-Owner approves or requests changes for M09-S02. After approval: M09-S03 planning only (tenant-isolated retrieval).
+Await the owner's decision on `M09-S03.md` and ADR-019. After approval: M09-S04 planning (plan only). Do not start S04 automatically.
 
 ## Next prohibited action
 
@@ -32,6 +32,10 @@ Owner approves or requests changes for M09-S02. After approval: M09-S03 planning
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-06 | Completed M09-S03: ADR-019 `Proposed` (`real[]` vectors, in-app ranking after the SQL tenant/approval filter, pgvector trigger); provider-neutral embedding boundary + OpenAI-compatible client + offline fake (kill switch honored); `knowledge_chunks` with version metadata and exact citations; approval-time chunking; indexing job/sweeper/reindex with storage purge retry; retrieval with thresholds, top-k, character budget and lexical fallback; suspicious-instruction flag; search/reindex routes; additive migration `AddKnowledgeChunks`; OpenAPI regenerated (additive). Backend 953 passed / 0 failed (one existing timing-sensitive M07 test failed once, passed on rerun); EF clean; `pnpm ci:frontend` green; Docker at baseline. Status -> `REVIEW`. | Claude |
+| 2026-10-06 | Project owner approved the M09-S03 plan ("ok implement"): Q1–Q8 as recommended. M09-S01/S02 confirmed merged (`ffcfa79`). Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-06 | Graphify refreshed at the S02 approval boundary (9,319 nodes, 24,971 edges, 419 communities). Embedding probe (synthetic, owner's free key): `gemini-embedding-001`/`-2` available via the OpenAI-compatible endpoint, 3,072 dims; Romanized delivery question vs English FAQ 0.81 (wrong doc 0.51–0.55). Drafted the M09-S03 plan `docs/plan/M09-S03_TENANT_ISOLATED_RETRIEVAL_PLAN.md` (plan only): `real[]` vectors + in-app ranking after the tenant/approval filter (ADR-019 to accept), embedding boundary + offline fake, chunks with version metadata, indexing job/sweeper/reindex, citations, threshold, lexical fallback. Decisions Q1–Q8 pending. | Claude |
+| 2026-10-06 | Project owner approved M09-S02 ("approved start the next planning"). Position set to M09-S03 PLANNING (plan only). | Project owner / Claude |
 | 2026-10-06 | Completed M09-S02: AssistantPolicy (safe defaults, caps, unidentified-media setting), versioned knowledge library (text/.txt/.md upload/store-policy import, approve/reject/supersede/delete with storage purge), approved-only query, readiness/activation, 12 `/v1/assistant` routes, additive migration `AddAssistantPolicyAndKnowledge`, OpenAPI regenerated; problem responses now carry field errors. Backend 915 passed / 0 failed; EF clean; `pnpm ci:frontend` green; Docker at baseline. Status -> `REVIEW`. | Claude |
 | 2026-10-06 | Project owner approved the M09-S02 plan ("ok implement"): Q1–Q8 as recommended; media decisions: M1 shared-post/storefront-link exact matching scheduled for M09-S04; M2 photo/screenshot recognition deferred to Phase 2 (ADR needed); M3 `UnrecognizedMediaBehavior` setting (default ask for details). Status -> `IN PROGRESS`. | Project owner / Claude |
 | 2026-10-06 | Graphify refreshed at the S01 approval boundary (8,909 nodes, 23,725 edges, 401 communities). Drafted the M09-S02 plan `docs/plan/M09-S02_ASSISTANT_POLICY_KNOWLEDGE_PLAN.md` (plan only): AssistantPolicy with safe defaults and platform caps, versioned knowledge library with review/approval, approved-only query contract, readiness reusing `StoreReadiness`, backend + API only (UI in S08). Decisions Q1–Q8 pending. | Claude |
