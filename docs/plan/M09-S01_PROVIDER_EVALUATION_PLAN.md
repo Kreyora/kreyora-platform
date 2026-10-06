@@ -6,7 +6,7 @@
 - **Step:** 01 — Provider evaluation and AI boundary
 - **Author:** Claude (planning)
 - **Date:** 2026-10-06
-- **Status:** `REVIEW` (2026-10-06, checkpoint `artifacts/checkpoints/M09-S01.md`); was `IN PROGRESS` — approved by the owner on 2026-10-06 ("now implement"): Q1–Q7 as recommended, **Q4 = A ($0)**; added requirement R-PAID
+- **Status:** `APPROVED` 2026-10-06; was `REVIEW` (2026-10-06, checkpoint `artifacts/checkpoints/M09-S01.md`); was `IN PROGRESS` — approved by the owner on 2026-10-06 ("now implement"): Q1–Q7 as recommended, **Q4 = A ($0)**; added requirement R-PAID
 - **Prerequisites:** M08 exit gate `APPROVED` (2026-10-06). Owner direction 2026-10-06: build at **zero cost** on free tiers with synthetic data; start with Gemma 4 31B. **Revised the same day: OpenRouter + Google AI Studio (Gemini API free tier)**. NVIDIA was dropped (the owner found its playground quality poor); the owner also has a Google AI Studio free-tier key.
 - **Manual work for the owner in this step:**
   1. Set two API keys **yourself** with `dotnet user-secrets`, never in chat: OpenRouter (credit limit 0) as `Ai:Providers:OpenRouter:ApiKey`, and Google AI Studio as `Ai:Providers:GoogleAiStudio:ApiKey`. Also note (in words) the free-tier limits AI Studio shows for your project.

@@ -1,5 +1,6 @@
 using Kreyora.Application.Abstractions;
 using Kreyora.Application.Ai;
+using Kreyora.Application.Assistant;
 using Kreyora.Application.Audit;
 using Kreyora.Application.Authentication;
 using Kreyora.Application.Authorization;
@@ -17,6 +18,7 @@ using Kreyora.Application.Storefront;
 using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Ai;
+using Kreyora.Infrastructure.Assistant;
 using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authentication;
 using Kreyora.Infrastructure.Authorization;
@@ -204,6 +206,16 @@ public static class DependencyInjection
         services.AddScoped<IConversationInboxService, ConversationInboxService>();
         services.AddScoped<IConversationPrivacyService, ConversationPrivacyService>();
         services.AddScoped<IConversationReplyService, ConversationReplyService>();
+        // Assistant policy, readiness and knowledge (M09-S02); database-backed, so only with a connection string.
+        services.AddScoped<AssistantPolicyService>();
+        services.AddScoped<IAssistantPolicyService>(sp => sp.GetRequiredService<AssistantPolicyService>());
+        services.AddScoped<IAssistantPolicyQuery>(sp => sp.GetRequiredService<AssistantPolicyService>());
+        services.AddScoped<AssistantReadinessService>();
+        services.AddScoped<IAssistantReadinessService>(sp => sp.GetRequiredService<AssistantReadinessService>());
+        services.AddScoped<IAssistantActivationQuery>(sp => sp.GetRequiredService<AssistantReadinessService>());
+        services.AddScoped<KnowledgeService>();
+        services.AddScoped<IKnowledgeService>(sp => sp.GetRequiredService<KnowledgeService>());
+        services.AddScoped<IApprovedKnowledgeQuery>(sp => sp.GetRequiredService<KnowledgeService>());
         services.AddScoped<IIntegrationWorkScheduler, HangfireIntegrationWorkScheduler>();
         services.AddScoped<IConversationOutboundReconciler, ConversationOutboundReconciler>();
         services.AddScoped<IOutboundEnqueuer>(sp => (OutboundMessageService)sp.GetRequiredService<IOutboundMessageService>());

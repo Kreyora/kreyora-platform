@@ -76,7 +76,14 @@ public sealed class AiLimitsOptions
 {
     public int TimeoutSeconds { get; set; } = 30;
 
+    /// <summary>Also the platform cap for a shop's assistant output budget (M09-S02).</summary>
     public int MaxOutputTokens { get; set; } = 800;
+
+    /// <summary>Platform cap for a shop's tool steps per reply.</summary>
+    public int MaxToolSteps { get; set; } = 6;
+
+    /// <summary>Platform cap for a shop's assistant replies per conversation per hour.</summary>
+    public int MaxRepliesPerConversationPerHour { get; set; } = 60;
 }
 
 public sealed class AiDataPolicyOptions
@@ -106,9 +113,19 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
             yield return "Ai:Limits:TimeoutSeconds must be between 1 and 120.";
         }
 
-        if (options.Limits.MaxOutputTokens is < 16 or > 8000)
+        if (options.Limits.MaxOutputTokens is < 50 or > 8000)
         {
-            yield return "Ai:Limits:MaxOutputTokens must be between 16 and 8000.";
+            yield return "Ai:Limits:MaxOutputTokens must be between 50 and 8000.";
+        }
+
+        if (options.Limits.MaxToolSteps is < 1 or > 12)
+        {
+            yield return "Ai:Limits:MaxToolSteps must be between 1 and 12.";
+        }
+
+        if (options.Limits.MaxRepliesPerConversationPerHour is < 1 or > 600)
+        {
+            yield return "Ai:Limits:MaxRepliesPerConversationPerHour must be between 1 and 600.";
         }
 
         foreach (var profileName in options.Profiles.Keys)

@@ -3,25 +3,25 @@
 ## Active position
 
 - **Milestone:** 09 — Constrained AI Assistant, RAG, and Commerce Tools
-- **Step:** S01 — Provider evaluation and AI boundary
-- **Status:** `REVIEW` (2026-10-06; ADR-018 `Proposed`)
+- **Step:** S02 — Assistant policy and approved knowledge lifecycle
+- **Status:** `REVIEW` (2026-10-06)
 - **Plan state:** Milestone 08 complete (exit gate APPROVED 2026-10-06). M09 hard gates: provider ADR (S01) and approved data-processing terms before real customer content.
 - **Active milestone file:** `docs/milestones/09_AI_ASSISTANT_RAG_TOOLS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master` at `fd5a7ec` + uncommitted M08 exit-gate approval records and M09-S01 changes (commit/push needs owner authorization).
-- **Current checkpoint:** `artifacts/checkpoints/M09-S01.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M08-EXIT.md` (APPROVED 2026-10-06)
-- **Last approved state:** M08 exit gate approved 2026-10-06 (Milestone 08 complete).
+- **Current checkpoint:** `artifacts/checkpoints/M09-S02.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M09-S01.md` (APPROVED 2026-10-06)
+- **Last approved state:** M09-S01 approved 2026-10-06 (ADR-018 accepted).
 
 ## Current objective
 
-Owner review of M09-S01 (`artifacts/checkpoints/M09-S01.md`) and acceptance of ADR-018 (Gemini 3.5 Flash-Lite primary, 3.5 Flash fallback, free tier synthetic-only, R-PAID, control levels).
+Owner review of M09-S02 (`artifacts/checkpoints/M09-S02.md`): safe defaults, readiness checks, approval workflow, data handling.
 
 ## Next permitted action
 
-Owner approves or requests changes for M09-S01. After approval: M09-S02 planning only (assistant policy, knowledge lifecycle; includes the per-shop auto-on and reply-style decisions).
+Owner approves or requests changes for M09-S02. After approval: M09-S03 planning only (tenant-isolated retrieval).
 
 ## Next prohibited action
 
@@ -32,6 +32,10 @@ Owner approves or requests changes for M09-S01. After approval: M09-S02 planning
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-06 | Completed M09-S02: AssistantPolicy (safe defaults, caps, unidentified-media setting), versioned knowledge library (text/.txt/.md upload/store-policy import, approve/reject/supersede/delete with storage purge), approved-only query, readiness/activation, 12 `/v1/assistant` routes, additive migration `AddAssistantPolicyAndKnowledge`, OpenAPI regenerated; problem responses now carry field errors. Backend 915 passed / 0 failed; EF clean; `pnpm ci:frontend` green; Docker at baseline. Status -> `REVIEW`. | Claude |
+| 2026-10-06 | Project owner approved the M09-S02 plan ("ok implement"): Q1–Q8 as recommended; media decisions: M1 shared-post/storefront-link exact matching scheduled for M09-S04; M2 photo/screenshot recognition deferred to Phase 2 (ADR needed); M3 `UnrecognizedMediaBehavior` setting (default ask for details). Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-06 | Graphify refreshed at the S01 approval boundary (8,909 nodes, 23,725 edges, 401 communities). Drafted the M09-S02 plan `docs/plan/M09-S02_ASSISTANT_POLICY_KNOWLEDGE_PLAN.md` (plan only): AssistantPolicy with safe defaults and platform caps, versioned knowledge library with review/approval, approved-only query contract, readiness reusing `StoreReadiness`, backend + API only (UI in S08). Decisions Q1–Q8 pending. | Claude |
+| 2026-10-06 | Project owner approved M09-S01 ("ok approved"); ADR-018 accepted. Position set to M09-S02 PLANNING (plan only). Repo-organization items still awaiting the owner's decision. | Project owner / Claude |
 | 2026-10-06 | Cleanup (owner request): removed the stray tracked `Library/…/DeveloperTools/deviceid` (machine ID from Microsoft dev-tool telemetry, committed in `c2500b0`) and ignored `Library/`; deleted local ignored `TestResults/`; renamed probe evidence files; trimmed diagnostic experiments from the evaluation tool. AI tests 69/69 still green. | Project owner / Claude |
 | 2026-10-06 | Completed M09-S01 (owner stopped free-tier testing early; Gemini only): ADR-018 `Proposed`; `AI_EVALUATION_BASELINE.md`; checkpoint `M09-S01.md`. Backend 866 passed / 0 failed; EF clean; `pnpm ci:frontend` green; secret scan clean; Docker at baseline. Full 72-case run, owner grading and dataset review deferred to S08. Status -> `REVIEW`. | Claude |
 | 2026-10-06 | Owner decision during M09-S01: **Gemini (Google AI Studio) only for now**. OpenRouter removed from configuration and harness; Primary `gemini-3.5-flash-lite`, Fallback `gemini-3.5-flash` (thinking off). Adapter stays provider-neutral (R-PAID). Single-provider risk recorded for ADR-018. | Project owner / Claude |
