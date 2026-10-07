@@ -115,6 +115,113 @@
         }
       }
     },
+    "/v1/assistant/playground": {
+      "post": {
+        "tags": [
+          "Assistant"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantPlaygroundRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantPlaygroundRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantPlaygroundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPlaygroundResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPlaygroundResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPlaygroundResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assistant/turns": {
+      "get": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfAssistantTurnItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfAssistantTurnItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageOfAssistantTurnItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/assistant/tools": {
       "get": {
         "tags": [
@@ -6765,6 +6872,137 @@
           }
         }
       },
+      "AssistantPlaygroundMessage": {
+        "required": [
+          "from",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "AssistantPlaygroundRequest": {
+        "required": [
+          "messages"
+        ],
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantPlaygroundMessage"
+            }
+          }
+        }
+      },
+      "AssistantPlaygroundResult": {
+        "required": [
+          "turnId",
+          "outcome",
+          "reasonCode",
+          "reply",
+          "tools",
+          "citations",
+          "modelCalls",
+          "inputTokens",
+          "outputTokens",
+          "estimatedCostUsd",
+          "validationCodes"
+        ],
+        "type": "object",
+        "properties": {
+          "turnId": {
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/AssistantTurnOutcome"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "reply": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantPlaygroundToolUse"
+            }
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TurnCitation"
+            }
+          },
+          "modelCalls": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "inputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "estimatedCostUsd": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "validationCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AssistantPlaygroundToolUse": {
+        "required": [
+          "tool",
+          "outcome",
+          "dryRun"
+        ],
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        }
+      },
       "AssistantPolicyItem": {
         "required": [
           "enabled",
@@ -7117,6 +7355,135 @@
             "default": false
           }
         }
+      },
+      "AssistantTurnItem": {
+        "required": [
+          "id",
+          "conversationId",
+          "isPlayground",
+          "outcome",
+          "reasonCode",
+          "startedAt",
+          "finishedAt",
+          "policyVersion",
+          "promptVersion",
+          "registryVersion",
+          "modelCalls",
+          "toolSteps",
+          "citations",
+          "validationCodes",
+          "inputTokens",
+          "outputTokens",
+          "estimatedCostUsd",
+          "outboundMessageId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isPlayground": {
+            "type": "boolean"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/AssistantTurnOutcome"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "policyVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "promptVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "registryVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "modelCalls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TurnModelCall"
+            }
+          },
+          "toolSteps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TurnToolStep"
+            }
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TurnCitation"
+            }
+          },
+          "validationCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "estimatedCostUsd": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "outboundMessageId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AssistantTurnOutcome": {
+        "type": "integer"
       },
       "AttachBody": {
         "required": [
@@ -8110,6 +8477,27 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "CursorPageOfAssistantTurnItem": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantTurnItem"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -13078,6 +13466,156 @@
               "string"
             ],
             "format": "uint32"
+          }
+        }
+      },
+      "TurnCitation": {
+        "required": [
+          "documentId",
+          "versionId",
+          "chunkIndex",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          },
+          "chunkIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "TurnModelCall": {
+        "required": [
+          "profile",
+          "provider",
+          "model",
+          "latencyMs",
+          "inputTokens",
+          "outputTokens",
+          "outcome"
+        ],
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "string"
+          },
+          "provider": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "latencyMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "inputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outcome": {
+            "type": "string"
+          }
+        }
+      },
+      "TurnToolStep": {
+        "required": [
+          "tool",
+          "toolVersion",
+          "outcome",
+          "durationMs",
+          "argumentFields",
+          "argumentsHash",
+          "resultCount",
+          "replayed",
+          "dryRun"
+        ],
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "toolVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "durationMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "argumentFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "argumentsHash": {
+            "type": "string"
+          },
+          "resultCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean"
           }
         }
       },

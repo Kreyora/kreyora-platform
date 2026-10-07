@@ -20,7 +20,7 @@ public sealed class StorefrontAdministrationService(
     ITenantPermissionAuthorizer permissionAuthorizer,
     IAuditEventService auditEvents,
     IStorefrontCatalogReadService catalog,
-    IDeliveryRuleReadService deliveryRules) : IStorefrontAdministrationService
+    IDeliveryRuleReadService deliveryRules) : IStorefrontAdministrationService, IStoreReadinessQuery
 {
     private const string CreateOperation = "store.create";
     private const string ActivateOperation = "store.activate";
@@ -110,6 +110,13 @@ public sealed class StorefrontAdministrationService(
         {
             return Result<StorefrontStore>.Conflict("This store slug is already in use.");
         }
+    }
+
+    async Task<StoreReadiness?> IStoreReadinessQuery.GetAsync(CancellationToken cancellationToken)
+    {
+        tenantContext.RequireCurrent();
+        var store = await GetStoreEntityAsync(cancellationToken);
+        return store is null ? null : await BuildReadinessAsync(store, cancellationToken);
     }
 
     public async Task<Result<StoreReadiness>> GetReadinessAsync(CancellationToken cancellationToken = default)

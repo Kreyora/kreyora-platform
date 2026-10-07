@@ -14,6 +14,15 @@ public interface IStorefrontAdministrationService
     Task<Result<StoreProductPublicationItem>> SetProductVisibilityAsync(SetStoreProductVisibilityRequest request, CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// Store readiness for system callers (M09-S06: the assistant's activation check runs in background turns with no
+/// member role). Same rules as <see cref="IStorefrontAdministrationService.GetReadinessAsync"/>; null when no store.
+/// </summary>
+public interface IStoreReadinessQuery
+{
+    Task<StoreReadiness?> GetAsync(CancellationToken cancellationToken = default);
+}
+
 public interface IStorefrontCatalogReadService
 {
     Task<bool> IsPublishedPurchasableAsync(string productId, CancellationToken cancellationToken = default);

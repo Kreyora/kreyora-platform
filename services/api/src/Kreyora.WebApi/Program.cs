@@ -31,6 +31,8 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// preserveStaticLogger: each host logs through its own pipeline instead of the process-wide Log.Logger, which every new
+// host would otherwise replace (in-process test hosts running in parallel were writing into each other's sinks).
 builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
@@ -38,7 +40,8 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .Enrich.With<SensitiveDataEnricher>()
     .WriteTo.Console(
         outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}",
-        formatProvider: CultureInfo.InvariantCulture));
+        formatProvider: CultureInfo.InvariantCulture),
+    preserveStaticLogger: true);
 
 builder.Services.AddServiceDefaults();
 
@@ -212,6 +215,7 @@ if (app.Services.GetService<JobStorage>() is not null)
     RecurringJob.AddOrUpdate<NotificationDeliveryJob>("notification-delivery", job => job.RunAsync(), Cron.Minutely);
     IntegrationJobRegistration.RegisterRecurring(scope.ServiceProvider.GetRequiredService<IRecurringJobManager>());
     Kreyora.Infrastructure.Assistant.KnowledgeIndexingJob.RegisterRecurring(scope.ServiceProvider.GetRequiredService<IRecurringJobManager>());
+    Kreyora.Infrastructure.Assistant.Orchestration.AssistantTurnPurgeJob.RegisterRecurring(scope.ServiceProvider.GetRequiredService<IRecurringJobManager>());
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
