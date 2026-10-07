@@ -48,7 +48,7 @@ public sealed partial class AssistantTurnService(
         "manche sanga kura", "manxe sanga kura", "manche sita kura", "staff sanga kura", "owner sanga kura", "मान्छेसँग कुरा", "मान्छेसँग बोल्न"
     ];
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Assistant turn {TurnId} → {Outcome} ({Reason}); model calls {ModelCalls}, tools {ToolCalls}, tokens {Tokens}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Assistant turn {TurnId} completed with outcome {Outcome} ({Reason}); model calls {ModelCalls}, tools {ToolCalls}, tokens {Tokens}")]
     private static partial void LogTurn(ILogger logger, string turnId, AssistantTurnOutcome outcome, string reason, int modelCalls, int toolCalls, int tokens);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Assistant turn {TurnId} failed unexpectedly")]
