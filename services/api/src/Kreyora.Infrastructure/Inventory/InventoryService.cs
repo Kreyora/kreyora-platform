@@ -24,7 +24,7 @@ public sealed class InventoryService(
     ITenantPermissionAuthorizer permissionAuthorizer,
     IAuditEventService auditEvents,
     Domain.Abstractions.ITimeProvider timeProvider,
-    IOptions<InventoryReservationOptions> reservationOptions) : IInventoryService, ICheckoutInventoryReservationService, IOrderInventoryReservationService
+    IOptions<InventoryReservationOptions> reservationOptions) : IInventoryService, ICheckoutInventoryReservationService, IOrderInventoryReservationService, IConversationInventoryHoldService
 {
     // PostgreSQL can reject a burst of concurrent serializable transactions before
     // the row lock has a chance to serialize them. Keep this finite, but large
@@ -410,6 +410,180 @@ public sealed class InventoryService(
             return Result<IReadOnlyList<OrderInventoryRestock>>.ValidationError(exception.Message);
         }
     }
+
+    // ---- Assistant chat holds (M09-S05): same locking, expiry, idempotency and audit as the other reservation paths. ----
+
+    public async Task<Result<IReadOnlyList<ConversationHold>>> HoldAsync(ConversationHoldRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var context = tenantContext.RequireCurrent();
+        try
+        {
+            var conversationId = NormalizeRequired(request.ConversationId, nameof(request.ConversationId), 26);
+            var key = NormalizeRequired(request.IdempotencyKey, nameof(request.IdempotencyKey), 200);
+            if (request.Lines is null || request.Lines.Count is 0 or > 50) return Result<IReadOnlyList<ConversationHold>>.ValidationError("A hold requires 1-50 lines.");
+            var lines = request.Lines.Select(line => new ConversationHoldLine(NormalizeRequired(line.VariantId, nameof(line.VariantId), 26), line.Quantity))
+                .OrderBy(line => line.VariantId, StringComparer.Ordinal).ToArray();
+            if (lines.Any(line => line.Quantity is < 1 or > 100) || lines.GroupBy(line => line.VariantId, StringComparer.Ordinal).Any(group => group.Count() > 1))
+                return Result<IReadOnlyList<ConversationHold>>.ValidationError("Hold lines must be unique quantities between 1 and 100.");
+
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    return await HoldOnceAsync(context, conversationId, lines, key, cancellationToken);
+                }
+                catch (Exception exception) when (attempt < MaxSerializableAttempts &&
+                    (exception is PostgresException postgres && IsRetryable(postgres) || exception is DbUpdateException update && IsRetryable(update) ||
+                     exception is InvalidOperationException invalid && IsTransientFailure(invalid)))
+                {
+                    dbContext.ChangeTracker.Clear();
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(200, attempt * 15) + Random.Shared.Next(10)), cancellationToken);
+                }
+            }
+        }
+        catch (Exception exception) when (IsValidationException(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<IReadOnlyList<ConversationHold>>.ValidationError(exception.Message);
+        }
+        catch (DbUpdateException)
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<IReadOnlyList<ConversationHold>>.Conflict("The hold conflicted with another update. Please retry.");
+        }
+    }
+
+    private async Task<Result<IReadOnlyList<ConversationHold>>> HoldOnceAsync(TenantContext context, string conversationId, ConversationHoldLine[] lines, string key, CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        var now = timeProvider.UtcNow;
+        var holds = new List<ConversationHold>();
+        var created = new List<(InventoryReservation Reservation, InventoryItem Item)>();
+        foreach (var line in lines)
+        {
+            var lineKey = $"{key}:{line.VariantId}";
+            var fingerprint = Fingerprint(new { conversationId, line.VariantId, line.Quantity, Source = InventoryReservationSource.Conversation });
+            var replay = await FindReplayAsync(InventoryReservationCommandOperation.Reserve, lineKey, fingerprint, cancellationToken);
+            if (replay is not null)
+            {
+                if (replay.IsFailure) return Result<IReadOnlyList<ConversationHold>>.Failure(replay.Error!);
+                holds.Add(Map(replay.Value!.Reservation));
+                continue;
+            }
+
+            // One active hold per variant per conversation: asking again returns the existing hold instead of stacking.
+            var existing = await dbContext.InventoryReservations.SingleOrDefaultAsync(r => r.Source == InventoryReservationSource.Conversation &&
+                r.ReferenceId == conversationId && r.VariantId == line.VariantId && r.State == InventoryReservationState.Active && r.ExpiresAt > now, cancellationToken);
+            if (existing is not null)
+            {
+                holds.Add(Map(Map(existing)));
+                continue;
+            }
+
+            var item = await LockInventoryItemForVariantAsync(line.VariantId, cancellationToken);
+            if (item is null) return Result<IReadOnlyList<ConversationHold>>.NotFound("A selected product is no longer available.");
+            await ExpireDueForItemAsync(item, cancellationToken);
+            item.Reserve(line.Quantity);
+            var reservation = InventoryReservation.Create(context.TenantId, item.Id, item.VariantId, line.Quantity, InventoryReservationSource.Conversation,
+                conversationId, null, now.Add(reservationOptions.Value.DefaultDuration), now);
+            dbContext.InventoryReservations.Add(reservation);
+            dbContext.InventoryReservationCommands.Add(InventoryReservationCommand.Create(context.TenantId, reservation.Id, InventoryReservationCommandOperation.Reserve, lineKey, fingerprint));
+            created.Add((reservation, item));
+            holds.Add(Map(Map(reservation)));
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        foreach (var (reservation, item) in created)
+        {
+            await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.created", "inventory-reservation", reservation.Id,
+                Metadata: JsonSerializer.Serialize(new { inventoryItemId = item.Id, variantId = item.VariantId, quantity = reservation.Quantity, source = reservation.Source.ToString(), conversationId }),
+                ActorKind: CommerceActorKind.CommerceSystem), cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return Result<IReadOnlyList<ConversationHold>>.Success(holds);
+    }
+
+    public async Task<Result<IReadOnlyList<ConversationHold>>> ReleaseAsync(string conversationId, IReadOnlyList<string>? reservationIds, CancellationToken cancellationToken = default)
+    {
+        tenantContext.RequireCurrent();
+        try
+        {
+            var normalized = NormalizeRequired(conversationId, nameof(conversationId), 26);
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            var query = dbContext.InventoryReservations.Where(r => r.Source == InventoryReservationSource.Conversation && r.ReferenceId == normalized && r.State == InventoryReservationState.Active);
+            if (reservationIds is { Count: > 0 }) query = query.Where(r => reservationIds.Contains(r.Id));
+            var reservations = await query.OrderBy(r => r.VariantId).ToListAsync(cancellationToken);
+            if (reservationIds is { Count: > 0 } && reservations.Count != reservationIds.Distinct(StringComparer.Ordinal).Count())
+                return Result<IReadOnlyList<ConversationHold>>.NotFound("A hold is not active for this conversation.");
+
+            var released = await ReleaseHoldsAsync(reservations, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return Result<IReadOnlyList<ConversationHold>>.Success(released);
+        }
+        catch (Exception exception) when (IsValidationException(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<IReadOnlyList<ConversationHold>>.ValidationError(exception.Message);
+        }
+        catch (DbUpdateException)
+        {
+            dbContext.ChangeTracker.Clear();
+            return Result<IReadOnlyList<ConversationHold>>.Conflict("The release conflicted with another update. Please retry.");
+        }
+    }
+
+    public async Task<int> ReleaseConversationHoldsAsync(string conversationId, IReadOnlyList<string> variantIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(variantIds);
+        tenantContext.RequireCurrent();
+        var reservations = await dbContext.InventoryReservations.Where(r => r.Source == InventoryReservationSource.Conversation && r.ReferenceId == conversationId &&
+            r.State == InventoryReservationState.Active && variantIds.Contains(r.VariantId)).OrderBy(r => r.VariantId).ToListAsync(cancellationToken);
+        return (await ReleaseHoldsAsync(reservations, cancellationToken)).Count; // caller's transaction
+    }
+
+    public async Task<IReadOnlyList<ConversationHold>> GetActiveAsync(string conversationId, CancellationToken cancellationToken = default)
+    {
+        tenantContext.RequireCurrent();
+        var now = timeProvider.UtcNow;
+        var reservations = await dbContext.InventoryReservations.AsNoTracking().Where(r => r.Source == InventoryReservationSource.Conversation &&
+            r.ReferenceId == conversationId && r.State == InventoryReservationState.Active && r.ExpiresAt > now).OrderBy(r => r.VariantId).ToListAsync(cancellationToken);
+        return [.. reservations.Select(r => Map(Map(r)))];
+    }
+
+    public Task<int> CountCreatedSinceAsync(string conversationId, DateTimeOffset since, CancellationToken cancellationToken = default)
+    {
+        tenantContext.RequireCurrent();
+        return dbContext.InventoryReservations.CountAsync(r => r.Source == InventoryReservationSource.Conversation && r.ReferenceId == conversationId && r.CreatedAt >= since, cancellationToken);
+    }
+
+    private async Task<List<ConversationHold>> ReleaseHoldsAsync(List<InventoryReservation> reservations, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.UtcNow;
+        var released = new List<ConversationHold>();
+        foreach (var reservation in reservations)
+        {
+            var item = await LockInventoryItemAsync(reservation.InventoryItemId, cancellationToken);
+            item.ReleaseReservation(reservation.Quantity);
+            reservation.Release(now);
+            released.Add(Map(Map(reservation)));
+        }
+
+        if (released.Count == 0) return released;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        foreach (var reservation in reservations)
+        {
+            await auditEvents.AppendAsync(new AuditEventWrite("inventory.reservation.released", "inventory-reservation", reservation.Id,
+                Metadata: JsonSerializer.Serialize(new { inventoryItemId = reservation.InventoryItemId, quantity = reservation.Quantity, source = reservation.Source.ToString(), conversationId = reservation.ReferenceId }),
+                ActorKind: CommerceActorKind.CommerceSystem), cancellationToken);
+        }
+
+        return released;
+    }
+
+    private static ConversationHold Map(InventoryReservationItem reservation) =>
+        new(reservation.Id, reservation.VariantId, reservation.Quantity, reservation.ExpiresAt, reservation.State);
 
     private async Task<Result<InventoryReservationResult>> ReserveStockOnceAsync(
         TenantContext context,

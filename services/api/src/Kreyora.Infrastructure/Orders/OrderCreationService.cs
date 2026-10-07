@@ -24,7 +24,8 @@ public sealed class OrderCreationService(
     ITenantContextAccessor tenantContext,
     IOrderInventoryReservationService inventory,
     IAuditEventService auditEvents,
-    Domain.Abstractions.ITimeProvider timeProvider) : IOrderCreationService
+    Domain.Abstractions.ITimeProvider timeProvider,
+    Kreyora.Application.Assistant.IAssistantCheckoutLinkHandover? assistantLinks = null) : IOrderCreationService
 {
     private const string CreateOperation = "order.create";
     private const int MaxSerializableAttempts = 5;
@@ -122,6 +123,12 @@ public sealed class OrderCreationService(
         }
 
         session.Complete(now);
+        if (assistantLinks is not null)
+        {
+            // M09-S05: an order from an assistant link marks the link used and links the chat identity to the customer.
+            await assistantLinks.OnOrderCreatedAsync(session.Id, order.Id, session.CustomerId, cancellationToken);
+        }
+
         dbContext.OrderCommands.Add(OrderCommand.Create(context.TenantId, CreateOperation, request.IdempotencyKey, fingerprint, order.Id));
         dbContext.OutboxMessages.Add(new OutboxMessage
         {

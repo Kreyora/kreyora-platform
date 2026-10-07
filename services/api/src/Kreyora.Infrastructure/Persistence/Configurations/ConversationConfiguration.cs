@@ -25,6 +25,7 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
         builder.Property(e => e.CreatedAt).IsRequired();
         builder.Property(e => e.ModifiedAt).IsRequired();
         builder.Ignore(e => e.IsAutomationActive);
+        builder.Property(e => e.EscalationCategory).HasMaxLength(Conversation.EscalationCategoryMaxLength);
 
         builder.Property<uint>("xmin").HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
 

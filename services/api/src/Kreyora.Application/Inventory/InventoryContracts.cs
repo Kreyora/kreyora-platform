@@ -23,6 +23,36 @@ public interface ICheckoutInventoryReservationService
 {
     Task<Result<IReadOnlyList<CheckoutInventoryReservation>>> ReserveForCheckoutAsync(CheckoutInventoryReservationRequest request, CancellationToken cancellationToken = default);
     Task ExpireForCheckoutAsync(string checkoutSessionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Releases a conversation's active holds on these variants inside the caller's transaction, so checkout can reserve
+    /// the same units atomically (M09-S05 hold handover). Returns how many holds were released.
+    /// </summary>
+    Task<int> ReleaseConversationHoldsAsync(string conversationId, IReadOnlyList<string> variantIds, CancellationToken cancellationToken = default);
+}
+
+public sealed record ConversationHoldLine(string VariantId, int Quantity);
+
+public sealed record ConversationHoldRequest(string ConversationId, IReadOnlyList<ConversationHoldLine> Lines, string IdempotencyKey);
+
+public sealed record ConversationHold(string ReservationId, string VariantId, int Quantity, DateTimeOffset ExpiresAt, InventoryReservationState State);
+
+/// <summary>
+/// System entry point for assistant holds (M09-S05): the same locked, serializable, idempotent and audited reservation
+/// logic as checkout, with <see cref="InventoryReservationSource.Conversation"/> and the conversation as reference. One
+/// active hold per variant per conversation; another hold for the same variant returns the existing one.
+/// </summary>
+public interface IConversationInventoryHoldService
+{
+    Task<Result<IReadOnlyList<ConversationHold>>> HoldAsync(ConversationHoldRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Releases this conversation's active holds (all, or the given reservation IDs); other reservations are never touched.</summary>
+    Task<Result<IReadOnlyList<ConversationHold>>> ReleaseAsync(string conversationId, IReadOnlyList<string>? reservationIds, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ConversationHold>> GetActiveAsync(string conversationId, CancellationToken cancellationToken = default);
+
+    /// <summary>Holds created for this conversation since <paramref name="since"/> (daily cap).</summary>
+    Task<int> CountCreatedSinceAsync(string conversationId, DateTimeOffset since, CancellationToken cancellationToken = default);
 }
 
 public interface IOrderInventoryReservationService

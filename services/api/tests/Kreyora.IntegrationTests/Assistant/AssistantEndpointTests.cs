@@ -69,7 +69,7 @@ public sealed class AssistantEndpointTests : IClassFixture<PostgresFixture>
         Assert.True(policy["enabled"]!.GetValue<bool>());
         Assert.Null(policy["reviewedAt"]?.GetValue<string?>());
         Assert.Equal("askForDetails", policy["unrecognizedMediaBehavior"]!.GetValue<string>());
-        Assert.DoesNotContain(policy["allowedTools"]!.AsArray().Select(t => t!.GetValue<string>()), AssistantPolicy.WriteTools.Contains);
+        Assert.DoesNotContain("ReserveInventory", policy["allowedTools"]!.AsArray().Select(t => t!.GetValue<string>())); // holds are opt-in (M09-S05 Q9)
         Assert.Contains("refund_or_exchange", policy["fixedEscalationCategories"]!.AsArray().Select(t => t!.GetValue<string>()));
 
         policy["brandNote"] = "Secret brand voice: always say hajur";
@@ -106,7 +106,7 @@ public sealed class AssistantEndpointTests : IClassFixture<PostgresFixture>
         Assert.Contains("assistant_policy_changed", await stale.Content.ReadAsStringAsync());
 
         var fresh = await JsonAsync(client, HttpMethod.Get, "/v1/assistant/policy", tenant, TenantRole.Owner);
-        fresh["allowedTools"] = new JsonArray("CreateCheckoutLink");
+        fresh["allowedTools"] = new JsonArray("CreateOrderDraft");
         fresh["maxToolSteps"] = 99;
         fresh["supportedLanguages"] = new JsonArray("fr");
         var invalid = await SendAsync(client, HttpMethod.Put, "/v1/assistant/policy", tenant, TenantRole.Owner, fresh);

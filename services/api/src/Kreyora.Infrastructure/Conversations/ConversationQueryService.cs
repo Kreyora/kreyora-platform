@@ -267,7 +267,9 @@ public sealed class ConversationQueryService(
             c.LastCustomerMessageAt,
             c.CustomerLastReadAt,
             c.CreatedAt,
-            c.ModifiedAt);
+            c.ModifiedAt,
+            c.EscalationCategory,
+            c.EscalatedAt);
     }
 
     private async Task<Dictionary<string, IReadOnlyList<string>>> LabelsForAsync(

@@ -26,7 +26,10 @@ public sealed class AssistantDomainTests
         Assert.Equal(AssistantReplyStyle.MatchCustomer, policy.ReplyStyle);
         Assert.Equal(UnrecognizedMediaBehavior.AskForDetails, policy.UnrecognizedMediaBehavior);
         Assert.Equal(OutsideHoursBehavior.AnswerAndPromiseFollowUp, policy.OutsideHoursBehavior);
-        Assert.DoesNotContain(policy.AllowedTools, AssistantPolicy.WriteTools.Contains);
+        // M09-S05 Q9: quote and checkout link on; holds (consequential for other customers) are seller opt-in.
+        Assert.Equal(["QuoteCart", "CreateCheckoutLink"], policy.AllowedTools.Where(AssistantPolicy.WriteTools.Contains));
+        Assert.DoesNotContain("ReserveInventory", policy.AllowedTools);
+        Assert.DoesNotContain("CreateOrderDraft", AssistantPolicy.WriteTools); // Q1: no AI-created orders
         Assert.Contains(AssistantPolicy.AlwaysAllowedTool, policy.AllowedTools);
         Assert.Equal(7, policy.BusinessHours.Count);
         Assert.Contains("refund_or_exchange", AssistantPolicy.FixedEscalationCategories);
@@ -40,7 +43,7 @@ public sealed class AssistantDomainTests
 
     public static TheoryData<string, AssistantPolicySettings> InvalidSettings => new()
     {
-        { "allowedTools", Valid() with { AllowedTools = ["CreateCheckoutLink"] } },
+        { "allowedTools", Valid() with { AllowedTools = ["CreateOrderDraft"] } },
         { "allowedTools", Valid() with { AllowedTools = ["DropDatabase"] } },
         { "supportedLanguages", Valid() with { SupportedLanguages = ["fr"] } },
         { "supportedLanguages", Valid() with { SupportedLanguages = [] } },

@@ -49,8 +49,14 @@ public sealed class AssistantPolicy : BaseEntity, ITenantOwned
     /// <summary>Read tools available to the assistant (M09-S04). <c>EscalateToHuman</c> is always allowed.</summary>
     public static readonly IReadOnlyList<string> ReadTools = ["SearchProducts", "CheckInventory", "GetPrice", "GetShippingInfo", "GetOrderStatus"];
 
-    /// <summary>Write tools arrive in M09-S05; they cannot be enabled before then.</summary>
-    public static readonly IReadOnlyList<string> WriteTools = ["QuoteCart", "CreateOrderDraft", "ReserveInventory", "ReleaseReservation", "CreateCheckoutLink"];
+    /// <summary>
+    /// Controlled write tools (M09-S05, ADR-020). No order drafts: orders only come from customer checkout (Q1).
+    /// Holds (ReserveInventory/ReleaseReservation) are seller opt-in; quote and checkout link are on by default (Q9).
+    /// </summary>
+    public static readonly IReadOnlyList<string> WriteTools = ["QuoteCart", "ReserveInventory", "ReleaseReservation", "CreateCheckoutLink"];
+
+    /// <summary>Write tools enabled for new shops (Q9).</summary>
+    public static readonly IReadOnlyList<string> DefaultWriteTools = ["QuoteCart", "CreateCheckoutLink"];
 
     public const string AlwaysAllowedTool = "EscalateToHuman";
 
@@ -95,7 +101,7 @@ public sealed class AssistantPolicy : BaseEntity, ITenantOwned
         BusinessHours = [.. DefaultHours],
         OutsideHoursBehavior = OutsideHoursBehavior.AnswerAndPromiseFollowUp,
         UnrecognizedMediaBehavior = UnrecognizedMediaBehavior.AskForDetails,
-        AllowedTools = [.. ReadTools, AlwaysAllowedTool],
+        AllowedTools = [.. ReadTools, .. DefaultWriteTools, AlwaysAllowedTool],
         MaxToolSteps = 4,
         MaxRepliesPerConversationPerHour = 20,
         MaxOutputTokens = 600
@@ -184,8 +190,7 @@ public static class AssistantPolicyRules
 
         foreach (var tool in s.AllowedTools.Where(t => t != AssistantPolicy.AlwaysAllowedTool))
         {
-            if (AssistantPolicy.WriteTools.Contains(tool)) Add("allowedTools", $"'{tool}' is not available yet (write tools arrive in M09-S05).");
-            else if (!AssistantPolicy.ReadTools.Contains(tool)) Add("allowedTools", $"Unknown tool '{tool}'.");
+            if (!AssistantPolicy.ReadTools.Contains(tool) && !AssistantPolicy.WriteTools.Contains(tool)) Add("allowedTools", $"Unknown tool '{tool}'.");
         }
 
         if (s.MaxToolSteps < 1 || s.MaxToolSteps > caps.MaxToolSteps) Add("maxToolSteps", $"Must be between 1 and {caps.MaxToolSteps}.");

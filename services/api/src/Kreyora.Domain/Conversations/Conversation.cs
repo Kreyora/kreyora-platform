@@ -56,6 +56,11 @@ public sealed class Conversation : BaseEntity, ITenantOwned
     public DateTimeOffset? LastCustomerMessageAt { get; private set; }
     public DateTimeOffset? CustomerLastReadAt { get; private set; }
 
+    /// <summary>Why the assistant handed this conversation to a person (M09-S05); a fixed category, never customer text.</summary>
+    public string? EscalationCategory { get; private set; }
+
+    public DateTimeOffset? EscalatedAt { get; private set; }
+
     public bool IsAutomationActive => AutomationMode == AutomationMode.Automated;
 
     /// <summary>New threads start as <see cref="ConversationStatus.New"/> with automation as owner (plan §10.4 new → bot_active).</summary>
@@ -131,6 +136,21 @@ public sealed class Conversation : BaseEntity, ITenantOwned
         return true;
     }
 
+    /// <summary>
+    /// The assistant hands the conversation to a person (M09-S05 EscalateToHuman): takeover plus the reason category.
+    /// Returns false when a human already owns the conversation (idempotent; the first reason is kept).
+    /// </summary>
+    public bool Escalate(string category, DateTimeOffset now)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(category);
+        if (!TakeOver()) return false;
+        EscalationCategory = category.Length > EscalationCategoryMaxLength ? category[..EscalationCategoryMaxLength] : category;
+        EscalatedAt = now;
+        return true;
+    }
+
+    public const int EscalationCategoryMaxLength = 48;
+
     /// <summary>ADR-017: explicit hand-back to automation. Returns false when already automated (idempotent).</summary>
     public bool Release()
     {
@@ -140,6 +160,8 @@ public sealed class Conversation : BaseEntity, ITenantOwned
         }
 
         AutomationMode = AutomationMode.Automated;
+        EscalationCategory = null; // the hand-back ends the escalation; its record stays in the audit log
+        EscalatedAt = null;
         if (!IsDisposition(Status))
         {
             Status = ConversationStatus.BotActive;

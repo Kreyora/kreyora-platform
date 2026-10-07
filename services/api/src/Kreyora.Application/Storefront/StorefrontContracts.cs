@@ -82,12 +82,23 @@ public sealed record StorePublicationQuery(int Page, int PageSize);
 public sealed record DeliveryRuleQuery(int Page, int PageSize);
 public sealed record CreateDeliveryRuleRequest(DeliveryRuleInput Rule, string IdempotencyKey);
 public sealed record UpdateDeliveryRuleRequest(string RuleId, DeliveryRuleInput Rule, uint ExpectedVersion);
-public sealed record StorefrontQuoteRequest(IReadOnlyList<StorefrontQuoteLineRequest> Lines, StorefrontDestinationInput Destination);
+/// <param name="AssistantLinkToken">Public: a checkout link from the assistant; that chat's held units count as available (M09-S05).</param>
+/// <param name="HeldByConversationId">Internal only: the assistant quoting inside a chat; that chat's held units count as available.</param>
+public sealed record StorefrontQuoteRequest(IReadOnlyList<StorefrontQuoteLineRequest> Lines, StorefrontDestinationInput Destination, string? AssistantLinkToken = null, string? HeldByConversationId = null);
+
+/// <summary>
+/// Units an assistant chat holds per variant (M09-S05), so the customer they are held for can still quote and check out
+/// those units while everyone else sees them as reserved. Read-only.
+/// </summary>
+public interface IConversationHoldAllowance
+{
+    Task<IReadOnlyDictionary<string, int>> HeldAsync(string storeId, string? conversationId, string? assistantLinkToken, CancellationToken cancellationToken = default);
+}
 public sealed record StorefrontQuoteLineRequest(string VariantId, int Quantity);
 public sealed record StorefrontDestinationInput(string CountryCode, string District, string? Municipality, string? Locality);
 public sealed record CheckoutCustomerInput(string DisplayName, string Phone, string? Email, bool SaveContact, bool PrivacyAcknowledged);
 public sealed record CheckoutAddressInput(string AddressLine1, string? AddressLine2, string District, string? Municipality, string? Locality, string? Landmark);
-public sealed record CreateCheckoutSessionRequest(string QuoteToken, CheckoutCustomerInput Customer, CheckoutAddressInput Address, string IdempotencyKey);
+public sealed record CreateCheckoutSessionRequest(string QuoteToken, CheckoutCustomerInput Customer, CheckoutAddressInput Address, string IdempotencyKey, string? AssistantLinkToken = null);
 
 public sealed record StoreSettingsInput(
     string DisplayName,
@@ -259,4 +270,9 @@ public sealed record DeliveryInfoResult(
 public interface IDeliveryInfoQuery
 {
     Task<DeliveryInfoResult> GetAsync(string storeId, string place, IReadOnlyList<DeliveryInfoItem>? items, CancellationToken cancellationToken = default);
+
+    /// <summary>The place as the matched zone's own destination (so the quote service picks the same rule), or why it can't be matched.</summary>
+    Task<DeliveryDestinationResolution> ResolveDestinationAsync(string storeId, string place, CancellationToken cancellationToken = default);
 }
+
+public sealed record DeliveryDestinationResolution(DeliveryInfoStatus Status, StorefrontDestinationInput? Destination, string? Label, IReadOnlyList<string> Suggestions);
