@@ -113,3 +113,7 @@ ADR-021 adds `OutboundMessageOrigin.Handoff` for the assistant's single "a team 
 - it is **allowed during the takeover it accompanies** and is **not cancelled** by takeover suppression.
 
 Automation replies remain blocked after a takeover, exactly as decided above. See ADR-021 §9.
+
+## Amendment (2026-10-07, M09-S07) — appended
+
+ADR-022 changes one decision above: a reply typed by the seller **in the Instagram app** (a `ProviderNative` echo) that remains unmatched to any Kreyora send after 30 seconds **takes the conversation over** (audited trigger `native_app_reply`, automation suppressed). Echoes of Kreyora's own sends still change nothing. See ADR-022 §5.

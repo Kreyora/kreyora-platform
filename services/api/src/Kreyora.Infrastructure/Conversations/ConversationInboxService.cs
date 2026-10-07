@@ -59,7 +59,7 @@ public sealed class ConversationInboxService(
     public async Task<Result<ConversationDetailItem>> ReleaseAsync(string conversationId, CancellationToken cancellationToken = default) =>
         await MutateAsync(conversationId, async (conversation, _) =>
         {
-            if (!conversation.Release())
+            if (!conversation.Release(timeProvider.UtcNow))
             {
                 return Outcome.NoChange;
             }

@@ -28,7 +28,7 @@ namespace Kreyora.Infrastructure.Assistant.Orchestration;
 public sealed partial class AssistantTurnService(
     AppDbContext dbContext,
     ITenantContextAccessor tenantContext,
-    IAssistantActivationQuery activation,
+    AssistantSendGuard guard,
     IAssistantPolicyQuery policies,
     IAssistantToolContextFactory toolContexts,
     IAssistantToolRegistry registry,
@@ -87,15 +87,14 @@ public sealed partial class AssistantTurnService(
     {
         var o = run.Options.Orchestration;
         var now = timeProvider.UtcNow;
-        var conversation = run.Conversation!;
         var trigger = run.Trigger!;
-        var conversationId = conversation.Id;
+        var conversationId = run.Conversation!.Id;
 
-        // 1. Gate: kill switches and ownership end silently (the team or operator owns the situation).
+        // 1. Gate (M09-S07 guard, first pass): kill switch, connection, safety, entitlement, ownership, readiness.
+        //    These end silently: the operator, the team or the customer's state owns the situation.
         if (!run.Options.Enabled) return await FinishAsync(run, AssistantTurnOutcome.Blocked, AssistantTurnReasons.PlatformDisabled, null, cancellationToken);
-        if (conversation.AutomationMode != AutomationMode.Automated) return await FinishAsync(run, AssistantTurnOutcome.Blocked, AssistantTurnReasons.AutomationPaused, null, cancellationToken);
-        if (!await activation.IsActiveAsync(cancellationToken)) return await FinishAsync(run, AssistantTurnOutcome.Blocked, AssistantTurnReasons.AssistantInactive, null, cancellationToken);
-        if (await NewerCustomerMessageAsync(conversationId, trigger, cancellationToken)) return await FinishAsync(run, AssistantTurnOutcome.Superseded, AssistantTurnReasons.Superseded, null, cancellationToken);
+        if (await guard.CheckAsync(conversationId, trigger, handoffNotice: false, cancellationToken) is { } stop)
+            return await FinishAsync(run, stop.Outcome, stop.Reason, null, cancellationToken);
 
         var policy = await policies.GetEffectiveAsync(cancellationToken);
         run.Policy = policy;
@@ -328,10 +327,13 @@ public sealed partial class AssistantTurnService(
     private async Task<AssistantTurnResult> SendAsync(TurnRun run, string text, string reason, CancellationToken cancellationToken)
     {
         var conversationId = run.Conversation!.Id;
-        // Ownership re-check against committed state right before enqueueing.
-        var current = await dbContext.Conversations.AsNoTracking().Where(c => c.Id == conversationId).Select(c => c.AutomationMode).SingleAsync(cancellationToken);
-        if (current != AutomationMode.Automated) return await FinishAsync(run, AssistantTurnOutcome.Blocked, AssistantTurnReasons.TakenOverDuringTurn, null, cancellationToken);
-        if (await NewerCustomerMessageAsync(conversationId, run.Trigger!, cancellationToken)) return await FinishAsync(run, AssistantTurnOutcome.Superseded, AssistantTurnReasons.Superseded, null, cancellationToken);
+        // Second pass of the guard against committed state, right before enqueueing (ADR-022). A takeover during the
+        // turn is reported as such; the enqueue- and delivery-time gates still stand behind this check.
+        if (await guard.CheckAsync(conversationId, run.Trigger!, handoffNotice: false, cancellationToken) is { } stop)
+        {
+            var stopReason = stop.Reason == AssistantTurnReasons.AutomationPaused ? AssistantTurnReasons.TakenOverDuringTurn : stop.Reason;
+            return await FinishAsync(run, stop.Outcome, stopReason, null, cancellationToken);
+        }
 
         var enqueued = await replies.EnqueueAutomationReplyAsync(conversationId, text, $"assistant-turn:{run.Turn.Id}", cancellationToken);
         return enqueued.IsFailure
@@ -353,9 +355,14 @@ public sealed partial class AssistantTurnService(
         }
 
         string? notice = null;
+        var noticeStop = recentNotice ? null : await guard.CheckAsync(conversationId, null, handoffNotice: true, cancellationToken);
         if (recentNotice)
         {
             run.Turn.RecordValidation([AssistantTurnReasons.FallbackCooldown]);
+        }
+        else if (noticeStop is not null)
+        {
+            run.Turn.RecordValidation([noticeStop.Reason]); // no notice to an unreachable or unsafe conversation; the team still owns it
         }
         else
         {
@@ -542,10 +549,6 @@ public sealed partial class AssistantTurnService(
         run.Turn.RecordModelCall(new TurnModelCall(profile.ToString(), result.Provider, result.Model, (long)result.Latency.TotalMilliseconds, input, output,
             result.IsSuccess ? result.FinishReason.ToString().ToLowerInvariant() : result.Failure.ToString()!.ToLowerInvariant()), cost);
     }
-
-    private async Task<bool> NewerCustomerMessageAsync(string conversationId, Message trigger, CancellationToken cancellationToken) =>
-        await dbContext.Messages.AsNoTracking().AnyAsync(m => m.ConversationId == conversationId && m.Id != trigger.Id &&
-            m.Direction == MessageDirection.Inbound && m.Origin == MessageOrigin.Customer && m.ReceivedAt > trigger.ReceivedAt, cancellationToken);
 
     public static bool IsOutsideHours(AssistantPolicyItem policy, DateTimeOffset now)
     {

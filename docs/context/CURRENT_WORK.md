@@ -3,25 +3,25 @@
 ## Active position
 
 - **Milestone:** 09 — Constrained AI Assistant, RAG, and Commerce Tools
-- **Step:** S06 — Bounded orchestration, budgets, and action logs
-- **Status:** `REVIEW` (implemented 2026-10-07; awaiting owner review and ADR-021 acceptance)
+- **Step:** S07 — Conversation integration, escalation, and takeover
+- **Status:** `REVIEW` (checkpoint `M09-S07.md`, 2026-10-07)
 - **Plan state:** Milestone 08 complete (exit gate APPROVED 2026-10-06). M09 hard gates: provider ADR (S01) and approved data-processing terms before real customer content.
 - **Active milestone file:** `docs/milestones/09_AI_ASSISTANT_RAG_TOOLS.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master` at `075faae` (M09-S01–S05 merged, PRs #119/#121/#123/#125/#127).
-- **Current checkpoint:** `artifacts/checkpoints/M09-S06.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M09-S05.md` (APPROVED 2026-10-07)
-- **Last approved state:** M09-S05 approved 2026-10-07; ADR-020 accepted.
+- **Branch:** `master` at `0e92635` (M09-S01–S06 merged, PRs #119/#121/#123/#125/#127/#129).
+- **Current checkpoint:** `artifacts/checkpoints/M09-S07.md` (REVIEW 2026-10-07)
+- **Previous checkpoint:** `artifacts/checkpoints/M09-S06.md` (APPROVED 2026-10-07)
+- **Last approved state:** M09-S06 approved 2026-10-07; ADR-021 accepted.
 
 ## Current objective
 
-Owner review of M09-S06 (bounded orchestration): budget/timeout values, failure texts, log schema, kill-switch evidence, ADR-021.
+Owner review of M09-S07 (`artifacts/checkpoints/M09-S07.md`); approving it accepts ADR-022 (ownership semantics).
 
 ## Next permitted action
 
-Await the owner's decision on `M09-S06.md` and ADR-021. After approval: M09-S07 planning (plan only). Do not start S07 automatically.
+Wait for the owner's review of M09-S07. After approval: M09-S08 planning (plan only), which also covers customer display names (owner decision 2026-10-07).
 
 ## Next prohibited action
 
@@ -32,6 +32,12 @@ Await the owner's decision on `M09-S06.md` and ADR-021. After approval: M09-S07 
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-07 | M09-S07 checkpoint written (`REVIEW`). Live sandbox session (owner present; real Instagram traffic; live Gemini, made-up content): script steps 1, 3, 4 passed plus extra checks (6 replies with grounded tools and 0 validation codes, AI escalation + hand-off notice, silence while person-owned, release, cooldown, staff reply; all outbound read; own echoes never took over). Owner decisions: skip steps 2, 5, 6, 7, 8 (gaps documented; covered by integration tests except the shared-post capture); move customer display names (Instagram profile lookup) to S08. Findings: F1 only a Facebook-side Tester role (with developer registration) produced webhooks — answers M08 U3; F2 callback first set on the Instagram-business-login page (wrong signing secret), fixed on the main Webhooks product; F3 4–18 s start delay from Hangfire polling; F4 masked customer names. Status -> `REVIEW`. | Project owner / Claude |
+| 2026-10-07 | M09-S07 Tasks 1–7 built and verified (Task 8 live session awaits the owner's go-ahead; Task 9 checkpoint after it). ADR-022 `Proposed` (ownership semantics end to end; amends ADR-017: unmatched Instagram-app echoes take over after 30 s). `AssistantSendGuard` runs before the model and again before enqueue (connection, safety, entitlement, ownership incl. `AutomationResumedAt`, readiness); post-commit debounced trigger (4 s) via the webhook hook, gated to entitled shops; `AssistantTurnJob` (system tenant scope, busy backoff, crash restart by turn key); per-minute sweeper (entitled shops with an enabled policy, filtered in SQL); native-reply check job; `needsPerson` queue with escalation reason and waiting time (fixed during build: a delivered hand-off notice had hidden escalated chats). Additive migration `AddConversationAutomationResumedAt`; OpenAPI regenerated (additive). Tests: 24 new S07 integration tests (webhook ingress → job → delivery; races incl. takeover between the delivery gate and the claim) + 8 unit tests; mutation check: disabling the second guard pass / release cut fails 6 tests. Backend 1,123 passed / 0 failed; Release build 0 warnings; EF clean; `pnpm ci:frontend` green (480); diff/secret checks clean; Docker at baseline; graphify refreshed (11,027 nodes, 30,150 edges). Status stays `IN PROGRESS`. | Claude |
+| 2026-10-07 | Date correction: entries for the M09-S06 approval, ADR-021 acceptance and the M09-S07 plan were written as 2026-10-08; the system date and the merge of `0e92635` (2026-10-07 20:18 +0545) show 2026-10-07. Corrected in this file, `M09-S06.md`, ADR-021 and the S07 plan (all uncommitted at the time). | Claude |
+| 2026-10-07 | Project owner approved the M09-S07 plan ("ok implement"): Q1–Q10 as recommended. Live sandbox session (Task 8) still needs its own go-ahead. Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-07 | Drafted the M09-S07 plan `docs/plan/M09-S07_CONVERSATION_INTEGRATION_PLAN.md` (plan only): post-commit debounced turn trigger + retry-safe job + sweeper; one guard (connection, readiness, entitlement, ownership, safety, rates) before invocation and before enqueue; ownership semantics (claim is the linearization point; takeover wins; hand-off notice the only exception; explicit release) as ADR-022; native Instagram-app replies count as takeover (delayed check); needs-a-person queue; race tests; live sandbox session on the owner's go-ahead. Decisions Q1–Q10 pending. | Claude |
+| 2026-10-07 | Project owner approved M09-S06 ("approved start the planning of s07"); ADR-021 accepted. S06 + CI fix merged (`0e92635`, PR #129). Graphify refreshed at this approval boundary (10,765 nodes, 29,270 edges; built from `0e92635`). Position set to M09-S07 planning (plan only). | Project owner / Claude |
 | 2026-10-07 | CI fix for M09-S06 (commit `9987139`): the redaction test's missing "Replied" log was a test-host isolation bug, not missing logging. `UseSerilog` without `preserveStaticLogger` let parallel in-process hosts write into each other's sinks (reproduced with a probe). Fixed with `preserveStaticLogger: true`; completion message reworded to "completed with outcome"; regression test `HostLoggingIsolationTests` (fails without the fix). 5 full runs after the fix: the log assertion passed in all; unrelated transients seen: one `StorePolicyImport` failure (message not captured; passed 3/3 alone) and one local Testcontainers connection refusal at host start. Correction appended to `M09-S06.md`. S06 stays `REVIEW`. | Claude |
 | 2026-10-07 | Completed M09-S06: ADR-021 `Proposed` (amends ADR-017 with the `Handoff` origin); `IAssistantTurnService` (lease, gate, pre-checks, coalesced context + knowledge + prompt `assistant-system-v1`, bounded tool loop, output validation with one corrective retry, ownership re-check, gated enqueue, safe fallback with hand-off notice), budgets and circuit breaker, data rule (synthetic allowlist), redacted `assistant_turns` log (90-day purge, read API), owner playground; fixed a latent S02 activation permission bug (`IStoreReadinessQuery`); shared `AssistantText` with the harness; additive migration `AddAssistantTurns`; OpenAPI regenerated (additive). Backend 1,090 passed / 0 failed; EF clean; `pnpm ci:frontend` green (480); Docker at baseline; graphify refreshed (10,735 nodes). Status -> `REVIEW`. | Claude |
 | 2026-10-07 | Project owner approved the M09-S06 plan ("ok implement"): Q1–Q11 as recommended. Status -> `IN PROGRESS`. | Project owner / Claude |

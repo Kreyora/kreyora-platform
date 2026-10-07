@@ -20,7 +20,8 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
-| ADR-021 | Assistant orchestration, budgets, safe fallback and action log (amends ADR-017) | `Proposed` | 2026-10-07 | — |
+| ADR-022 | Assistant conversation integration and ownership semantics (amends ADR-017) | `Proposed` | 2026-10-07 | — |
+| ADR-021 | Assistant orchestration, budgets, safe fallback and action log (amends ADR-017) | `Accepted` | 2026-10-07 | — |
 | ADR-020 | AI action permission matrix | `Accepted` | 2026-10-07 | — |
 | ADR-019 | Knowledge retrieval architecture | `Accepted` | 2026-10-06 | — |
 | ADR-018 | AI provider, model selection, data policy, fallback and disable | `Accepted` | 2026-10-06 | — |
@@ -46,7 +47,8 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
-| ADR-021 | Assistant orchestration, budgets, safe fallback and action log (amends ADR-017) | `Proposed` | 2026-10-07 | — |
+| ADR-022 | Assistant conversation integration and ownership semantics (amends ADR-017) | `Proposed` | 2026-10-07 | — |
+| ADR-021 | Assistant orchestration, budgets, safe fallback and action log (amends ADR-017) | `Accepted` | 2026-10-07 | — |
 | ADR-020 | AI action permission matrix | `Accepted` | 2026-10-07 | — |
 | ADR-019 | Knowledge retrieval architecture | `Accepted` | 2026-10-06 | — |
 | ADR-018 | AI provider, model selection, data policy, fallback and disable | `Accepted` | 2026-10-06 | — |

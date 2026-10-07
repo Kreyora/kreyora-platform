@@ -61,6 +61,12 @@ public sealed class Conversation : BaseEntity, ITenantOwned
 
     public DateTimeOffset? EscalatedAt { get; private set; }
 
+    /// <summary>
+    /// When automation was last handed back (M09-S07 Q7). Customer messages received before it belong to the person who
+    /// owned the conversation; the assistant answers only later messages.
+    /// </summary>
+    public DateTimeOffset? AutomationResumedAt { get; private set; }
+
     public bool IsAutomationActive => AutomationMode == AutomationMode.Automated;
 
     /// <summary>New threads start as <see cref="ConversationStatus.New"/> with automation as owner (plan §10.4 new → bot_active).</summary>
@@ -152,7 +158,7 @@ public sealed class Conversation : BaseEntity, ITenantOwned
     public const int EscalationCategoryMaxLength = 48;
 
     /// <summary>ADR-017: explicit hand-back to automation. Returns false when already automated (idempotent).</summary>
-    public bool Release()
+    public bool Release(DateTimeOffset? now = null)
     {
         if (AutomationMode == AutomationMode.Automated)
         {
@@ -160,6 +166,7 @@ public sealed class Conversation : BaseEntity, ITenantOwned
         }
 
         AutomationMode = AutomationMode.Automated;
+        AutomationResumedAt = now ?? DateTimeOffset.UtcNow;
         EscalationCategory = null; // the hand-back ends the escalation; its record stays in the audit log
         EscalatedAt = null;
         if (!IsDisposition(Status))

@@ -1,6 +1,6 @@
 # ADR-021 — Assistant orchestration, budgets, safe fallback and action log
 
-- **Status:** `Proposed` (owner acceptance at the M09-S06 checkpoint)
+- **Status:** `Accepted` (2026-10-07, with the M09-S06 approval; was `Proposed`)
 - **Date:** 2026-10-07
 - **Owner:** Platform Architect
 - **Reviewers:** Project Owner

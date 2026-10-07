@@ -25,8 +25,8 @@ RAG is limited to approved seller FAQ, delivery, returns, and brand material. Ap
 | 03 | Tenant-isolated retrieval | `APPROVED` |
 | 04 | Read-only commerce tool registry | `APPROVED` |
 | 05 | Controlled write tools | `APPROVED` |
-| 06 | Bounded orchestration, budgets, and action logs | `REVIEW` |
-| 07 | Conversation integration, escalation, and takeover | `NOT STARTED` |
+| 06 | Bounded orchestration, budgets, and action logs | `APPROVED` |
+| 07 | Conversation integration, escalation, and takeover | `REVIEW` |
 | 08 | Frontend integration and multilingual/adversarial evaluation | `NOT STARTED` |
 
 ## Prompt 01 — Provider evaluation and AI boundary
