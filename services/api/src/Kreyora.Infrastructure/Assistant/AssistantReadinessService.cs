@@ -18,6 +18,7 @@ public sealed class AssistantReadinessService(
     AppDbContext dbContext,
     ITenantContextAccessor tenantContext,
     IStoreReadinessQuery storeReadiness,
+    IAssistantEntitlementQuery entitlements,
     IOptionsMonitor<AiOptions> aiOptions) : IAssistantReadinessService, IAssistantActivationQuery
 {
     public const string StoreReady = "store_ready";
@@ -25,6 +26,7 @@ public sealed class AssistantReadinessService(
     public const string PolicyReviewed = "policy_reviewed";
     public const string KnowledgeApproved = "knowledge_approved";
     public const string PlatformEnabled = "platform_enabled";
+    public const string Entitled = "ai_entitled";
 
     public async Task<Result<AssistantReadinessItem>> GetAsync(CancellationToken cancellationToken = default) =>
         Result<AssistantReadinessItem>.Success(await BuildAsync(cancellationToken));
@@ -56,6 +58,10 @@ public sealed class AssistantReadinessService(
         var knowledge = await dbContext.KnowledgeDocuments.AnyAsync(d => d.TenantId == tenantId && d.DeletedAt == null && d.ActiveVersionId != null, cancellationToken);
         checks.Add(new AssistantReadinessCheck(KnowledgeApproved, knowledge, false,
             knowledge ? "Approved knowledge is available." : "Recommended: add and approve FAQ, delivery or returns information.", []));
+
+        var entitled = entitlements.IsEntitled(tenantId);
+        checks.Add(new AssistantReadinessCheck(Entitled, entitled, true,
+            entitled ? "This shop is enabled for the assistant." : "The assistant hasn't been enabled for this shop yet (platform operator setting).", []));
 
         var platform = aiOptions.CurrentValue.Enabled;
         checks.Add(new AssistantReadinessCheck(PlatformEnabled, platform, false,

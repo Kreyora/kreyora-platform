@@ -542,6 +542,7 @@ public sealed class AssistantTurnTests : IClassFixture<PostgresFixture>
             services.PostConfigure<AiOptions>(o =>
             {
                 if (synthetic) o.DataPolicy.SyntheticTenantIds.Add(shop.TenantId);
+                o.Entitlements.AllowedTenantIds.Add(shop.TenantId); // M09-S07: the operator enabled this shop
                 configure?.Invoke(o);
             });
             configureServices?.Invoke(services);

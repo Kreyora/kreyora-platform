@@ -1672,6 +1672,7 @@ export interface paths {
                     connectionId?: string;
                     unreadOnly?: boolean;
                     assignedTo?: string;
+                    needsPerson?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -6002,6 +6003,9 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             modifiedAt: string;
+            escalationCategory?: null | string;
+            /** Format: date-time */
+            waitingSince?: null | string;
         };
         CreateChannelConnectionRequest: {
             channel: components["schemas"]["ChannelType"];

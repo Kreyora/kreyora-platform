@@ -55,26 +55,53 @@ public sealed class ConversationQueryService(
             conversations = conversations.Where(c => c.AssignedUserId == query.AssignedTo);
         }
 
-        var total = await conversations.CountAsync(cancellationToken);
+        // M09-S07 Q8: how long the customer has waited for a person. Since the assistant's escalation while no person
+        // has answered since; otherwise since the first of the customer's trailing messages (none when the shop spoke
+        // last). Assistant replies and hand-off notices are not a person answering; staff and Instagram-app replies are.
+        var shaped = conversations.Select(c => new
+        {
+            Conversation = c,
+            WaitingSince = c.EscalatedAt != null && !dbContext.Messages.Any(m => m.TenantId == tenantId && m.ConversationId == c.Id &&
+                    (m.Origin == MessageOrigin.Staff || m.Origin == MessageOrigin.ProviderNative) && m.OccurredAt >= c.EscalatedAt)
+                ? c.EscalatedAt
+                : dbContext.Messages
+                    .Where(m => m.TenantId == tenantId && m.ConversationId == c.Id && m.Origin == MessageOrigin.Customer &&
+                        !dbContext.Messages.Any(o => o.TenantId == tenantId && o.ConversationId == c.Id && o.Origin != MessageOrigin.Customer && o.OccurredAt >= m.OccurredAt))
+                    .Min(m => (DateTimeOffset?)m.OccurredAt)
+        });
 
-        var rows = await conversations
-            .OrderByDescending(c => c.LastMessageAt.HasValue)
-            .ThenByDescending(c => c.LastMessageAt)
-            .ThenByDescending(c => c.CreatedAt)
-            .ThenBy(c => c.Id)
+        // The staff queue: a person owns the chat, it is open, and the customer is waiting; oldest wait first.
+        if (query.NeedsPerson)
+        {
+            shaped = shaped.Where(r => r.Conversation.AutomationMode == AutomationMode.HumanTakeover
+                && r.Conversation.Status != ConversationStatus.Spam && r.Conversation.Status != ConversationStatus.Resolved && r.Conversation.Status != ConversationStatus.Closed
+                && r.WaitingSince != null);
+        }
+
+        var total = await shaped.CountAsync(cancellationToken);
+
+        var ordered = query.NeedsPerson
+            ? shaped.OrderBy(r => r.WaitingSince).ThenBy(r => r.Conversation.Id)
+            : shaped
+                .OrderByDescending(r => r.Conversation.LastMessageAt.HasValue)
+                .ThenByDescending(r => r.Conversation.LastMessageAt)
+                .ThenByDescending(r => r.Conversation.CreatedAt)
+                .ThenBy(r => r.Conversation.Id);
+        var rows = await ordered
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Join(
                 dbContext.CustomerChannelIdentities.AsNoTracking().Where(i => i.TenantId == tenantId),
-                c => c.CustomerChannelIdentityId,
+                r => r.Conversation.CustomerChannelIdentityId,
                 i => i.Id,
-                (c, i) => new
+                (r, i) => new
                 {
-                    Conversation = c,
+                    r.Conversation,
+                    r.WaitingSince,
                     i.DisplayName,
                     i.ExternalUserId,
                     LastText = dbContext.Messages
-                        .Where(m => m.TenantId == tenantId && m.ConversationId == c.Id)
+                        .Where(m => m.TenantId == tenantId && m.ConversationId == r.Conversation.Id)
                         .OrderByDescending(m => m.OccurredAt)
                         .ThenByDescending(m => m.CreatedAt)
                         .Select(m => m.RedactedAt != null ? null : (m.Kind == MessageKind.Media ? m.Text ?? "[media]" : m.Text))
@@ -98,7 +125,9 @@ public sealed class ConversationQueryService(
                 r.Conversation.AssignedAt,
                 r.Conversation.IsAutomationActive,
                 r.Conversation.CreatedAt,
-                r.Conversation.ModifiedAt))
+                r.Conversation.ModifiedAt,
+                r.Conversation.EscalationCategory,
+                r.WaitingSince))
             .ToList();
 
         return Result<PagedResult<ConversationSummaryItem>>.Success(new PagedResult<ConversationSummaryItem>

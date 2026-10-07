@@ -257,6 +257,15 @@ public static class DependencyInjection
         services.AddScoped<IAssistantTurnService, AssistantTurnService>();
         services.AddScoped<IAssistantTurnLogQuery, AssistantTurnLogQuery>();
         services.AddTransient<AssistantTurnPurgeJob>();
+        // M09-S07 conversation integration (ADR-022).
+        services.AddScoped<AssistantSendGuard>();
+        services.AddSingleton<IAssistantEntitlementQuery, AssistantEntitlementQuery>();
+        services.AddScoped<IAssistantInboundHook, AssistantInboundHook>();
+        services.AddScoped<IAssistantTurnScheduler, HangfireAssistantTurnScheduler>();
+        services.AddScoped<INativeReplyTakeoverService, NativeReplyTakeoverService>();
+        services.AddTransient<AssistantTurnJob>();
+        services.AddTransient<AssistantTurnSweepJob>();
+        services.AddTransient<NativeReplyCheckJob>();
         services.AddSingleton<IAssistantToolRegistry, AssistantToolRegistry>();
         services.AddScoped<IAssistantToolContextFactory, AssistantToolContextFactory>();
         services.AddScoped<IAssistantToolConsoleService, AssistantToolConsoleService>();

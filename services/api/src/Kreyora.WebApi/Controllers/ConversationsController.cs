@@ -24,9 +24,10 @@ public sealed class ConversationsController(
         [FromQuery] string? connectionId = null,
         [FromQuery] bool unreadOnly = false,
         [FromQuery] string? assignedTo = null,
+        [FromQuery] bool needsPerson = false,
         CancellationToken cancellationToken = default) =>
         this.ToActionResult(await conversationQueryService.ListConversationsAsync(
-            new ConversationQuery(page, pageSize, status, connectionId, unreadOnly, assignedTo),
+            new ConversationQuery(page, pageSize, status, connectionId, unreadOnly, assignedTo, needsPerson),
             cancellationToken));
 
     [HttpGet("assignees"), Authorize(Policy = TenantPermissions.ConversationsRead)]

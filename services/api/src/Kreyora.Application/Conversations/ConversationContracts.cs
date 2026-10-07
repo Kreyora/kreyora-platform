@@ -112,7 +112,8 @@ public sealed record ConversationQuery(
     ConversationStatus? Status = null,
     string? ConnectionId = null,
     bool UnreadOnly = false,
-    string? AssignedTo = null);
+    string? AssignedTo = null,
+    bool NeedsPerson = false);
 
 public sealed record ConversationSummaryItem(
     string Id,
@@ -128,7 +129,9 @@ public sealed record ConversationSummaryItem(
     DateTimeOffset? AssignedAt,
     bool IsAutomationActive,
     DateTimeOffset CreatedAt,
-    DateTimeOffset ModifiedAt);
+    DateTimeOffset ModifiedAt,
+    string? EscalationCategory = null,
+    DateTimeOffset? WaitingSince = null);
 
 public sealed record CustomerIdentitySummary(
     string Id,

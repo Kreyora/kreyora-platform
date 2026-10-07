@@ -16,7 +16,8 @@ namespace Kreyora.Infrastructure.Conversations;
 /// </summary>
 public sealed partial class ConversationIngestionService(
     AppDbContext dbContext,
-    ILogger<ConversationIngestionService> logger) : IConversationIngestionService
+    ILogger<ConversationIngestionService> logger,
+    Kreyora.Application.Assistant.IAssistantInboundHook? assistantHook = null) : IConversationIngestionService
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "Inbound message for connection {ConnectionId} already exists in the timeline; skipped (inbound event {InboundEventId})")]
     private static partial void LogMessageExists(ILogger logger, string connectionId, string inboundEventId);
@@ -118,13 +119,16 @@ public sealed partial class ConversationIngestionService(
         }
 
         conversation.RecordInboundMessage(occurredAt);
-        dbContext.Messages.Add(createMessage(conversation.Id, DateTimeOffset.UtcNow));
+        var message = createMessage(conversation.Id, DateTimeOffset.UtcNow);
+        dbContext.Messages.Add(message);
+        assistantHook?.CustomerMessageReceived(connection.TenantId, conversation.Id, message.Id); // scheduled only after commit (M09-S07)
     }
 
     /// <summary>
     /// A business message reported back by the provider (ADR-017). Kreyora's own sends already have a timeline
     /// row with this provider ID and are skipped; messages typed in the provider's app become ProviderNative
-    /// rows. Echoes never count as customer activity or unread, and never take over automation (Q5).
+    /// rows. Echoes never count as customer activity or unread. Since M09-S07 (ADR-022) an echo still unmatched after a
+    /// short delay takes the conversation over: the seller answered from the app.
     /// </summary>
     private async Task IngestEchoAsync(
         InboundEvent inboundEvent,
@@ -164,9 +168,12 @@ public sealed partial class ConversationIngestionService(
         }
 
         conversation.RecordOutboundMessage(occurredAt);
-        dbContext.Messages.Add(Message.CreateProviderNativeEcho(
+        var echo = Message.CreateProviderNativeEcho(
             connection.TenantId, conversation.Id, connection.Id, inboundEvent.Id, providerMessageId,
-            text, mediaUrl, mediaContentType, occurredAt, DateTimeOffset.UtcNow));
+            text, mediaUrl, mediaContentType, occurredAt, DateTimeOffset.UtcNow);
+        dbContext.Messages.Add(echo);
+        // M09-S07 Q6 (ADR-022): if it stays unmatched to our own sends, the seller replied from the app → takeover.
+        assistantHook?.NativeReplyReceived(connection.TenantId, echo.Id);
     }
 
     private async Task ApplyStatusAsync(
