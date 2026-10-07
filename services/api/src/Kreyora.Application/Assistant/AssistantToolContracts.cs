@@ -17,13 +17,16 @@ public sealed record AssistantToolContext(
     string? CustomerChannelIdentityId,
     string? CustomerId,
     IReadOnlyList<string> AllowedTools,
-    bool IsSellerPreview);
+    bool IsSellerPreview,
+    bool IsAutomationActive = true,
+    string? TurnId = null);
 
 /// <summary>Builds <see cref="AssistantToolContext"/> for the current tenant.</summary>
 public interface IAssistantToolContextFactory
 {
     /// <summary>Context for a customer conversation; the tools enabled in the shop's policy are allowed.</summary>
-    Task<Result<AssistantToolContext>> ForConversationAsync(string conversationId, CancellationToken cancellationToken = default);
+    /// <param name="turnId">The orchestration turn (S06); write calls in the same turn with the same arguments replay one result.</param>
+    Task<Result<AssistantToolContext>> ForConversationAsync(string conversationId, string? turnId = null, CancellationToken cancellationToken = default);
 
     /// <summary>Seller preview: shop context without a customer; every registered read tool may be previewed.</summary>
     Task<Result<AssistantToolContext>> ForSellerPreviewAsync(CancellationToken cancellationToken = default);
@@ -81,6 +84,26 @@ public static class AssistantToolErrorCodes
     public const string PlaceNotServed = "place_not_served";
     public const string NeedsMoreDetail = "needs_more_detail";
     public const string StoreUnavailable = "store_unavailable";
+    public const string ConfirmationRequired = "confirmation_required";
+    public const string AutomationPaused = "automation_paused";
+    public const string ConversationRequired = "conversation_required";
+    public const string Stale = "stale";
+    public const string LimitReached = "limit_reached";
+}
+
+/// <summary>
+/// Per-call facts the registry gives a write tool through its DI scope (M09-S05): the idempotency key, the action ID
+/// the completed call will be stored under, and an optional server-only reference to keep with it.
+/// </summary>
+public sealed class AssistantCallContext
+{
+    public string ActionId { get; set; } = string.Empty;
+
+    public string IdempotencyKey { get; set; } = string.Empty;
+
+    public string? InternalReference { get; set; }
+
+    public DateTimeOffset? ReferenceExpiresAt { get; set; }
 }
 
 /// <summary>
@@ -99,7 +122,9 @@ public sealed record AssistantToolTrace(
     string Outcome,
     IReadOnlyList<string> ArgumentFields,
     string ArgumentsHash,
-    int ResultCount);
+    int ResultCount,
+    bool Replayed = false,
+    bool DryRun = false);
 
 /// <summary>What the registry hands back: the JSON the model sees, plus the trace.</summary>
 public sealed record AssistantToolOutcome(string ResultJson, AssistantToolTrace Trace)

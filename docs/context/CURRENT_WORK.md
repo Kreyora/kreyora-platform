@@ -3,25 +3,25 @@
 ## Active position
 
 - **Milestone:** 09 — Constrained AI Assistant, RAG, and Commerce Tools
-- **Step:** S04 — Read-only commerce tool registry
-- **Status:** `REVIEW` (implemented 2026-10-06; awaiting owner review)
+- **Step:** S05 — Controlled write tools
+- **Status:** `REVIEW` (implemented 2026-10-07; awaiting owner review and ADR-020 acceptance)
 - **Plan state:** Milestone 08 complete (exit gate APPROVED 2026-10-06). M09 hard gates: provider ADR (S01) and approved data-processing terms before real customer content.
 - **Active milestone file:** `docs/milestones/09_AI_ASSISTANT_RAG_TOOLS.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master` at `836ab16` (M09-S01, S02 and S03 merged, PRs #119/#121/#123).
-- **Current checkpoint:** `artifacts/checkpoints/M09-S04.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M09-S03.md` (APPROVED 2026-10-06)
-- **Last approved state:** M09-S03 approved 2026-10-06; ADR-019 accepted.
+- **Branch:** `master` at `e156a14` (M09-S01–S04 merged, PRs #119/#121/#123/#125).
+- **Current checkpoint:** `artifacts/checkpoints/M09-S05.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M09-S04.md` (APPROVED 2026-10-07)
+- **Last approved state:** M09-S04 approved 2026-10-07.
 
 ## Current objective
 
-Owner review of M09-S04 (read-only commerce tool registry): tool schemas, authorization boundary, result minimization, traces, gazetteer.
+Owner review of M09-S05 (controlled write tools) and the decision on ADR-020 (AI action permission matrix).
 
 ## Next permitted action
 
-Await the owner's decision on `M09-S04.md`. After approval: M09-S05 planning (plan only). Do not start S05 automatically.
+Await the owner's decision on `M09-S05.md` and ADR-020. After approval: M09-S06 planning (plan only). Do not start S06 automatically.
 
 ## Next prohibited action
 
@@ -32,6 +32,10 @@ Await the owner's decision on `M09-S04.md`. After approval: M09-S05 planning (pl
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-07 | Completed M09-S05: ADR-020 `Proposed` (AI action permission matrix); write tools QuoteCart, ReserveInventory (two-phase, server-checked consent), ReleaseReservation, CreateCheckoutLink (hashed token, public read, storefront landing page), EscalateToHuman (system takeover + category); registry v2 (conversation-only, takeover gate, dry-run preview, same-turn replay); holds hand over to checkout atomically; orders from links count as the chat's orders; additive migration `AddAssistantWriteTools`; OpenAPI regenerated (additive). Backend 1,045 passed on rerun (existing M07 Scenario04 flaky); EF clean; `pnpm ci:frontend` green (480); Docker at baseline; graphify refreshed (10,367 nodes). Status -> `REVIEW`. | Claude |
+| 2026-10-07 | Project owner approved the M09-S05 plan ("ok implement"): Q1–Q9 as recommended. Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-07 | Drafted the M09-S05 plan `docs/plan/M09-S05_CONTROLLED_WRITE_TOOLS_PLAN.md` (plan only): AI action permission matrix (ADR-020 proposed); QuoteCart (no order drafts), bounded 15-minute chat holds with two-phase confirmation, release, saved checkout links with a storefront landing page and atomic hold handover (order links the chat customer, closing the S04 gap), EscalateToHuman as system takeover; idempotent replay, takeover gate, dry-run preview. Decisions Q1–Q9 pending. | Claude |
+| 2026-10-07 | Project owner approved M09-S04 ("approved start the planning of s05"). S04 merged (`e156a14`, PR #125). Graphify refreshed at this approval boundary (10,018 nodes, 26,921 edges; built from `e156a14`). Position set to M09-S05 planning (plan only). | Project owner / Claude |
 | 2026-10-06 | Completed M09-S04: versioned allowlisted read-tool registry (`kreyora-read-tools.v1`; strict schemas, per-call scope + 3 s deadline, envelope + values-free trace); SearchProducts / CheckInventory (bands) / GetPrice / GetShippingInfo (zones + 77-district gazetteer, server-priced items) / GetOrderStatus (linked or order number + phone suffix, 5-failure lockout, audited); storefront-link resolver; shared-post identifier capture (Q6-A); tool list + preview API; harness on real schemas; additive migration `AddAssistantReadTools`; OpenAPI regenerated (additive). Backend 1,019 passed / 0 failed; EF clean; `pnpm ci:frontend` green; Docker at baseline. Status -> `REVIEW`. | Claude |
 | 2026-10-06 | Project owner approved the M09-S04 plan ("ok implement"): Q1–Q9 as recommended (Q6-A: storefront links now, Instagram shared-post matching after the S07 live capture). Graphify refreshed at this approval boundary (9,644 nodes, 25,802 edges, 425 communities; built from `836ab16`). Status -> `IN PROGRESS`. | Project owner / Claude |
 | 2026-10-06 | Drafted the M09-S04 plan `docs/plan/M09-S04_READ_TOOL_REGISTRY_PLAN.md` (plan only): versioned allowlisted registry with strict schemas, timeouts and traces; five read tools on existing application data with minimized results; order status via linked customer or order number + phone suffix with lockout; place gazetteer; storefront-link resolver; Instagram shared-post matching proposed after the S07 live capture. Found: chat customers are not yet linked to orders (`CustomerChannelIdentity.CustomerId` never set). Decisions Q1–Q9 pending. | Claude |

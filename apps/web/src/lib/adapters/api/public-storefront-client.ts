@@ -1,7 +1,7 @@
 import { apiFetch } from "@/lib/api";
 import type { components } from "@/lib/api/generated/v1";
 import type { PublicCheckoutClient, PublicStorefrontClient } from "@/lib/ports/public-storefront-client";
-import type { PublicCatalogPage, PublicCatalogProduct, PublicCheckoutSession, PublicDeliveryQuote, PublicOrderConfirmation, PublicStorefront, PublicTotals } from "@/lib/types/public-storefront";
+import type { PublicAssistantLink, PublicCatalogPage, PublicCatalogProduct, PublicCheckoutSession, PublicDeliveryQuote, PublicOrderConfirmation, PublicStorefront, PublicTotals } from "@/lib/types/public-storefront";
 
 type Schemas = components["schemas"];
 const asNumber = (value: number | string | null | undefined) => typeof value === "number" ? value : Number(value ?? 0);
@@ -44,15 +44,19 @@ export const apiPublicStorefrontClient: PublicStorefrontClient = {
 
 export const apiPublicCheckoutClient: PublicCheckoutClient = {
   async createQuote(input) {
-    const value = await request<Schemas["PublicDeliveryQuote"]>(input.slug, "/checkout/quotes", { method: "POST", body: { lines: input.lines, destination: input.destination } });
+    const value = await request<Schemas["PublicDeliveryQuote"]>(input.slug, "/checkout/quotes", { method: "POST", body: { lines: input.lines, destination: input.destination, ...(input.assistantLinkToken ? { assistantLinkToken: input.assistantLinkToken } : {}) } });
     return { quoteToken: value.quoteToken, expiresAt: value.expiresAt, delivery: { name: value.delivery.name, feeNpr: asNumber(value.delivery.feeNpr), estimatedEtaText: value.delivery.estimatedEtaText ?? undefined, codAvailable: value.delivery.codAvailable }, totals: mapTotals(value.totals) } satisfies PublicDeliveryQuote;
   },
   async createSession(input) {
-    const value = await request<Schemas["PublicCheckoutSession"]>(input.slug, "/checkout/sessions", { method: "POST", headers: { "Idempotency-Key": input.idempotencyKey }, body: { quoteToken: input.quoteToken, customer: input.customer, address: input.address } });
+    const value = await request<Schemas["PublicCheckoutSession"]>(input.slug, "/checkout/sessions", { method: "POST", headers: { "Idempotency-Key": input.idempotencyKey }, body: { quoteToken: input.quoteToken, customer: input.customer, address: input.address, ...(input.assistantLinkToken ? { assistantLinkToken: input.assistantLinkToken } : {}) } });
     return { id: value.id, expiresAt: value.expiresAt, delivery: { name: value.delivery.name, feeNpr: asNumber(value.delivery.feeNpr), estimatedEtaText: value.delivery.estimatedEtaText ?? undefined, codAvailable: value.delivery.codAvailable }, totals: mapTotals(value.totals), wasReplayed: value.wasReplayed } satisfies PublicCheckoutSession;
   },
   async createCodOrder(input) {
     const value = await request<Schemas["PublicOrderConfirmation"]>(input.slug, "/checkout/orders", { method: "POST", headers: { "Idempotency-Key": input.idempotencyKey }, body: { checkoutSessionId: input.checkoutSessionId } });
     return { orderNumber: value.orderNumber, status: value.status, paymentStatus: value.paymentStatus, fulfilmentStatus: value.fulfilmentStatus, paymentMethod: value.paymentMethod, totalNpr: asNumber(value.totalNpr), currency: value.currency, wasReplayed: value.wasReplayed } satisfies PublicOrderConfirmation;
+  },
+  async getAssistantLink(input) {
+    const value = await request<Schemas["PublicAssistantLink"]>(input.slug, `/assistant-links/${encodeURIComponent(input.token)}`);
+    return { expiresAt: value.expiresAt, items: value.items.map((item) => ({ productId: item.productId, productSlug: item.productSlug, productTitle: item.productTitle, variantId: item.variantId, variantName: item.variantName, quantity: asNumber(item.quantity), unitPriceNpr: asNumber(item.unitPriceNpr), available: item.available })) } satisfies PublicAssistantLink;
   },
 };

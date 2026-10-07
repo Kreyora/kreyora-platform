@@ -81,7 +81,20 @@ public sealed class CustomerChannelIdentity : BaseEntity, ITenantOwned
         }
 
         DisplayName = null;
+        CustomerId = null;
         ErasedAt = now;
+        return true;
+    }
+
+    /// <summary>
+    /// Links this chat identity to the customer who ordered through its assistant checkout link (M09-S05). Only fills an
+    /// empty link and never touches erased identities; returns false when nothing changed.
+    /// </summary>
+    public bool LinkCustomer(string customerId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(customerId);
+        if (ErasedAt.HasValue || CustomerId is not null) return false;
+        CustomerId = customerId;
         return true;
     }
 

@@ -9,6 +9,7 @@ import { useCart } from "@/hooks/use-cart";
 import { usePublicCheckoutClient } from "@/lib/providers/client-provider";
 import { ApiClientError } from "@/lib/api/errors";
 import type { PublicDeliveryQuote } from "@/lib/types/public-storefront";
+import { clearAssistantLink, readAssistantLink } from "@/lib/storefront/assistant-link";
 
 function idempotencyKey(): string {
   return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -46,7 +47,7 @@ export default function CheckoutPage() {
   async function calculateQuote() {
     if (!canQuote || isQuoting) return;
     setIsQuoting(true); setMessage(undefined);
-    try { setQuote(await checkout.createQuote({ slug, lines, destination: destination() })); setSessionKey(undefined); setOrderKey(undefined); }
+    try { setQuote(await checkout.createQuote({ slug, lines, destination: destination(), assistantLinkToken: readAssistantLink(slug) })); setSessionKey(undefined); setOrderKey(undefined); }
     catch (error) { setMessage(explain(error)); }
     finally { setIsQuoting(false); }
   }
@@ -58,10 +59,10 @@ export default function CheckoutPage() {
     const currentOrderKey = orderKey ?? idempotencyKey();
     setSessionKey(currentSessionKey); setOrderKey(currentOrderKey);
     try {
-      const session = await checkout.createSession({ slug, quoteToken: quote.quoteToken, idempotencyKey: currentSessionKey, customer: { displayName: name.trim(), phone: phone.trim(), email: email.trim() || undefined, saveContact: false, privacyAcknowledged: privacy }, address: address() });
+      const session = await checkout.createSession({ slug, quoteToken: quote.quoteToken, idempotencyKey: currentSessionKey, customer: { displayName: name.trim(), phone: phone.trim(), email: email.trim() || undefined, saveContact: false, privacyAcknowledged: privacy }, address: address(), assistantLinkToken: readAssistantLink(slug) });
       const confirmation = await checkout.createCodOrder({ slug, checkoutSessionId: session.id, idempotencyKey: currentOrderKey });
       sessionStorage.setItem(`kreyora:public-confirmation:v1:${slug}:${confirmation.orderNumber}`, JSON.stringify(confirmation));
-      clearCart(); router.push(`/store/${slug}/confirmation/${confirmation.orderNumber}`);
+      clearAssistantLink(slug); clearCart(); router.push(`/store/${slug}/confirmation/${confirmation.orderNumber}`);
     } catch (error) {
       const text = explain(error); setMessage(text);
       if (error instanceof ApiClientError && error.status === 409) invalidateQuote();

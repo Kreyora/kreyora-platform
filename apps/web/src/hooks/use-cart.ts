@@ -12,6 +12,8 @@ interface CartContextValue {
   removeItem: (variantId: string) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   clearCart: () => void;
+  /** Replaces the cart with these items (an assistant checkout link defines the whole cart). */
+  replaceItems: (items: PublicCartItem[]) => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -66,6 +68,7 @@ export function CartProvider({ children, storeSlug }: { children: ReactNode; sto
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);
+  const replaceItems = useCallback((next: PublicCartItem[]) => setItems(next), []);
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce(
@@ -76,7 +79,7 @@ export function CartProvider({ children, storeSlug }: { children: ReactNode; sto
   return React.createElement(
     CartContext.Provider,
     {
-      value: { items, itemCount, subtotal, addItem, removeItem, updateQuantity, clearCart },
+      value: { items, itemCount, subtotal, addItem, removeItem, updateQuantity, clearCart, replaceItems },
     },
     children,
   );

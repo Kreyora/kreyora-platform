@@ -6,6 +6,7 @@ using Kreyora.Application.Models;
 using Kreyora.Application.Storefront;
 using Kreyora.Application.Tenancy;
 using Kreyora.Domain.Assistant;
+using Kreyora.Domain.Conversations;
 using Kreyora.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -18,11 +19,11 @@ public sealed class AssistantToolContextFactory(
     ITenantContextAccessor tenantContext,
     IAssistantPolicyQuery policies) : IAssistantToolContextFactory
 {
-    public async Task<Result<AssistantToolContext>> ForConversationAsync(string conversationId, CancellationToken cancellationToken = default)
+    public async Task<Result<AssistantToolContext>> ForConversationAsync(string conversationId, string? turnId = null, CancellationToken cancellationToken = default)
     {
         var tenantId = tenantContext.RequireCurrent().TenantId;
         var conversation = await dbContext.Conversations.AsNoTracking().Where(c => c.Id == conversationId && c.TenantId == tenantId)
-            .Select(c => new { c.StoreId, c.CustomerChannelIdentityId }).SingleOrDefaultAsync(cancellationToken);
+            .Select(c => new { c.StoreId, c.CustomerChannelIdentityId, c.AutomationMode }).SingleOrDefaultAsync(cancellationToken);
         if (conversation is null) return Result<AssistantToolContext>.NotFound("The conversation was not found.");
 
         var storeId = conversation.StoreId ?? await StoreIdAsync(tenantId, cancellationToken);
@@ -33,7 +34,8 @@ public sealed class AssistantToolContextFactory(
             .Select(i => i.CustomerId).SingleOrDefaultAsync(cancellationToken);
         var policy = await policies.GetEffectiveAsync(cancellationToken);
         return Result<AssistantToolContext>.Success(new AssistantToolContext(tenantId, storeId, conversationId, conversation.CustomerChannelIdentityId, customerId,
-            [.. policy.AllowedTools.Where(AssistantPolicy.ReadTools.Contains)], IsSellerPreview: false));
+            [.. policy.AllowedTools.Where(t => AssistantPolicy.ReadTools.Contains(t) || AssistantPolicy.WriteTools.Contains(t) || t == AssistantPolicy.AlwaysAllowedTool)],
+            IsSellerPreview: false, IsAutomationActive: conversation.AutomationMode == AutomationMode.Automated, TurnId: turnId));
     }
 
     public async Task<Result<AssistantToolContext>> ForSellerPreviewAsync(CancellationToken cancellationToken = default)
@@ -42,7 +44,8 @@ public sealed class AssistantToolContextFactory(
         var storeId = await StoreIdAsync(tenantId, cancellationToken);
         return storeId is null
             ? StoreMissing()
-            : Result<AssistantToolContext>.Success(new AssistantToolContext(tenantId, storeId, null, null, null, AssistantPolicy.ReadTools, IsSellerPreview: true));
+            : Result<AssistantToolContext>.Success(new AssistantToolContext(tenantId, storeId, null, null, null,
+                [.. AssistantPolicy.ReadTools, .. AssistantPolicy.WriteTools, AssistantPolicy.AlwaysAllowedTool], IsSellerPreview: true));
     }
 
     private Task<string?> StoreIdAsync(string tenantId, CancellationToken cancellationToken) =>
@@ -88,6 +91,12 @@ public sealed class StorefrontLinkOptions
     public string PlatformBaseDomain { get; set; } = string.Empty;
 
     public bool EnableDevelopmentSlugRoutes { get; set; }
+
+    /// <summary>
+    /// Web origin of the storefront for development slug routes (checkout links become
+    /// <c>{origin}/store/{slug}/link/{token}</c>); production links use <c>https://{slug}.{PlatformBaseDomain}/link/{token}</c>.
+    /// </summary>
+    public string StorefrontWebOrigin { get; set; } = "http://localhost:3000";
 }
 
 /// <summary>

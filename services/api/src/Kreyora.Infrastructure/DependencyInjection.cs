@@ -233,6 +233,23 @@ public static class DependencyInjection
         services.AddSingleton<IAssistantTool, GetPriceTool>();
         services.AddSingleton<IAssistantTool, GetShippingInfoTool>();
         services.AddSingleton<IAssistantTool, GetOrderStatusTool>();
+        // M09-S05 write tools (ADR-020) and their services.
+        services.AddSingleton<IAssistantTool, QuoteCartTool>();
+        services.AddSingleton<IAssistantTool, ReserveInventoryTool>();
+        services.AddSingleton<IAssistantTool, ReleaseReservationTool>();
+        services.AddSingleton<IAssistantTool, CreateCheckoutLinkTool>();
+        services.AddSingleton<IAssistantTool, EscalateToHumanTool>();
+        services.AddScoped<AssistantCallContext>();
+        services.AddScoped<IAssistantActionStore, AssistantActionStore>();
+        services.AddScoped<AssistantCartValidator>();
+        services.AddScoped<IConversationHoldAllowance, ConversationHoldAllowance>();
+        services.AddScoped<IAssistantQuoteService, AssistantQuoteService>();
+        services.AddScoped<IAssistantHoldService, AssistantHoldService>();
+        services.AddScoped<AssistantCheckoutLinkService>();
+        services.AddScoped<IAssistantCheckoutLinkService>(sp => sp.GetRequiredService<AssistantCheckoutLinkService>());
+        services.AddScoped<IAssistantCheckoutLinkHandover>(sp => sp.GetRequiredService<AssistantCheckoutLinkService>());
+        services.AddScoped<IConversationInventoryHoldService>(sp => (InventoryService)sp.GetRequiredService<IInventoryService>());
+        services.AddScoped<IConversationEscalationService, ConversationEscalationService>();
         services.AddSingleton<IAssistantToolRegistry, AssistantToolRegistry>();
         services.AddScoped<IAssistantToolContextFactory, AssistantToolContextFactory>();
         services.AddScoped<IAssistantToolConsoleService, AssistantToolConsoleService>();

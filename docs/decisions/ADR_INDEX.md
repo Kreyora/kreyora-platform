@@ -20,6 +20,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-020 | AI action permission matrix | `Proposed` | 2026-10-07 | — |
 | ADR-019 | Knowledge retrieval architecture | `Accepted` | 2026-10-06 | — |
 | ADR-018 | AI provider, model selection, data policy, fallback and disable | `Accepted` | 2026-10-06 | — |
 | ADR-017 | Conversation ownership, takeover invariant, and outbound delivery semantics | `Accepted` | 2026-10-05 | — |
@@ -44,6 +45,7 @@
 
 | ADR | Title | Status | Date | Superseded by |
 |---|---|---|---|---|
+| ADR-020 | AI action permission matrix | `Proposed` | 2026-10-07 | — |
 | ADR-019 | Knowledge retrieval architecture | `Accepted` | 2026-10-06 | — |
 | ADR-018 | AI provider, model selection, data policy, fallback and disable | `Accepted` | 2026-10-06 | — |
 | ADR-017 | Conversation ownership, takeover invariant, and outbound delivery semantics | `Accepted` | 2026-10-05 | — |

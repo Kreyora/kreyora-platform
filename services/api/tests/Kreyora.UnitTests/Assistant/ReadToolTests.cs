@@ -114,17 +114,18 @@ public sealed class ReadToolTests
         var calls = 0;
         var tool = new ScriptedTool("GetPrice", (_, _) => { calls++; return Task.FromResult(AssistantToolResult.Success(new { }, 0)); });
         var write = new ScriptedTool("QuoteCart", (_, _) => { calls++; return Task.FromResult(AssistantToolResult.Success(new { }, 0)); });
-        var registry = Registry(tool, write);
+        var retired = new ScriptedTool("CreateOrderDraft", (_, _) => { calls++; return Task.FromResult(AssistantToolResult.Success(new { }, 0)); });
+        var registry = Registry(tool, write, retired);
 
-        foreach (var (name, allowed) in new[] { ("GetPrice", new[] { "SearchProducts" }), ("QuoteCart", new[] { "QuoteCart" }), ("Nope", new[] { "Nope" }) })
+        foreach (var (name, allowed) in new[] { ("GetPrice", new[] { "SearchProducts" }), ("QuoteCart", new[] { "GetPrice" }), ("CreateOrderDraft", new[] { "CreateOrderDraft" }), ("Nope", new[] { "Nope" }) })
         {
             var outcome = await registry.ExecuteAsync(Context(allowed), new AiToolCall("c", name, "{}"));
             Assert.Equal("tool_not_allowed", outcome.Trace.Outcome);
         }
 
         Assert.Equal(0, calls);
-        Assert.Empty(registry.GetDefinitions(Context(["QuoteCart"])));
-        Assert.Equal(["GetPrice"], registry.GetDefinitions(Context(["GetPrice", "QuoteCart"])).Select(d => d.Name));
+        Assert.Empty(registry.GetDefinitions(Context(["CreateOrderDraft"])));
+        Assert.Equal(["GetPrice", "QuoteCart"], registry.GetDefinitions(Context(["GetPrice", "QuoteCart"])).Select(d => d.Name));
     }
 
     [Fact]
@@ -174,7 +175,7 @@ public sealed class ReadToolTests
         Assert.Equal(AssistantPolicy.ReadTools, tools.Select(t => t.Name));
         Assert.True(tools.Single(t => t.Name == "GetPrice").EnabledInPolicy);
         Assert.False(tools.Single(t => t.Name == "SearchProducts").EnabledInPolicy);
-        Assert.Equal("kreyora-read-tools.v1", registry.Version);
+        Assert.Equal("kreyora-tools.v2", registry.Version);
     }
 
     // ---- domain rules ----

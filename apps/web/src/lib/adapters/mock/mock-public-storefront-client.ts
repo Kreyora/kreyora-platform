@@ -53,4 +53,14 @@ export const mockPublicCheckoutClient: PublicCheckoutClient = {
     await delay(); ensureStore(input.slug);
     return { orderNumber: "NC-2025-0099", status: "pending_confirmation", paymentStatus: "pending", fulfilmentStatus: "unfulfilled", paymentMethod: "cod", totalNpr: 0, currency: "NPR", wasReplayed: false } satisfies PublicOrderConfirmation;
   },
+  async getAssistantLink(input) {
+    await delay(); ensureStore(input.slug);
+    if (!input.token.startsWith("demo-")) throw new Error("Checkout link not found");
+    // Demo mode only: a fixture cart standing in for a link the assistant would send.
+    const items = products.filter((product) => product.publishState === "published").slice(0, 2).flatMap((product) => {
+      const variant = product.variants.find((item) => item.isPublished);
+      return variant ? [{ productId: product.id, productSlug: product.slug, productTitle: product.title, variantId: variant.id, variantName: variant.name, quantity: 1, unitPriceNpr: variant.price.amount, available: true }] : [];
+    });
+    return { expiresAt: new Date(Date.now() + 24 * 3_600_000).toISOString(), items };
+  },
 };

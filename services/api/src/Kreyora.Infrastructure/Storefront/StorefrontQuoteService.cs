@@ -19,7 +19,8 @@ public sealed class StorefrontQuoteService(
     IStorefrontInventoryReadService inventory,
     IDataProtectionProvider dataProtectionProvider,
     IOptions<StorefrontQuoteOptions> options,
-    ITimeProvider timeProvider) : IStorefrontQuoteService
+    ITimeProvider timeProvider,
+    IConversationHoldAllowance? holdAllowance = null) : IStorefrontQuoteService
 {
     private readonly ITimeLimitedDataProtector protector = dataProtectionProvider.CreateProtector("Kreyora.Storefront.DeliveryQuote.v1").ToTimeLimitedDataProtector();
 
@@ -35,6 +36,9 @@ public sealed class StorefrontQuoteService(
             var store = await dbContext.Stores.SingleOrDefaultAsync(cancellationToken);
             if (store is null) return Result<StorefrontDeliveryQuote>.NotFound("A store has not been created for the selected workspace.");
 
+            var held = holdAllowance is not null && (request.AssistantLinkToken is not null || request.HeldByConversationId is not null)
+                ? await holdAllowance.HeldAsync(store.Id, request.HeldByConversationId, request.AssistantLinkToken, cancellationToken)
+                : new Dictionary<string, int>();
             var lines = new List<StorefrontQuoteLine>();
             foreach (var line in request.Lines)
             {
@@ -46,7 +50,7 @@ public sealed class StorefrontQuoteService(
                 }
 
                 var available = await inventory.GetAvailableQuantityAsync(variant.VariantId, cancellationToken);
-                if (available is null || available < line.Quantity) return Result<StorefrontDeliveryQuote>.ValidationError("A selected product does not have enough available stock.");
+                if (available is null || available + held.GetValueOrDefault(variant.VariantId) < line.Quantity) return Result<StorefrontDeliveryQuote>.ValidationError("A selected product does not have enough available stock.");
                 var subtotal = variant.UnitPriceNpr * line.Quantity;
                 lines.Add(new StorefrontQuoteLine(variant.ProductId, variant.ProductTitle, variant.VariantId, variant.VariantName, line.Quantity, variant.UnitPriceNpr, subtotal));
             }

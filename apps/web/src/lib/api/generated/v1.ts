@@ -4678,6 +4678,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/v1/store/assistant-links/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicAssistantLink"];
+                        "application/json": components["schemas"]["PublicAssistantLink"];
+                        "text/json": components["schemas"]["PublicAssistantLink"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/v1/dev/stores/{slug}/assistant-links/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                    slug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicAssistantLink"];
+                        "application/json": components["schemas"]["PublicAssistantLink"];
+                        "text/json": components["schemas"]["PublicAssistantLink"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/v1/store/checkout/sessions": {
         parameters: {
             query?: never;
@@ -5586,6 +5665,10 @@ export interface components {
             argumentsHash: string;
             /** Format: int32 */
             resultCount: number | string;
+            /** @default false */
+            replayed: boolean;
+            /** @default false */
+            dryRun: boolean;
         };
         AttachBody: {
             productId: string;
@@ -5754,6 +5837,9 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             modifiedAt: string;
+            escalationCategory?: null | string;
+            /** Format: date-time */
+            escalatedAt?: null | string;
         };
         ConversationStatus: number;
         ConversationStatusAction: number;
@@ -6581,6 +6667,23 @@ export interface components {
         PaymentProofStatus: number;
         PaymentStatus: number;
         ProductPublishState: number;
+        PublicAssistantLink: {
+            /** Format: date-time */
+            expiresAt: string;
+            items: components["schemas"]["PublicAssistantLinkLine"][];
+        };
+        PublicAssistantLinkLine: {
+            productId: string;
+            productSlug: string;
+            productTitle: string;
+            variantId: string;
+            variantName: string;
+            /** Format: int32 */
+            quantity: number | string;
+            /** Format: double */
+            unitPriceNpr: number | string;
+            available: boolean;
+        };
         PublicationBody: {
             state: components["schemas"]["ProductPublishState"];
             /** Format: uint32 */
@@ -6646,6 +6749,7 @@ export interface components {
             quoteToken: string;
             customer: components["schemas"]["PublicCheckoutCustomer"];
             address: components["schemas"]["PublicCheckoutAddress"];
+            assistantLinkToken?: null | string;
         };
         PublicCreateOrderRequest: {
             checkoutSessionId: string;
@@ -6697,6 +6801,7 @@ export interface components {
         PublicQuoteRequest: {
             lines: components["schemas"]["PublicQuoteLine"][];
             destination: components["schemas"]["PublicDestination"];
+            assistantLinkToken?: null | string;
         };
         PublicStorefront: {
             displayName: string;

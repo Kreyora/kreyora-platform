@@ -5663,6 +5663,92 @@
         }
       }
     },
+    "/public/v1/store/assistant-links/{token}": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAssistantLink"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAssistantLink"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAssistantLink"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/v1/dev/stores/{slug}/assistant-links/{token}": {
+      "get": {
+        "tags": [
+          "PublicStorefront"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAssistantLink"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAssistantLink"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAssistantLink"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/public/v1/store/checkout/sessions": {
       "post": {
         "tags": [
@@ -7021,6 +7107,14 @@
               "string"
             ],
             "format": "int32"
+          },
+          "replayed": {
+            "type": "boolean",
+            "default": false
+          },
+          "dryRun": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -7717,6 +7811,19 @@
           },
           "modifiedAt": {
             "type": "string",
+            "format": "date-time"
+          },
+          "escalationCategory": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "escalatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "date-time"
           }
         }
@@ -11264,6 +11371,74 @@
       "ProductPublishState": {
         "type": "integer"
       },
+      "PublicAssistantLink": {
+        "required": [
+          "expiresAt",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicAssistantLinkLine"
+            }
+          }
+        }
+      },
+      "PublicAssistantLinkLine": {
+        "required": [
+          "productId",
+          "productSlug",
+          "productTitle",
+          "variantId",
+          "variantName",
+          "quantity",
+          "unitPriceNpr",
+          "available"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          },
+          "productSlug": {
+            "type": "string"
+          },
+          "productTitle": {
+            "type": "string"
+          },
+          "variantId": {
+            "type": "string"
+          },
+          "variantName": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unitPriceNpr": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "available": {
+            "type": "boolean"
+          }
+        }
+      },
       "PublicationBody": {
         "required": [
           "state",
@@ -11548,6 +11723,12 @@
           },
           "address": {
             "$ref": "#/components/schemas/PublicCheckoutAddress"
+          },
+          "assistantLinkToken": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -11763,6 +11944,12 @@
           },
           "destination": {
             "$ref": "#/components/schemas/PublicDestination"
+          },
+          "assistantLinkToken": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

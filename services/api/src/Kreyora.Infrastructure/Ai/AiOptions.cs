@@ -50,6 +50,18 @@ public sealed class AiToolOptions
 
     /// <summary>Available quantity at or below which stock shows as low (Q3); exact counts are never shown.</summary>
     public int LowStockThreshold { get; set; } = 3;
+
+    /// <summary>How long an assistant checkout link stays valid (M09-S05 Q2).</summary>
+    public int CheckoutLinkHours { get; set; } = 24;
+
+    /// <summary>Live checkout links per conversation (M09-S05).</summary>
+    public int MaxLiveLinksPerConversation { get; set; } = 5;
+
+    /// <summary>Holds created per conversation in 24 hours (M09-S05 Q3). Hold length is <c>Inventory:Reservations:DefaultDurationMinutes</c>.</summary>
+    public int MaxHoldsPerConversationPerDay { get; set; } = 10;
+
+    /// <summary>How long a hold proposal waits for the customer's confirmation (M09-S05 Q4).</summary>
+    public int ConfirmationMinutes { get; set; } = 10;
 }
 
 public sealed class AiEmbeddingOptions
@@ -218,6 +230,10 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
         if (retrieval.MaxCharacters is < 200 or > 20000) yield return "Ai:Retrieval:MaxCharacters must be between 200 and 20000.";
         if (options.Tools.TimeoutSeconds is < 1 or > 30) yield return "Ai:Tools:TimeoutSeconds must be between 1 and 30.";
         if (options.Tools.LowStockThreshold is < 0 or > 100) yield return "Ai:Tools:LowStockThreshold must be between 0 and 100.";
+        if (options.Tools.CheckoutLinkHours is < 1 or > 168) yield return "Ai:Tools:CheckoutLinkHours must be between 1 and 168.";
+        if (options.Tools.MaxLiveLinksPerConversation is < 1 or > 20) yield return "Ai:Tools:MaxLiveLinksPerConversation must be between 1 and 20.";
+        if (options.Tools.MaxHoldsPerConversationPerDay is < 1 or > 50) yield return "Ai:Tools:MaxHoldsPerConversationPerDay must be between 1 and 50.";
+        if (options.Tools.ConfirmationMinutes is < 1 or > 60) yield return "Ai:Tools:ConfirmationMinutes must be between 1 and 60.";
 
         if (options.Mode == AiMode.Live && !string.IsNullOrWhiteSpace(options.Embeddings.Provider))
         {

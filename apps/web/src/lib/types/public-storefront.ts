@@ -57,3 +57,7 @@ export interface PublicDeliveryOption { name: string; feeNpr: number; estimatedE
 export interface PublicDeliveryQuote { quoteToken: string; expiresAt: string; delivery: PublicDeliveryOption; totals: PublicTotals; }
 export interface PublicCheckoutSession { id: string; expiresAt: string; delivery: PublicDeliveryOption; totals: PublicTotals; wasReplayed: boolean; }
 export interface PublicOrderConfirmation { orderNumber: string; status: string | number; paymentStatus: string | number; fulfilmentStatus: string | number; paymentMethod: string | number; totalNpr: number; currency: string; wasReplayed: boolean; }
+
+/** Items of an assistant checkout link (M09-S05) with current server prices; the cart estimate until checkout reprices. */
+export interface PublicAssistantLinkItem { productId: string; productSlug: string; productTitle: string; variantId: string; variantName: string; quantity: number; unitPriceNpr: number; available: boolean; }
+export interface PublicAssistantLink { expiresAt: string; items: PublicAssistantLinkItem[]; }

@@ -77,6 +77,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
     public DbSet<KnowledgeDocumentVersion> KnowledgeDocumentVersions => Set<KnowledgeDocumentVersion>();
     public DbSet<KnowledgeChunk> KnowledgeChunks => Set<KnowledgeChunk>();
     public DbSet<OrderLookupGuard> OrderLookupGuards => Set<OrderLookupGuard>();
+    public DbSet<AssistantAction> AssistantActions => Set<AssistantAction>();
+    public DbSet<AssistantCheckoutLink> AssistantCheckoutLinks => Set<AssistantCheckoutLink>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -141,6 +143,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRo
         builder.Entity<KnowledgeDocumentVersion>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<KnowledgeChunk>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
         builder.Entity<OrderLookupGuard>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<AssistantAction>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
+        builder.Entity<AssistantCheckoutLink>().HasQueryFilter(e => e.TenantId == CurrentTenantId);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -20,43 +20,8 @@ public sealed class DeliveryInfoQuery(
 
     public async Task<DeliveryInfoResult> GetAsync(string storeId, string place, IReadOnlyList<DeliveryInfoItem>? items, CancellationToken cancellationToken = default)
     {
-        var rules = await dbContext.DeliveryRules.AsNoTracking().Where(r => r.StoreId == storeId && r.IsActive).Include(r => r.Zones).ToListAsync(cancellationToken);
-        var zones = rules.SelectMany(rule => rule.Zones.Select(zone => new ZoneEntry(rule, zone))).ToList();
-        var served = zones.Select(z => z.Label).Distinct(StringComparer.OrdinalIgnoreCase).Take(MaxSuggestions).ToArray();
-
-        var key = NepalGazetteer.Key(place);
-        if (key.Length == 0) return Outcome(DeliveryInfoStatus.PlaceUnknown, served);
-
-        // 1. The shop's own zone names (any level); 2. the gazetteer.
-        var destinations = zones.SelectMany(z => z.DirectMatches(key)).Distinct().ToList();
-        if (destinations.Count == 0)
-        {
-            var places = NepalGazetteer.Lookup(place);
-            if (places.Select(p => p.District).Distinct(StringComparer.Ordinal).Count() > 1)
-            {
-                return Outcome(DeliveryInfoStatus.NeedsMoreDetail, [.. places.Select(p => p.District).Distinct(StringComparer.Ordinal)]);
-            }
-
-            destinations = [.. places.Select(p => new Destination(Canonical(p.District), NepalGazetteer.Key(p.Municipality), string.Empty, p.Municipality ?? p.District))];
-        }
-
-        if (destinations.Count == 0) return Outcome(DeliveryInfoStatus.PlaceUnknown, served);
-
-        var match = destinations
-            .SelectMany(destination => zones.Where(z => z.Matches(destination)).Select(z => (Destination: destination, Zone: z)))
-            .OrderByDescending(m => m.Zone.Zone.Specificity)
-            .ThenBy(m => m.Zone.Rule.Priority)
-            .ThenBy(m => m.Zone.Rule.CreatedAt)
-            .ThenBy(m => m.Zone.Rule.Id, StringComparer.Ordinal)
-            .FirstOrDefault();
-        if (match.Zone is null)
-        {
-            // Served only at municipality/locality level inside that district: ask which one.
-            var narrower = destinations.Where(d => d.Municipality.Length == 0)
-                .SelectMany(d => zones.Where(z => z.District == d.District && z.Municipality.Length > 0).Select(z => z.Zone.Municipality!))
-                .Distinct(StringComparer.OrdinalIgnoreCase).Take(MaxSuggestions).ToArray();
-            return narrower.Length > 0 ? Outcome(DeliveryInfoStatus.NeedsMoreDetail, narrower) : Outcome(DeliveryInfoStatus.PlaceNotServed, served);
-        }
+        var resolved = await ResolveAsync(storeId, place, cancellationToken);
+        if (resolved.Match is not { } match) return Outcome(resolved.Status, resolved.Suggestions);
 
         var rule = match.Zone.Rule;
         var payments = await dbContext.StorePaymentConfigurations.AsNoTracking().Where(c => c.StoreId == storeId)
@@ -75,6 +40,59 @@ public sealed class DeliveryInfoQuery(
         return new DeliveryInfoResult(DeliveryInfoStatus.Matched, match.Destination.Label, fee, rule.BaseFeeNpr,
             rule.FeeType == DeliveryFeeType.Threshold ? rule.FreeAboveNpr : null, subtotal, rule.EstimatedEtaText,
             rule.CodAvailable && codEnabled, qrEnabled, []);
+    }
+
+    public async Task<DeliveryDestinationResolution> ResolveDestinationAsync(string storeId, string place, CancellationToken cancellationToken = default)
+    {
+        var resolved = await ResolveAsync(storeId, place, cancellationToken);
+        if (resolved.Match is not { } match) return new DeliveryDestinationResolution(resolved.Status, null, null, resolved.Suggestions);
+        var zone = match.Zone.Zone;
+        return new DeliveryDestinationResolution(DeliveryInfoStatus.Matched, new StorefrontDestinationInput("NP", zone.District, zone.Municipality, zone.Locality), match.Destination.Label, []);
+    }
+
+    private async Task<Resolution> ResolveAsync(string storeId, string place, CancellationToken cancellationToken)
+    {
+        var rules = await dbContext.DeliveryRules.AsNoTracking().Where(r => r.StoreId == storeId && r.IsActive).Include(r => r.Zones).ToListAsync(cancellationToken);
+        var zones = rules.SelectMany(rule => rule.Zones.Select(zone => new ZoneEntry(rule, zone))).ToList();
+        var served = zones.Select(z => z.Label).Distinct(StringComparer.OrdinalIgnoreCase).Take(MaxSuggestions).ToArray();
+
+        var key = NepalGazetteer.Key(place);
+        if (key.Length == 0) return new Resolution(DeliveryInfoStatus.PlaceUnknown, served, null);
+
+        // 1. The shop's own zone names (any level); 2. the gazetteer.
+        var destinations = zones.SelectMany(z => z.DirectMatches(key)).Distinct().ToList();
+        if (destinations.Count == 0)
+        {
+            var places = NepalGazetteer.Lookup(place);
+            if (places.Select(p => p.District).Distinct(StringComparer.Ordinal).Count() > 1)
+            {
+                return new Resolution(DeliveryInfoStatus.NeedsMoreDetail, [.. places.Select(p => p.District).Distinct(StringComparer.Ordinal)], null);
+            }
+
+            destinations = [.. places.Select(p => new Destination(Canonical(p.District), NepalGazetteer.Key(p.Municipality), string.Empty, p.Municipality ?? p.District))];
+        }
+
+        if (destinations.Count == 0) return new Resolution(DeliveryInfoStatus.PlaceUnknown, served, null);
+
+        var match = destinations
+            .SelectMany(destination => zones.Where(z => z.Matches(destination)).Select(z => new Match(destination, z)))
+            .OrderByDescending(m => m.Zone.Zone.Specificity)
+            .ThenBy(m => m.Zone.Rule.Priority)
+            .ThenBy(m => m.Zone.Rule.CreatedAt)
+            .ThenBy(m => m.Zone.Rule.Id, StringComparer.Ordinal)
+            .FirstOrDefault();
+        if (match is null)
+        {
+            // Served only at municipality/locality level inside that district: ask which one.
+            var narrower = destinations.Where(d => d.Municipality.Length == 0)
+                .SelectMany(d => zones.Where(z => z.District == d.District && z.Municipality.Length > 0).Select(z => z.Zone.Municipality!))
+                .Distinct(StringComparer.OrdinalIgnoreCase).Take(MaxSuggestions).ToArray();
+            return narrower.Length > 0
+                ? new Resolution(DeliveryInfoStatus.NeedsMoreDetail, narrower, null)
+                : new Resolution(DeliveryInfoStatus.PlaceNotServed, served, null);
+        }
+
+        return new Resolution(DeliveryInfoStatus.Matched, [], match);
     }
 
     /// <summary>Server-priced subtotal of published, visible, in-stock variants; null if any line can't be supplied.</summary>
@@ -100,6 +118,10 @@ public sealed class DeliveryInfoQuery(
     private static string Canonical(string district) => NepalGazetteer.CanonicalDistrict(district) ?? NepalGazetteer.Key(district);
 
     private sealed record Destination(string District, string Municipality, string Locality, string Label);
+
+    private sealed record Match(Destination Destination, ZoneEntry Zone);
+
+    private sealed record Resolution(DeliveryInfoStatus Status, IReadOnlyList<string> Suggestions, Match? Match);
 
     private sealed class ZoneEntry(DeliveryRule rule, DeliveryRuleZone zone)
     {
