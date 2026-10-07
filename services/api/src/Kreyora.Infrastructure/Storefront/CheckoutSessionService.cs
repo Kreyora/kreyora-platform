@@ -25,7 +25,8 @@ public sealed class CheckoutSessionService(
     ICheckoutInventoryReservationService inventory,
     IAuditEventService auditEvents,
     Domain.Abstractions.ITimeProvider timeProvider,
-    IOptions<CheckoutSessionOptions> options) : IStorefrontCheckoutSessionService
+    IOptions<CheckoutSessionOptions> options,
+    Kreyora.Application.Assistant.IAssistantCheckoutLinkHandover? assistantLinks = null) : IStorefrontCheckoutSessionService
 {
     private const string CreateOperation = "checkout-session.create";
 
@@ -41,6 +42,20 @@ public sealed class CheckoutSessionService(
             await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
             var replay = await FindReplayAsync(request.IdempotencyKey, fingerprint, cancellationToken);
             if (replay is not null) return replay;
+
+            // M09-S05: a checkout from an assistant link first releases that chat's holds on these items, in this same
+            // serializable transaction, so revalidation and the checkout reservation below can take exactly those units.
+            string? assistantLinkId = null;
+            if (assistantLinks is not null && !string.IsNullOrWhiteSpace(request.AssistantLinkToken))
+            {
+                var quoted = await quotes.ReadQuoteAsync(request.QuoteToken, cancellationToken);
+                var storeId = await dbContext.Stores.Select(item => item.Id).SingleOrDefaultAsync(cancellationToken);
+                if (quoted.IsSuccess && storeId is not null)
+                {
+                    assistantLinkId = await assistantLinks.BeginCheckoutAsync(request.AssistantLinkToken, storeId,
+                        [.. quoted.Value!.Lines.Select(line => line.VariantId)], cancellationToken);
+                }
+            }
 
             var quote = await quotes.RevalidateForCheckoutAsync(request.QuoteToken, cancellationToken);
             if (quote.IsFailure) return Result<CheckoutSessionItemResult>.Failure(quote.Error!);
@@ -62,6 +77,7 @@ public sealed class CheckoutSessionService(
                 now.AddDays(options.Value.PiiReviewDays), revalidatedQuote.Totals.MerchandiseSubtotalNpr, revalidatedQuote.Totals.DiscountNpr, revalidatedQuote.Totals.DeliveryFeeNpr,
                 revalidatedQuote.Totals.TaxNpr, revalidatedQuote.Totals.ProviderFeeNpr, revalidatedQuote.Totals.PlatformFeeNpr, revalidatedQuote.Totals.TotalNpr, revalidatedQuote.Totals.Currency,
                 revalidatedQuote.Delivery.RuleId, revalidatedQuote.Delivery.RuleName, revalidatedQuote.Delivery.EstimatedEtaText, revalidatedQuote.Delivery.CodAvailable, now));
+            if (assistantLinkId is not null) await assistantLinks!.AttachCheckoutSessionAsync(assistantLinkId, session.Id, cancellationToken);
             dbContext.CheckoutSessions.Add(session);
             var reservations = await inventory.ReserveForCheckoutAsync(new CheckoutInventoryReservationRequest(session.Id,
                 revalidatedQuote.Lines.Select(line => new CheckoutInventoryLine(line.VariantId, line.Quantity)).ToArray(), expiresAt), cancellationToken);

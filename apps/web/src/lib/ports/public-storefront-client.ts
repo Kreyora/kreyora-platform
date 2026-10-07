@@ -1,4 +1,4 @@
-import type { PublicCatalogPage, PublicCatalogProduct, PublicCheckoutAddress, PublicCheckoutCustomer, PublicCheckoutSession, PublicDeliveryQuote, PublicDestination, PublicOrderConfirmation, PublicStorefront } from "@/lib/types/public-storefront";
+import type { PublicAssistantLink, PublicCatalogPage, PublicCatalogProduct, PublicCheckoutAddress, PublicCheckoutCustomer, PublicCheckoutSession, PublicDeliveryQuote, PublicDestination, PublicOrderConfirmation, PublicStorefront } from "@/lib/types/public-storefront";
 
 export interface PublicStorefrontClient {
   getStore(slug: string): Promise<PublicStorefront>;
@@ -8,7 +8,9 @@ export interface PublicStorefrontClient {
 }
 
 export interface PublicCheckoutClient {
-  createQuote(input: { slug: string; lines: Array<{ variantId: string; quantity: number }>; destination: PublicDestination }): Promise<PublicDeliveryQuote>;
-  createSession(input: { slug: string; quoteToken: string; customer: PublicCheckoutCustomer; address: PublicCheckoutAddress; idempotencyKey: string }): Promise<PublicCheckoutSession>;
+  createQuote(input: { slug: string; lines: Array<{ variantId: string; quantity: number }>; destination: PublicDestination; assistantLinkToken?: string }): Promise<PublicDeliveryQuote>;
+  createSession(input: { slug: string; quoteToken: string; customer: PublicCheckoutCustomer; address: PublicCheckoutAddress; idempotencyKey: string; assistantLinkToken?: string }): Promise<PublicCheckoutSession>;
   createCodOrder(input: { slug: string; checkoutSessionId: string; idempotencyKey: string }): Promise<PublicOrderConfirmation>;
+  /** Items of a checkout link the shop's assistant sent (M09-S05). */
+  getAssistantLink(input: { slug: string; token: string }): Promise<PublicAssistantLink>;
 }

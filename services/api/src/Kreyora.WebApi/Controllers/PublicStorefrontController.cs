@@ -25,7 +25,8 @@ public sealed class PublicStorefrontController(
     IStorefrontQuoteService quotes,
     IStorefrontCheckoutSessionService sessions,
     IOrderCreationService orders,
-    IOptions<PublicStorefrontOptions> options) : ControllerBase
+    IOptions<PublicStorefrontOptions> options,
+    Kreyora.Application.Assistant.IAssistantCheckoutLinkService assistantLinks) : ControllerBase
 {
     [HttpGet]
     [EnableRateLimiting("public-reads")]
@@ -68,10 +69,25 @@ public sealed class PublicStorefrontController(
     public async Task<ActionResult<PublicDeliveryQuote>> Quote(PublicQuoteRequest request, CancellationToken cancellationToken)
     {
         var result = await quotes.CreateQuoteAsync(new StorefrontQuoteRequest(request.Lines.Select(item => new StorefrontQuoteLineRequest(item.VariantId, item.Quantity)).ToArray(),
-            new StorefrontDestinationInput(request.Destination.CountryCode, request.Destination.District, request.Destination.Municipality, request.Destination.Locality)), cancellationToken);
+            new StorefrontDestinationInput(request.Destination.CountryCode, request.Destination.District, request.Destination.Municipality, request.Destination.Locality),
+            AssistantLinkToken: request.AssistantLinkToken), cancellationToken);
         return result.Match<ActionResult<PublicDeliveryQuote>>(
             value => Ok(MapQuote(value)),
             error => PublicError(error.Status, error.Detail));
+    }
+
+    /// <summary>
+    /// The items of an assistant checkout link (M09-S05) with current prices and availability, for the storefront's
+    /// landing page. No customer data; never cached; expired, used or other stores' links answer 404.
+    /// </summary>
+    [HttpGet("assistant-links/{token}")]
+    [EnableRateLimiting("public-reads")]
+    public async Task<ActionResult<Kreyora.Application.Assistant.PublicAssistantLink>> GetAssistantLink(string token, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(token) || token.Length > 64) return PublicError(StatusCodes.Status404NotFound, "This checkout link has expired. Ask the shop for a new one.");
+        var result = await assistantLinks.GetPublicAsync(token, cancellationToken);
+        Response.Headers.CacheControl = "no-store";
+        return result.Match<ActionResult<Kreyora.Application.Assistant.PublicAssistantLink>>(value => Ok(value), error => PublicError(error.Status, error.Detail));
     }
 
     [HttpPost("checkout/sessions")]
@@ -81,7 +97,8 @@ public sealed class PublicStorefrontController(
         if (!TryIdempotencyKey(idempotencyKey, out var key)) return PublicError(StatusCodes.Status400BadRequest, "A valid Idempotency-Key header is required.");
         var result = await sessions.CreateAsync(new CreateCheckoutSessionRequest(request.QuoteToken,
             new CheckoutCustomerInput(request.Customer.DisplayName, request.Customer.Phone, request.Customer.Email, request.Customer.SaveContact, request.Customer.PrivacyAcknowledged),
-            new CheckoutAddressInput(request.Address.AddressLine1, request.Address.AddressLine2, request.Address.District, request.Address.Municipality, request.Address.Locality, request.Address.Landmark), key), cancellationToken);
+            new CheckoutAddressInput(request.Address.AddressLine1, request.Address.AddressLine2, request.Address.District, request.Address.Municipality, request.Address.Locality, request.Address.Landmark), key,
+            request.AssistantLinkToken), cancellationToken);
         return result.Match<ActionResult<PublicCheckoutSession>>(
             value => StatusCode(value.WasReplayed ? StatusCodes.Status200OK : StatusCodes.Status201Created,
                 new PublicCheckoutSession(value.Id, value.ExpiresAt, value.Items.Select(MapSessionLine).ToArray(), MapDelivery(value.Delivery), value.Totals, value.WasReplayed)),
@@ -154,10 +171,10 @@ public sealed class PublicStorefrontController(
         line.LineSubtotalNpr);
 }
 
-public sealed record PublicQuoteRequest(IReadOnlyList<PublicQuoteLine> Lines, PublicDestination Destination);
+public sealed record PublicQuoteRequest(IReadOnlyList<PublicQuoteLine> Lines, PublicDestination Destination, string? AssistantLinkToken = null);
 public sealed record PublicQuoteLine(string VariantId, int Quantity);
 public sealed record PublicDestination(string CountryCode, string District, string? Municipality, string? Locality);
-public sealed record PublicCheckoutSessionRequest(string QuoteToken, PublicCheckoutCustomer Customer, PublicCheckoutAddress Address);
+public sealed record PublicCheckoutSessionRequest(string QuoteToken, PublicCheckoutCustomer Customer, PublicCheckoutAddress Address, string? AssistantLinkToken = null);
 public sealed record PublicCheckoutCustomer(string DisplayName, string Phone, string? Email, bool SaveContact, bool PrivacyAcknowledged);
 public sealed record PublicCheckoutAddress(string AddressLine1, string? AddressLine2, string District, string? Municipality, string? Locality, string? Landmark);
 public sealed record PublicDeliveryQuote(string QuoteToken, DateTimeOffset ExpiresAt, IReadOnlyList<StorefrontQuoteLine> Lines, PublicDeliveryOption Delivery, StorefrontQuoteTotals Totals);

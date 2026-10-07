@@ -146,7 +146,20 @@ public sealed record ConversationDetailItem(
     DateTimeOffset? LastCustomerMessageAt,
     DateTimeOffset? CustomerLastReadAt,
     DateTimeOffset CreatedAt,
-    DateTimeOffset ModifiedAt);
+    DateTimeOffset ModifiedAt,
+    string? EscalationCategory = null,
+    DateTimeOffset? EscalatedAt = null);
+
+/// <summary>
+/// The assistant's hand-over to a person (M09-S05 EscalateToHuman): a system takeover with a reason category, queued
+/// automation cancelled, audited without customer text. Idempotent.
+/// </summary>
+public interface IConversationEscalationService
+{
+    Task<Result<ConversationEscalationResult>> EscalateAsync(string conversationId, string category, CancellationToken cancellationToken = default);
+}
+
+public sealed record ConversationEscalationResult(bool Changed, string Category, DateTimeOffset? EscalatedAt);
 
 public sealed record MessageReactionSummary(string Emoji, int Count);
 

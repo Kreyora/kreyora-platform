@@ -28,7 +28,6 @@ namespace Kreyora.IntegrationTests.Assistant;
 /// </summary>
 public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
 {
-    private const string Phone = "9841234567";
     private readonly PostgresFixture fixture;
 
     public ReadToolEndpointTests(PostgresFixture fixture) => this.fixture = fixture;
@@ -38,7 +37,7 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task SearchProducts_ReturnsOnlyPublishedVisibleProducts_WithBandsAndPrices_NoInternalFields()
     {
-        var shop = await SeedShopAsync("s04-search");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-search");
         await using var factory = await FactoryAsync();
 
         var result = await RunAsync(factory, shop, "SearchProducts", """{"query":"red kurta"}""");
@@ -65,7 +64,7 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task CheckInventory_ShowsBandsAndCanFulfil_NeverCounts_AndGetPriceShowsSalePrices()
     {
-        var shop = await SeedShopAsync("s04-stock");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-stock");
         await using var factory = await FactoryAsync();
 
         var stock = await RunAsync(factory, shop, "CheckInventory", $$"""{"productId":"{{shop.KurtaId}}","quantity":3}""");
@@ -95,7 +94,7 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task GetShippingInfo_MatchesZonesGazetteerAndAliases_PricesItemsServerSide()
     {
-        var shop = await SeedShopAsync("s04-ship");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-ship");
         await using var factory = await FactoryAsync();
 
         var lalitpur = await RunAsync(factory, shop, "GetShippingInfo", """{"place":"Patan"}""");
@@ -136,9 +135,9 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task GetOrderStatus_NeedsLinkOrNumberPlusPhoneDigits_RevealsNoPii_AndLocksAfterFiveFailures()
     {
-        var shop = await SeedShopAsync("s04-orders");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-orders");
         await using var factory = await FactoryAsync();
-        var order = await CreateOrderAsync(factory, shop);
+        var order = await AssistantShopSeed.CreateOrderAsync(factory, shop);
 
         var ask = await RunAsync(factory, shop, "GetOrderStatus", "{}");
         Assert.Equal("verification_required", ask["error"]!["code"]!.GetValue<string>());
@@ -148,7 +147,7 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
         var status = Assert.Single(verified["data"]!["orders"]!.AsArray())!;
         Assert.Equal(order.OrderNumber, status["orderNumber"]!.GetValue<string>());
         Assert.Equal("pending_confirmation", status["status"]!.GetValue<string>());
-        foreach (var pii in new[] { "Sita", Phone, "Lakeside", "totalNpr", "Kathmandu", shop.TenantId })
+        foreach (var pii in new[] { "Sita", AssistantShopSeed.Phone, "Lakeside", "totalNpr", "Kathmandu", shop.TenantId })
         {
             Assert.DoesNotContain(pii, verified.ToJsonString(), StringComparison.OrdinalIgnoreCase);
         }
@@ -183,9 +182,9 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task GetOrderStatus_ForALinkedCustomer_ShowsTheirOrdersWithoutQuestions_ButNotSomeoneElses()
     {
-        var shop = await SeedShopAsync("s04-linked");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-linked");
         await using var factory = await FactoryAsync();
-        var order = await CreateOrderAsync(factory, shop);
+        var order = await AssistantShopSeed.CreateOrderAsync(factory, shop);
         await using (var db = fixture.CreateDbContext(new TenantContextAccessor()))
         {
             // Simulates the S05 link between the chat identity and the customer (no domain method exists yet).
@@ -196,8 +195,8 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
         var linked = await RunAsync(factory, shop, "GetOrderStatus", "{}");
         Assert.Equal(order.OrderNumber, Assert.Single(linked["data"]!["orders"]!.AsArray())!["orderNumber"]!.GetValue<string>());
 
-        var other = await SeedShopAsync("s04-linked-other");
-        var otherOrder = await CreateOrderAsync(factory, other);
+        var other = await AssistantShopSeed.SeedShopAsync(fixture, "s04-linked-other");
+        var otherOrder = await AssistantShopSeed.CreateOrderAsync(factory, other);
         var foreign = await RunAsync(factory, shop, "GetOrderStatus", $$"""{"orderNumber":"{{otherOrder.OrderNumber}}","phoneLast4":"4567"}""");
         Assert.Equal("not_verified", foreign["error"]!["code"]!.GetValue<string>()); // another tenant's order never verifies
     }
@@ -207,7 +206,7 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task Registry_RefusesDisabledUnknownAndWriteTools_AndRejectsInvalidOrSmuggledArguments()
     {
-        var shop = await SeedShopAsync("s04-registry");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-registry");
         await using var factory = await FactoryAsync();
         await SetAllowedToolsAsync(factory, shop.TenantId, ["SearchProducts"]);
 
@@ -236,8 +235,8 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task OtherTenantsIds_AnswerLikeMissingOnes_AndIdenticalCatalogsStaySeparate()
     {
-        var shopA = await SeedShopAsync("s04-iso-a");
-        var shopB = await SeedShopAsync("s04-iso-b");
+        var shopA = await AssistantShopSeed.SeedShopAsync(fixture, "s04-iso-a");
+        var shopB = await AssistantShopSeed.SeedShopAsync(fixture, "s04-iso-b");
         await using var factory = await FactoryAsync();
 
         var search = await RunAsync(factory, shopA, "SearchProducts", """{"query":"kurta"}""");
@@ -266,7 +265,7 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task Results_AreAlwaysCurrent_AndReadsChangeNothing()
     {
-        var shop = await SeedShopAsync("s04-stale");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-stale");
         await using var factory = await FactoryAsync();
         var priceArgs = $$"""{"productId":"{{shop.KurtaId}}","variantId":"{{shop.SmallId}}"}""";
         var stockArgs = $$"""{"productId":"{{shop.KurtaId}}","variantId":"{{shop.SmallId}}","quantity":5}""";
@@ -309,7 +308,7 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task Traces_RecordFieldNamesAndOutcome_NeverValues()
     {
-        var shop = await SeedShopAsync("s04-trace");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-trace");
         await using var factory = await FactoryAsync();
 
         var outcome = await ExecuteAsync(factory, shop, "GetOrderStatus", """{"orderNumber":"ORD-01J00000000000000000000000","phoneLast4":"4321","secret":"x"}""");
@@ -334,8 +333,8 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task ProductReferences_MatchOnlyThisShopsStorefrontLinks()
     {
-        var shop = await SeedShopAsync("s04-links");
-        var other = await SeedShopAsync("s04-links-other");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-links");
+        var other = await AssistantShopSeed.SeedShopAsync(fixture, "s04-links-other");
         await using var factory = await FactoryAsync();
 
         var text = $"Yo kati ho? https://{shop.Slug}.kreyora.test/product/{shop.KurtaSlug} ani yo pani http://localhost:3000/store/{shop.Slug}/product/{shop.KurtaSlug}. " +
@@ -354,13 +353,14 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task ToolConsole_ListsSchemas_PreviewsAsSeller_AndEnforcesRolesAndCsrf()
     {
-        var shop = await SeedShopAsync("s04-console");
+        var shop = await AssistantShopSeed.SeedShopAsync(fixture, "s04-console");
         await using var factory = await FactoryAsync();
         using var client = factory.CreateClient();
 
         var catalog = await JsonAsync(client, HttpMethod.Get, "/v1/assistant/tools", shop.TenantId, TenantRole.Viewer);
-        Assert.Equal("kreyora-read-tools.v1", catalog["registryVersion"]!.GetValue<string>());
-        Assert.Equal(["SearchProducts", "CheckInventory", "GetPrice", "GetShippingInfo", "GetOrderStatus"], catalog["tools"]!.AsArray().Select(t => t!["name"]!.GetValue<string>()));
+        Assert.Equal("kreyora-tools.v2", catalog["registryVersion"]!.GetValue<string>());
+        Assert.Equal(["SearchProducts", "CheckInventory", "GetPrice", "GetShippingInfo", "GetOrderStatus", "QuoteCart", "ReserveInventory", "ReleaseReservation", "CreateCheckoutLink", "EscalateToHuman"],
+            catalog["tools"]!.AsArray().Select(t => t!["name"]!.GetValue<string>()));
         Assert.All(catalog["tools"]!.AsArray(), t => Assert.False(t!["parametersSchema"]!["additionalProperties"]!.GetValue<bool>()));
 
         var preview = await JsonAsync(client, HttpMethod.Post, "/v1/assistant/tools/GetPrice/preview", shop.TenantId, TenantRole.Admin, new { arguments = new { productId = shop.KurtaId } });
@@ -369,7 +369,7 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
         var orderPreview = await JsonAsync(client, HttpMethod.Post, "/v1/assistant/tools/GetOrderStatus/preview", shop.TenantId, TenantRole.Owner, new { arguments = new { } });
         Assert.Equal("verification_required", orderPreview["result"]!["error"]!["code"]!.GetValue<string>());
 
-        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(client, HttpMethod.Post, "/v1/assistant/tools/QuoteCart/preview", shop.TenantId, TenantRole.Owner, new { arguments = new { } })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await SendAsync(client, HttpMethod.Post, "/v1/assistant/tools/CreateOrderDraft/preview", shop.TenantId, TenantRole.Owner, new { arguments = new { } })).StatusCode);
         foreach (var role in new[] { TenantRole.Viewer, TenantRole.Operator })
         {
             Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(client, HttpMethod.Post, "/v1/assistant/tools/GetPrice/preview", shop.TenantId, role, new { arguments = new { productId = shop.KurtaId } })).StatusCode);
@@ -384,12 +384,12 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
 
     // ---- helpers ----
 
-    private const string AssistantToolRegistryVersion = "kreyora-read-tools.v1";
+    private const string AssistantToolRegistryVersion = "kreyora-tools.v2";
 
-    private static async Task<JsonNode> RunAsync(AssistantTestHost factory, Shop shop, string tool, string arguments) =>
+    private static async Task<JsonNode> RunAsync(AssistantTestHost factory, AssistantShopSeed.Shop shop, string tool, string arguments) =>
         JsonNode.Parse((await ExecuteAsync(factory, shop, tool, arguments)).ResultJson)!;
 
-    private static Task<AssistantToolOutcome> ExecuteAsync(AssistantTestHost factory, Shop shop, string tool, string arguments) =>
+    private static Task<AssistantToolOutcome> ExecuteAsync(AssistantTestHost factory, AssistantShopSeed.Shop shop, string tool, string arguments) =>
         factory.AsTenantAsync(shop.TenantId, async sp =>
         {
             var context = await sp.GetRequiredService<IAssistantToolContextFactory>().ForConversationAsync(shop.ConversationId);
@@ -413,78 +413,6 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
             + await db.Customers.IgnoreQueryFilters().LongCountAsync() + await db.CheckoutSessions.IgnoreQueryFilters().LongCountAsync();
     }
 
-    private static async Task<SeededOrder> CreateOrderAsync(AssistantTestHost factory, Shop shop) =>
-        await factory.AsTenantAsync(shop.TenantId, async sp =>
-        {
-            var quote = await sp.GetRequiredService<IStorefrontQuoteService>().CreateQuoteAsync(new StorefrontQuoteRequest(
-                [new StorefrontQuoteLineRequest(shop.SmallId, 1)], new StorefrontDestinationInput("NP", "Kathmandu", null, null)));
-            Assert.True(quote.IsSuccess, quote.Error?.Detail);
-            var session = await sp.GetRequiredService<IStorefrontCheckoutSessionService>().CreateAsync(new CreateCheckoutSessionRequest(quote.Value!.QuoteToken,
-                new CheckoutCustomerInput("Sita Sharma", Phone, null, SaveContact: true, PrivacyAcknowledged: true),
-                new CheckoutAddressInput("Lakeside Road 7", null, "Kathmandu", null, null, null), $"s04-session-{Guid.NewGuid():N}"));
-            Assert.True(session.IsSuccess, session.Error?.Detail);
-            var order = await sp.GetRequiredService<IOrderCreationService>().CreateFromCheckoutAsync(
-                new CreateOrderFromCheckoutRequest(session.Value!.Id, OrderPaymentMethod.CashOnDelivery, $"s04-order-{Guid.NewGuid():N}"));
-            Assert.True(order.IsSuccess, order.Error?.Detail);
-            return new SeededOrder(order.Value!.Id, order.Value.OrderNumber, session.Value.CustomerId);
-        });
-
-    /// <summary>A shop with a kurta (S in stock, M low, L out; on sale), a saree, a hidden and a draft product, three delivery rules and a conversation.</summary>
-    private async Task<Shop> SeedShopAsync(string prefix)
-    {
-        var accessor = new TenantContextAccessor();
-        await using var db = fixture.CreateDbContext(accessor);
-        await db.Database.MigrateAsync();
-        var tenant = Tenant.Create($"{prefix} tenant", $"{prefix}-{Guid.NewGuid():N}"[..Math.Min(40, prefix.Length + 1 + 32)]);
-        db.Tenants.Add(tenant);
-        await db.SaveChangesAsync();
-
-        using var scope = accessor.BeginScope(new TenantContext(tenant.Id, "01J00000000000000000000001", "01J00000000000000000000002", TenantRole.Owner));
-        var suffix = Guid.NewGuid().ToString("N")[..8];
-        var slug = $"shop-{suffix}";
-        var store = Store.Create(tenant.Id, new StoreSettings("Demo Boutique", slug, null, StoreThemePreset.Default, null, "Owner", "owner@example.com", "9800000000",
-            null, null, null, null, "Terms", "Privacy", "Returns", "Payment"));
-        var kurta = Product.Create(tenant.Id, "Red Cotton Kurta", "Soft cotton kurta.", $"red-kurta-{suffix}");
-        var small = kurta.AddVariant($"KURTA-S-{suffix}", "Small", new Dictionary<string, string> { ["size"] = "S" }, 2500m, 3000m, true);
-        var medium = kurta.AddVariant($"KURTA-M-{suffix}", "Medium", new Dictionary<string, string> { ["size"] = "M" }, 2500m, null, true);
-        var large = kurta.AddVariant($"KURTA-L-{suffix}", "Large", new Dictionary<string, string> { ["size"] = "L" }, 2600m, null, true);
-        kurta.Publish();
-        var saree = Product.Create(tenant.Id, "Silk Saree", null, $"silk-saree-{suffix}");
-        var sareeVariant = saree.AddVariant($"SAREE-{suffix}", "Standard", null, 8000m, null, true);
-        saree.Publish();
-        var hidden = Product.Create(tenant.Id, "Secret Prototype", null, $"secret-{suffix}");
-        var hiddenVariant = hidden.AddVariant($"SECRET-{suffix}", "Standard", null, 999m, null, true);
-        hidden.Publish();
-        var draft = Product.Create(tenant.Id, "Draft Item Kurta", null, $"draft-{suffix}");
-        draft.AddVariant($"DRAFT-{suffix}", "Standard", null, 500m, null, true);
-
-        db.AddRange(store, kurta, saree, hidden, draft,
-            Stock(tenant.Id, small.Id, 10), Stock(tenant.Id, medium.Id, 2), Stock(tenant.Id, large.Id, 0), Stock(tenant.Id, sareeVariant.Id, 5), Stock(tenant.Id, hiddenVariant.Id, 5),
-            StoreProductPublication.Create(tenant.Id, store.Id, kurta.Id, StoreProductVisibility.Visible),
-            StoreProductPublication.Create(tenant.Id, store.Id, saree.Id, StoreProductVisibility.Visible),
-            StoreProductPublication.Create(tenant.Id, store.Id, hidden.Id, StoreProductVisibility.Hidden),
-            DeliveryRule.Create(tenant.Id, store.Id, new DeliveryRuleSettings("Valley", 0, DeliveryFeeType.Flat, 100m, null, "1-2 days", true, true,
-                [new DeliveryZoneInput("Kathmandu", null, null), new DeliveryZoneInput("Lalitpur", null, null), new DeliveryZoneInput("Bhaktapur", null, null)])),
-            DeliveryRule.Create(tenant.Id, store.Id, new DeliveryRuleSettings("Pokhara", 1, DeliveryFeeType.Threshold, 200m, 5000m, "3 days", false, true,
-                [new DeliveryZoneInput("Kaski", "Pokhara", null)])),
-            DeliveryRule.Create(tenant.Id, store.Id, new DeliveryRuleSettings("Old Jhapa", 2, DeliveryFeeType.Flat, 300m, null, null, true, false,
-                [new DeliveryZoneInput("Jhapa", null, null)])));
-
-        var connection = ChannelConnection.Create(tenant.Id, ChannelType.Instagram, "igid_" + suffix, "S04 IG", storeId: store.Id);
-        var identity = Kreyora.Domain.Customers.CustomerChannelIdentity.Create(tenant.Id, connection.Id, ChannelType.Instagram, "igsid_" + suffix, DateTimeOffset.UtcNow);
-        var conversation = Conversation.Start(tenant.Id, connection.Id, store.Id, identity.Id, ChannelType.Instagram);
-        db.AddRange(connection, identity, conversation);
-        await db.SaveChangesAsync();
-        return new Shop(tenant.Id, slug, conversation.Id, identity.Id, kurta.Id, kurta.Slug, small.Id, large.Id, hidden.Id, hidden.Slug);
-    }
-
-    private static InventoryItem Stock(string tenantId, string variantId, int onHand)
-    {
-        var item = InventoryItem.Create(tenantId, variantId);
-        if (onHand > 0) item.ApplyMovement(onHand);
-        return item;
-    }
-
     private async Task<AssistantTestHost> FactoryAsync()
     {
         await using (var db = fixture.CreateDbContext(new TenantContextAccessor()))
@@ -495,7 +423,5 @@ public sealed class ReadToolEndpointTests : IClassFixture<PostgresFixture>
         return new AssistantTestHost(fixture.ConnectionString, new InMemoryStorage());
     }
 
-    private sealed record Shop(string TenantId, string Slug, string ConversationId, string IdentityId, string KurtaId, string KurtaSlug, string SmallId, string LargeId, string HiddenId, string HiddenSlug);
 
-    private sealed record SeededOrder(string OrderId, string OrderNumber, string? CustomerId);
 }

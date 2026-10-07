@@ -38,9 +38,16 @@ public sealed partial class OrderStatusLookupService(
         var tenantId = tenantContext.RequireCurrent().TenantId;
         var orderNumber = NormalizeOrderNumber(request.OrderNumber);
 
-        if (request.CustomerId is { } customerId)
+        // Linked orders need no proof: the chat customer's own orders, and orders placed through this chat's assistant
+        // checkout links (M09-S05; works even when the customer chose not to save their contact details).
+        var customerId = request.CustomerId;
+        var linkedOrderIds = request.ConversationId is null ? [] : await dbContext.AssistantCheckoutLinks.AsNoTracking()
+            .Where(l => l.TenantId == tenantId && l.ConversationId == request.ConversationId && l.OrderId != null)
+            .Select(l => l.OrderId!).ToListAsync(cancellationToken);
+        if (customerId is not null || linkedOrderIds.Count > 0)
         {
-            var linked = await StatusAsync(tenantId, o => o.CustomerId == customerId && (orderNumber == null || o.OrderNumber == orderNumber), cancellationToken);
+            var linked = await StatusAsync(tenantId, o => ((customerId != null && o.CustomerId == customerId) || linkedOrderIds.Contains(o.Id))
+                && (orderNumber == null || o.OrderNumber == orderNumber), cancellationToken);
             if (linked.Count > 0) return Found(linked);
         }
 
