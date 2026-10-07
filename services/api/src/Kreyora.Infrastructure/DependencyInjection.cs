@@ -19,6 +19,7 @@ using Kreyora.Application.Support;
 using Kreyora.Application.Tenancy;
 using Kreyora.Infrastructure.Ai;
 using Kreyora.Infrastructure.Assistant;
+using Kreyora.Infrastructure.Assistant.Orchestration;
 using Kreyora.Infrastructure.Assistant.Tools;
 using Kreyora.Infrastructure.Audit;
 using Kreyora.Infrastructure.Authentication;
@@ -187,6 +188,7 @@ public static class DependencyInjection
             services.AddScoped<IDeliveryRuleService>(serviceProvider => serviceProvider.GetRequiredService<DeliveryRuleService>());
             services.AddScoped<IDeliveryRuleReadService>(serviceProvider => serviceProvider.GetRequiredService<DeliveryRuleService>());
             services.AddScoped<IStorefrontAdministrationService, StorefrontAdministrationService>();
+            services.AddScoped<IStoreReadinessQuery>(sp => (StorefrontAdministrationService)sp.GetRequiredService<IStorefrontAdministrationService>());
             services.AddScoped<IPublicStorefrontContextAccessor, PublicStorefrontContextAccessor>();
             services.AddScoped<IPublicStorefrontResolver, PublicStorefrontResolver>();
             services.AddScoped<IPublicStorefrontService, PublicStorefrontService>();
@@ -250,6 +252,11 @@ public static class DependencyInjection
         services.AddScoped<IAssistantCheckoutLinkHandover>(sp => sp.GetRequiredService<AssistantCheckoutLinkService>());
         services.AddScoped<IConversationInventoryHoldService>(sp => (InventoryService)sp.GetRequiredService<IInventoryService>());
         services.AddScoped<IConversationEscalationService, ConversationEscalationService>();
+        // M09-S06 orchestration (ADR-021).
+        services.AddSingleton<AssistantCircuitBreaker>();
+        services.AddScoped<IAssistantTurnService, AssistantTurnService>();
+        services.AddScoped<IAssistantTurnLogQuery, AssistantTurnLogQuery>();
+        services.AddTransient<AssistantTurnPurgeJob>();
         services.AddSingleton<IAssistantToolRegistry, AssistantToolRegistry>();
         services.AddScoped<IAssistantToolContextFactory, AssistantToolContextFactory>();
         services.AddScoped<IAssistantToolConsoleService, AssistantToolConsoleService>();

@@ -19,7 +19,9 @@ public sealed class AssistantController(
     IKnowledgeRetrievalService retrieval,
     IKnowledgeIndexScheduler indexScheduler,
     ITenantContextAccessor tenantContext,
-    IAssistantToolConsoleService tools) : ControllerBase
+    IAssistantToolConsoleService tools,
+    IAssistantTurnService turns,
+    IAssistantTurnLogQuery turnLog) : ControllerBase
 {
     private const long UploadRequestLimitBytes = KnowledgeText.MaxUploadBytes + 16 * 1024;
 
@@ -34,6 +36,20 @@ public sealed class AssistantController(
     [HttpGet("readiness"), Authorize(Policy = TenantPermissions.AiConfigurationRead)]
     public async Task<ActionResult<AssistantReadinessItem>> GetReadiness(CancellationToken cancellationToken = default) =>
         this.ToActionResult(await readiness.GetAsync(cancellationToken));
+
+    /// <summary>
+    /// Owner playground (M09-S06): made-up customer messages run through the real assistant turn with seller-preview tools
+    /// (dry run). Nothing is sent and nothing is held or created. Don't paste real customer messages.
+    /// </summary>
+    [HttpPost("playground"), Authorize(Policy = TenantPermissions.AiConfigurationWrite), ValidateAntiForgeryToken]
+    public async Task<ActionResult<AssistantPlaygroundResult>> Playground([FromBody] AssistantPlaygroundRequest request, CancellationToken cancellationToken = default) =>
+        this.ToActionResult(await turns.PlaygroundAsync(request, cancellationToken));
+
+    /// <summary>The redacted assistant turn log, newest first: outcomes, versions, model/tool/knowledge metadata, budgets. No message text.</summary>
+    [HttpGet("turns"), Authorize(Policy = TenantPermissions.AiConfigurationRead)]
+    public async Task<ActionResult<Kreyora.Application.Audit.CursorPage<AssistantTurnItem>>> ListTurns(
+        [FromQuery] string? conversationId, [FromQuery] string? cursor, [FromQuery] int pageSize = 25, CancellationToken cancellationToken = default) =>
+        Ok(await turnLog.ListAsync(conversationId, cursor, pageSize, cancellationToken));
 
     /// <summary>The read-tool registry: names, versions, descriptions, schemas, and which are on in the policy.</summary>
     [HttpGet("tools"), Authorize(Policy = TenantPermissions.AiConfigurationRead)]

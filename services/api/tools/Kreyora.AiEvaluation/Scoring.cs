@@ -1,3 +1,4 @@
+using Kreyora.Domain.Assistant;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -25,23 +26,6 @@ public sealed record CaseScore(
 /// <summary>Deterministic scoring (no AI judge). Every rule is unit-tested.</summary>
 public static partial class Scoring
 {
-    private static readonly string[] RomanizedNepaliWords =
-    [
-        "cha", "chha", "chaina", "ho", "hoina", "hajur", "kati", "ko", "ma", "huncha", "hunchha", "milcha", "dinus",
-        "dinuhos", "garnu", "garna", "garidinus", "parcha", "pugyo", "aayo", "aaucha", "tapai", "tapaiko", "mero", "ra",
-        "pani", "ni", "ta", "lai", "sanga", "bhayo", "bata", "samma", "wala", "chahiyo", "dhanyabad", "namaste", "ramro",
-        "thik", "kun", "kunai", "huna", "sakchha", "sakcha", "hola", "khusi", "lagcha", "mildaina", "chan", "ki",
-        // casual chat spellings seen in M09-S01 replies (e.g. "connect gardai xu hai, ekchhin kurnus na")
-        "hajurlai", "xa", "xu", "chu", "hai", "na", "gardai", "garchu", "gardinchu", "ekchhin", "ekchin", "kurnus",
-        "kripaya", "dhanyabaad", "dhanyawad", "aba", "aru", "pathaunus", "pathaidinchu", "huncha", "parchha", "bhanus",
-        "bhannu", "sakinchha", "ekdam", "maaf", "garnus", "rakhnus", "chaiyo", "chahinchha", "malai", "tapailai"
-    ];
-
-    [GeneratedRegex(@"[0-9०-९][0-9०-९,]*(?:\.[0-9०-९]+)?")]
-    private static partial Regex NumberPattern();
-
-    [GeneratedRegex(@"^\s*(?:[-*]\s*)?\**[0-9०-९]+[.)]\**\s", RegexOptions.Multiline)]
-    private static partial Regex ListMarker();
 
     public static CaseScore Score(EvalCase evalCase, CaseRun run)
     {
@@ -96,63 +80,13 @@ public static partial class Scoring
     /// Numbers in the reply that appear in no tool result and not in the customer's own messages: fabricated
     /// prices, stock, fees or dates. Devanagari digits are normalized; list markers ("1. ") are ignored.
     /// </summary>
-    public static IReadOnlyList<string> UngroundedNumbers(string reply, IEnumerable<string> groundingSources)
-    {
-        var allowed = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var source in groundingSources)
-        {
-            foreach (Match match in NumberPattern().Matches(source))
-            {
-                allowed.Add(Normalize(match.Value));
-            }
-        }
+    public static IReadOnlyList<string> UngroundedNumbers(string reply, IEnumerable<string> groundingSources) =>
+        AssistantText.UngroundedNumbers(reply, groundingSources);
 
-        var cleaned = ListMarker().Replace(reply, " ");
-        return NumberPattern().Matches(cleaned)
-            .Select(m => Normalize(m.Value))
-            .Where(n => n.Length > 0 && !allowed.Contains(n))
-            .Distinct(StringComparer.Ordinal)
-            .ToList();
-    }
-
-    public static string Normalize(string number)
-    {
-        var builder = new StringBuilder(number.Length);
-        foreach (var ch in number)
-        {
-            if (ch is >= '०' and <= '९')
-            {
-                builder.Append((char)('0' + (ch - '०')));
-            }
-            else if (ch is >= '0' and <= '9' or '.')
-            {
-                builder.Append(ch);
-            }
-        }
-
-        var text = builder.ToString().TrimEnd('.');
-        return text.EndsWith(".00", StringComparison.Ordinal) ? text[..^3] : text;
-    }
+    public static string Normalize(string number) => AssistantText.NormalizeNumber(number);
 
     /// <summary><c>ne</c> when Devanagari dominates, <c>rom</c> for Romanized Nepali, otherwise <c>en</c>.</summary>
-    public static string DetectLanguage(string text)
-    {
-        var letters = text.Where(char.IsLetter).ToList();
-        if (letters.Count == 0)
-        {
-            return "unknown";
-        }
-
-        var devanagari = letters.Count(c => c is >= 'ऀ' and <= 'ॿ');
-        if (devanagari >= letters.Count * 0.3)
-        {
-            return "ne";
-        }
-
-        var words = Regex.Split(text.ToLowerInvariant(), @"[^a-z]+").Where(w => w.Length > 0).ToList();
-        var hits = words.Count(w => RomanizedNepaliWords.Contains(w));
-        return hits >= Math.Max(2, words.Count / 12) ? "rom" : "en";
-    }
+    public static string DetectLanguage(string text) => AssistantText.DetectLanguage(text);
 
     public static bool LanguageMatches(string expected, string detected) => expected switch
     {

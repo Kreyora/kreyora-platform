@@ -8,5 +8,12 @@ public enum OutboundMessageOrigin
 {
     System = 0,
     Staff = 1,
-    Automation = 2
+    Automation = 2,
+
+    /// <summary>
+    /// The assistant's single "a team member will reply" notice sent with its own hand-off (M09-S06, ADR-021 amending
+    /// ADR-017): checked like automation (spam, connection, messaging window) but allowed during the takeover it causes,
+    /// and not cancelled by takeover suppression.
+    /// </summary>
+    Handoff = 3
 }

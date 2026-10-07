@@ -3,25 +3,25 @@
 ## Active position
 
 - **Milestone:** 09 — Constrained AI Assistant, RAG, and Commerce Tools
-- **Step:** S05 — Controlled write tools
-- **Status:** `REVIEW` (implemented 2026-10-07; awaiting owner review and ADR-020 acceptance)
+- **Step:** S06 — Bounded orchestration, budgets, and action logs
+- **Status:** `REVIEW` (implemented 2026-10-07; awaiting owner review and ADR-021 acceptance)
 - **Plan state:** Milestone 08 complete (exit gate APPROVED 2026-10-06). M09 hard gates: provider ADR (S01) and approved data-processing terms before real customer content.
 - **Active milestone file:** `docs/milestones/09_AI_ASSISTANT_RAG_TOOLS.md`
 
 ## Branch and checkpoint state
 
-- **Branch:** `master` at `e156a14` (M09-S01–S04 merged, PRs #119/#121/#123/#125).
-- **Current checkpoint:** `artifacts/checkpoints/M09-S05.md` (REVIEW)
-- **Previous checkpoint:** `artifacts/checkpoints/M09-S04.md` (APPROVED 2026-10-07)
-- **Last approved state:** M09-S04 approved 2026-10-07.
+- **Branch:** `master` at `075faae` (M09-S01–S05 merged, PRs #119/#121/#123/#125/#127).
+- **Current checkpoint:** `artifacts/checkpoints/M09-S06.md` (REVIEW)
+- **Previous checkpoint:** `artifacts/checkpoints/M09-S05.md` (APPROVED 2026-10-07)
+- **Last approved state:** M09-S05 approved 2026-10-07; ADR-020 accepted.
 
 ## Current objective
 
-Owner review of M09-S05 (controlled write tools) and the decision on ADR-020 (AI action permission matrix).
+Owner review of M09-S06 (bounded orchestration): budget/timeout values, failure texts, log schema, kill-switch evidence, ADR-021.
 
 ## Next permitted action
 
-Await the owner's decision on `M09-S05.md` and ADR-020. After approval: M09-S06 planning (plan only). Do not start S06 automatically.
+Await the owner's decision on `M09-S06.md` and ADR-021. After approval: M09-S07 planning (plan only). Do not start S07 automatically.
 
 ## Next prohibited action
 
@@ -32,6 +32,10 @@ Await the owner's decision on `M09-S05.md` and ADR-020. After approval: M09-S06 
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-07 | Completed M09-S06: ADR-021 `Proposed` (amends ADR-017 with the `Handoff` origin); `IAssistantTurnService` (lease, gate, pre-checks, coalesced context + knowledge + prompt `assistant-system-v1`, bounded tool loop, output validation with one corrective retry, ownership re-check, gated enqueue, safe fallback with hand-off notice), budgets and circuit breaker, data rule (synthetic allowlist), redacted `assistant_turns` log (90-day purge, read API), owner playground; fixed a latent S02 activation permission bug (`IStoreReadinessQuery`); shared `AssistantText` with the harness; additive migration `AddAssistantTurns`; OpenAPI regenerated (additive). Backend 1,090 passed / 0 failed; EF clean; `pnpm ci:frontend` green (480); Docker at baseline; graphify refreshed (10,735 nodes). Status -> `REVIEW`. | Claude |
+| 2026-10-07 | Project owner approved the M09-S06 plan ("ok implement"): Q1–Q11 as recommended. Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-07 | Drafted the M09-S06 plan `docs/plan/M09-S06_BOUNDED_ORCHESTRATION_PLAN.md` (plan only): assistant turn service (gate, deterministic pre-checks, coalesced context + retrieval + versioned prompt, bounded tool loop, output validation for ownership/grounding/links/length, safe fallback with hand-off, gated enqueue), budgets and limits table, circuit breaker and kill switches, redacted `assistant_turns` log (90 days), owner playground, ADR-021 proposed. Free tiers only for a platform synthetic-tenant allowlist (ADR-018). Decisions Q1–Q11 pending. | Claude |
+| 2026-10-07 | Project owner approved M09-S05 ("approved, start the next planning"); ADR-020 accepted. S05 merged (`075faae`, PR #127). Graphify refreshed at this approval boundary (10,383 nodes, 28,154 edges; built from `075faae`). Position set to M09-S06 planning (plan only). | Project owner / Claude |
 | 2026-10-07 | Completed M09-S05: ADR-020 `Proposed` (AI action permission matrix); write tools QuoteCart, ReserveInventory (two-phase, server-checked consent), ReleaseReservation, CreateCheckoutLink (hashed token, public read, storefront landing page), EscalateToHuman (system takeover + category); registry v2 (conversation-only, takeover gate, dry-run preview, same-turn replay); holds hand over to checkout atomically; orders from links count as the chat's orders; additive migration `AddAssistantWriteTools`; OpenAPI regenerated (additive). Backend 1,045 passed on rerun (existing M07 Scenario04 flaky); EF clean; `pnpm ci:frontend` green (480); Docker at baseline; graphify refreshed (10,367 nodes). Status -> `REVIEW`. | Claude |
 | 2026-10-07 | Project owner approved the M09-S05 plan ("ok implement"): Q1–Q9 as recommended. Status -> `IN PROGRESS`. | Project owner / Claude |
 | 2026-10-07 | Drafted the M09-S05 plan `docs/plan/M09-S05_CONTROLLED_WRITE_TOOLS_PLAN.md` (plan only): AI action permission matrix (ADR-020 proposed); QuoteCart (no order drafts), bounded 15-minute chat holds with two-phase confirmation, release, saved checkout links with a storefront landing page and atomic hold handover (order links the chat customer, closing the S04 gap), EscalateToHuman as system takeover; idempotent replay, takeover gate, dry-run preview. Decisions Q1–Q9 pending. | Claude |

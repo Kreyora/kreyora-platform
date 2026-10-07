@@ -17,7 +17,7 @@ namespace Kreyora.Infrastructure.Assistant;
 public sealed class AssistantReadinessService(
     AppDbContext dbContext,
     ITenantContextAccessor tenantContext,
-    IStorefrontAdministrationService storefront,
+    IStoreReadinessQuery storeReadiness,
     IOptionsMonitor<AiOptions> aiOptions) : IAssistantReadinessService, IAssistantActivationQuery
 {
     public const string StoreReady = "store_ready";
@@ -36,11 +36,12 @@ public sealed class AssistantReadinessService(
         var tenantId = tenantContext.RequireCurrent().TenantId;
         var checks = new List<AssistantReadinessCheck>();
 
-        var store = await storefront.GetReadinessAsync(cancellationToken);
-        checks.Add(store.IsSuccess
-            ? new AssistantReadinessCheck(StoreReady, store.Value!.CanAcceptOrders, true,
-                store.Value.CanAcceptOrders ? "The store is active and can accept orders." : "Finish the store setup (products, delivery, payment) so orders can be accepted.",
-                [.. store.Value.Blockers.Select(b => b.Code)])
+        // System-safe read (M09-S06): background turns have no member role, so no permission demand here.
+        var store = await storeReadiness.GetAsync(cancellationToken);
+        checks.Add(store is not null
+            ? new AssistantReadinessCheck(StoreReady, store.CanAcceptOrders, true,
+                store.CanAcceptOrders ? "The store is active and can accept orders." : "Finish the store setup (products, delivery, payment) so orders can be accepted.",
+                [.. store.Blockers.Select(b => b.Code)])
             : new AssistantReadinessCheck(StoreReady, false, true, "Create and set up the store first.", ["store_missing"]));
 
         var channel = await dbContext.ChannelConnections.AnyAsync(c => c.TenantId == tenantId && c.Status == ChannelConnectionStatus.Active, cancellationToken);

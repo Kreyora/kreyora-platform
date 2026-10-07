@@ -90,6 +90,14 @@ internal sealed class AssistantTestHost(string connectionString, InMemoryStorage
         return await work(scope.ServiceProvider);
     }
 
+    /// <summary>Runs <paramref name="work"/> in a DI scope as the system (no member role), like background jobs.</summary>
+    public async Task<T> AsSystemAsync<T>(string tenantId, Func<IServiceProvider, Task<T>> work)
+    {
+        using var scope = Services.CreateScope();
+        using var tenantScope = scope.ServiceProvider.GetRequiredService<ITenantContextAccessor>().BeginScope(new TenantContext(tenantId, null, null, null));
+        return await work(scope.ServiceProvider);
+    }
+
     private sealed class HeaderRoleResolver(IHttpContextAccessor httpContextAccessor, AppDbContext dbContext) : ITenantContextResolutionService
     {
         public Task<IReadOnlyList<WorkspaceSummary>> GetActiveWorkspacesAsync(string userId, CancellationToken cancellationToken = default) =>

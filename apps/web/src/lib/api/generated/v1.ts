@@ -105,6 +105,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/assistant/playground": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AssistantPlaygroundRequest"];
+                    "text/json": components["schemas"]["AssistantPlaygroundRequest"];
+                    "application/*+json": components["schemas"]["AssistantPlaygroundRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantPlaygroundResult"];
+                        "application/json": components["schemas"]["AssistantPlaygroundResult"];
+                        "text/json": components["schemas"]["AssistantPlaygroundResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/turns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    conversationId?: string;
+                    cursor?: string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CursorPageOfAssistantTurnItem"];
+                        "application/json": components["schemas"]["CursorPageOfAssistantTurnItem"];
+                        "text/json": components["schemas"]["CursorPageOfAssistantTurnItem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/assistant/tools": {
         parameters: {
             query?: never;
@@ -5589,6 +5673,35 @@ export interface components {
             /** Format: int32 */
             maxOutputTokens: number | string;
         };
+        AssistantPlaygroundMessage: {
+            from: string;
+            text: string;
+        };
+        AssistantPlaygroundRequest: {
+            messages: components["schemas"]["AssistantPlaygroundMessage"][];
+        };
+        AssistantPlaygroundResult: {
+            turnId: string;
+            outcome: components["schemas"]["AssistantTurnOutcome"];
+            reasonCode: string;
+            reply: null | string;
+            tools: components["schemas"]["AssistantPlaygroundToolUse"][];
+            citations: components["schemas"]["TurnCitation"][];
+            /** Format: int32 */
+            modelCalls: number | string;
+            /** Format: int32 */
+            inputTokens: number | string;
+            /** Format: int32 */
+            outputTokens: number | string;
+            /** Format: double */
+            estimatedCostUsd: number | string;
+            validationCodes: string[];
+        };
+        AssistantPlaygroundToolUse: {
+            tool: string;
+            outcome: string;
+            dryRun: boolean;
+        };
         AssistantPolicyItem: {
             enabled: boolean;
             replyStyle: components["schemas"]["AssistantReplyStyle"];
@@ -5670,6 +5783,32 @@ export interface components {
             /** @default false */
             dryRun: boolean;
         };
+        AssistantTurnItem: {
+            id: string;
+            conversationId: null | string;
+            isPlayground: boolean;
+            outcome: components["schemas"]["AssistantTurnOutcome"];
+            reasonCode: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            finishedAt: null | string;
+            policyVersion: null | string;
+            promptVersion: null | string;
+            registryVersion: null | string;
+            modelCalls: components["schemas"]["TurnModelCall"][];
+            toolSteps: components["schemas"]["TurnToolStep"][];
+            citations: components["schemas"]["TurnCitation"][];
+            validationCodes: string[];
+            /** Format: int32 */
+            inputTokens: number | string;
+            /** Format: int32 */
+            outputTokens: number | string;
+            /** Format: double */
+            estimatedCostUsd: number | string;
+            outboundMessageId: null | string;
+        };
+        AssistantTurnOutcome: number;
         AttachBody: {
             productId: string;
             /** Format: int32 */
@@ -5909,6 +6048,10 @@ export interface components {
             reason: string;
             /** Format: date-time */
             expiresAt: string;
+        };
+        CursorPageOfAssistantTurnItem: {
+            items: components["schemas"]["AssistantTurnItem"][];
+            nextCursor: null | string;
         };
         CursorPageOfAuditEventItem: {
             items: components["schemas"]["AuditEventItem"][];
@@ -7048,6 +7191,40 @@ export interface components {
             threshold: number | string;
             /** Format: uint32 */
             expectedVersion: number | string;
+        };
+        TurnCitation: {
+            documentId: string;
+            versionId: string;
+            /** Format: int32 */
+            chunkIndex: number | string;
+            /** Format: double */
+            score: number | string;
+        };
+        TurnModelCall: {
+            profile: string;
+            provider: null | string;
+            model: null | string;
+            /** Format: int64 */
+            latencyMs: number | string;
+            /** Format: int32 */
+            inputTokens: number | string;
+            /** Format: int32 */
+            outputTokens: number | string;
+            outcome: string;
+        };
+        TurnToolStep: {
+            tool: string;
+            /** Format: int32 */
+            toolVersion: number | string;
+            outcome: string;
+            /** Format: int64 */
+            durationMs: number | string;
+            argumentFields: string[];
+            argumentsHash: string;
+            /** Format: int32 */
+            resultCount: number | string;
+            replayed: boolean;
+            dryRun: boolean;
         };
         UnrecognizedMediaBehavior: number;
         UpdateAssistantPolicyRequest: {

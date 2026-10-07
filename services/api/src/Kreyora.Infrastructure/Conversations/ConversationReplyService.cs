@@ -167,11 +167,26 @@ public sealed class ConversationReplyService(
         return Result<MessageItem>.Success(ConversationMapping.ToItem(pending, []));
     }
 
-    public async Task<Result<string>> EnqueueAutomationReplyAsync(
+    public Task<Result<string>> EnqueueAutomationReplyAsync(
         string conversationId,
         string text,
         string idempotencyKey,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        EnqueueAssistantTextAsync(conversationId, text, idempotencyKey, OutboundMessageOrigin.Automation, cancellationToken);
+
+    public Task<Result<string>> EnqueueHandoffNoticeAsync(
+        string conversationId,
+        string text,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default) =>
+        EnqueueAssistantTextAsync(conversationId, text, idempotencyKey, OutboundMessageOrigin.Handoff, cancellationToken);
+
+    private async Task<Result<string>> EnqueueAssistantTextAsync(
+        string conversationId,
+        string text,
+        string idempotencyKey,
+        OutboundMessageOrigin origin,
+        CancellationToken cancellationToken)
     {
         var context = tenantContext.RequireCurrent();
         if (string.IsNullOrWhiteSpace(idempotencyKey) || string.IsNullOrWhiteSpace(text))
@@ -193,7 +208,7 @@ public sealed class ConversationReplyService(
 
         var enqueue = await enqueuer.EnqueueAsync(new OutboundEnqueueRequest(
             context.TenantId, conversation.ConnectionId, conversation.Id, recipient, idempotencyKey, text.Trim(),
-            OutboundMessageOrigin.Automation, null), cancellationToken);
+            origin, null), cancellationToken);
 
         if (!enqueue.Allowed)
         {

@@ -86,6 +86,16 @@ public interface IConversationReplyService
         string text,
         string idempotencyKey,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The assistant's hand-off notice (M09-S06, ADR-021): like an automation reply, but still delivered after the
+    /// takeover it accompanies. Messaging-window and connection rules still apply.
+    /// </summary>
+    Task<Result<string>> EnqueueHandoffNoticeAsync(
+        string conversationId,
+        string text,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IConversationPrivacyService

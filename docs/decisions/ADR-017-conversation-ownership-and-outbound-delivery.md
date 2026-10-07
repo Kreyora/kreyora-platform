@@ -105,3 +105,11 @@ M08-S07 corrected the Instagram client:
 - 1545041 is reported as "not available".
 
 The decision itself is unchanged: the local gate still enforces the window before any send. See `docs/architecture/INSTAGRAM_PRODUCTION_READINESS.md` R12.
+
+## Amendment (2026-10-07, M09-S06) — appended
+
+ADR-021 adds `OutboundMessageOrigin.Handoff` for the assistant's single "a team member will reply" notice that accompanies its own hand-off:
+- the gate checks it like automation (spam, connection, messaging window);
+- it is **allowed during the takeover it accompanies** and is **not cancelled** by takeover suppression.
+
+Automation replies remain blocked after a takeover, exactly as decided above. See ADR-021 §9.

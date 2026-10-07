@@ -212,6 +212,7 @@ if (app.Services.GetService<JobStorage>() is not null)
     RecurringJob.AddOrUpdate<NotificationDeliveryJob>("notification-delivery", job => job.RunAsync(), Cron.Minutely);
     IntegrationJobRegistration.RegisterRecurring(scope.ServiceProvider.GetRequiredService<IRecurringJobManager>());
     Kreyora.Infrastructure.Assistant.KnowledgeIndexingJob.RegisterRecurring(scope.ServiceProvider.GetRequiredService<IRecurringJobManager>());
+    Kreyora.Infrastructure.Assistant.Orchestration.AssistantTurnPurgeJob.RegisterRecurring(scope.ServiceProvider.GetRequiredService<IRecurringJobManager>());
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
