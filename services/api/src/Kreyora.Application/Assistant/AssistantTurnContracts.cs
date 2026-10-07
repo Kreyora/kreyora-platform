@@ -41,6 +41,10 @@ public static class AssistantTurnReasons
     public const string EnqueueDenied = "enqueue_denied";
     public const string UnexpectedError = "unexpected_error";
     public const string Playground = "playground";
+    public const string ConnectionUnavailable = "connection_unavailable";
+    public const string NotEntitled = "not_entitled";
+    public const string CustomerSafety = "customer_safety";
+    public const string ReceivedBeforeRelease = "received_before_release";
 }
 
 public sealed record AssistantTurnResult(string? TurnId, AssistantTurnOutcome Outcome, string ReasonCode, string? OutboundMessageId, bool Replayed);

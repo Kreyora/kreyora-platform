@@ -44,6 +44,9 @@ public sealed class AiOptions
 
     /// <summary>Assistant turn budgets and limits (M09-S06, ADR-021).</summary>
     public AiOrchestrationOptions Orchestration { get; set; } = new();
+
+    /// <summary>Operator entitlement before plan-based entitlements (M09-S07 Q3).</summary>
+    public AiEntitlementOptions Entitlements { get; set; } = new();
 }
 
 /// <summary>Bounds for one assistant turn and for daily use (M09-S06 Q1/Q2/Q3/Q7/Q8/Q9; values approved by the owner).</summary>
@@ -90,6 +93,33 @@ public sealed class AiOrchestrationOptions
 
     /// <summary>Turn log retention (Q9).</summary>
     public int TurnLogRetentionDays { get; set; } = 90;
+
+    /// <summary>Wait after a customer message before answering, so a burst gets one reply (M09-S07 Q1).</summary>
+    public int DebounceSeconds { get; set; } = 4;
+
+    /// <summary>Delay before deciding an Instagram-app echo was the seller's own reply (M09-S07 Q6).</summary>
+    public int NativeReplyCheckSeconds { get; set; } = 30;
+
+    /// <summary>The sweeper looks this far back for unanswered customer messages (M09-S07 Q2).</summary>
+    public int TriggerSweepMinutes { get; set; } = 30;
+
+    /// <summary>How often a busy turn is re-scheduled (5 s, 10 s, 20 s, … backoff).</summary>
+    public int MaxBusyRetries { get; set; } = 6;
+}
+
+public enum AiEntitlementMode
+{
+    /// <summary>Only workspaces in <see cref="AiEntitlementOptions.AllowedTenantIds"/> (default until M10 plans).</summary>
+    Allowlist = 0,
+    AllTenants = 1
+}
+
+/// <summary>Which workspaces may use the assistant at all (M09-S07 Q3); M10 plan entitlements replace this.</summary>
+public sealed class AiEntitlementOptions
+{
+    public AiEntitlementMode Mode { get; set; } = AiEntitlementMode.Allowlist;
+
+    public List<string> AllowedTenantIds { get; set; } = [];
 }
 
 public sealed class AiToolOptions
@@ -312,6 +342,11 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
         if (o.FallbackCooldownHours is < 0 or > 168) yield return "Ai:Orchestration:FallbackCooldownHours must be between 0 and 168.";
         if (o.CircuitFailureThreshold < 1 || o.CircuitWindowSeconds < 1 || o.CircuitOpenSeconds < 1) yield return "Ai:Orchestration circuit settings must be positive.";
         if (o.TurnLogRetentionDays is < 1 or > 3650) yield return "Ai:Orchestration:TurnLogRetentionDays must be between 1 and 3650.";
+        if (o.DebounceSeconds is < 0 or > 60) yield return "Ai:Orchestration:DebounceSeconds must be between 0 and 60.";
+        if (o.NativeReplyCheckSeconds is < 5 or > 600) yield return "Ai:Orchestration:NativeReplyCheckSeconds must be between 5 and 600.";
+        if (o.TriggerSweepMinutes is < 2 or > 1440) yield return "Ai:Orchestration:TriggerSweepMinutes must be between 2 and 1440.";
+        if (o.MaxBusyRetries is < 0 or > 10) yield return "Ai:Orchestration:MaxBusyRetries must be between 0 and 10.";
+        if (!Enum.IsDefined(options.Entitlements.Mode)) yield return "Ai:Entitlements:Mode must be Allowlist or AllTenants.";
         foreach (var (profileName, profile) in options.Profiles)
         {
             if (profile.InputPricePerMillionUsd < 0 || profile.OutputPricePerMillionUsd < 0) yield return $"Ai:Profiles:{profileName} prices cannot be negative.";
