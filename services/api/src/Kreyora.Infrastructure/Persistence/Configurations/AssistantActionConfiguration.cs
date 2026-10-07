@@ -76,3 +76,51 @@ public sealed class AssistantCheckoutLinkConfiguration : IEntityTypeConfiguratio
         builder.Property<uint>("xmin").HasColumnName("xmin").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
     }
 }
+
+/// <summary>The redacted AI action log (M09-S06): JSONB metadata, a running-turn lease per conversation.</summary>
+public sealed class AssistantTurnConfiguration : IEntityTypeConfiguration<AssistantTurn>
+{
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    public void Configure(EntityTypeBuilder<AssistantTurn> builder)
+    {
+        builder.ToTable("assistant_turns");
+        builder.HasKey(t => t.Id);
+        builder.Property(t => t.Id).HasMaxLength(26);
+        builder.Property(t => t.TenantId).IsRequired().HasMaxLength(26);
+        builder.Property(t => t.ConversationId).HasMaxLength(26);
+        builder.Property(t => t.TriggerMessageId).HasMaxLength(26);
+        builder.Property(t => t.TurnKey).IsRequired().HasMaxLength(80);
+        builder.Property(t => t.Outcome).HasConversion<string>().HasMaxLength(16);
+        builder.Property(t => t.ReasonCode).IsRequired().HasMaxLength(AssistantTurn.ReasonMaxLength);
+        builder.Property(t => t.PolicyVersion).HasMaxLength(32);
+        builder.Property(t => t.PromptVersion).HasMaxLength(64);
+        builder.Property(t => t.RegistryVersion).HasMaxLength(32);
+        builder.Property(t => t.OutboundMessageId).HasMaxLength(26);
+        AsJson<TurnModelCall>(builder.Property(t => t.ModelCalls));
+        AsJson<TurnToolStep>(builder.Property(t => t.ToolSteps));
+        AsJson<TurnCitation>(builder.Property(t => t.Citations));
+        AsJson<string>(builder.Property(t => t.ValidationCodes));
+        builder.HasIndex(t => new { t.TenantId, t.TurnKey }).IsUnique();
+        builder.HasIndex(t => new { t.TenantId, t.ConversationId })
+            .IsUnique().HasFilter("outcome = 'Running' AND conversation_id IS NOT NULL")
+            .HasDatabaseName("ux_assistant_turns_running_per_conversation");
+        builder.HasIndex(t => new { t.TenantId, t.StartedAt });
+        builder.HasIndex(t => t.StartedAt);
+        builder.HasOne<Conversation>().WithMany()
+            .HasForeignKey(t => new { t.TenantId, t.ConversationId })
+            .HasPrincipalKey(c => new { c.TenantId, c.Id })
+            .OnDelete(DeleteBehavior.Cascade);
+        // No xmin token: the running-turn lease is protected by the unique indexes and a serializable transaction, and
+        // the finished row is written whole (it may be re-attached after other services cleared the change tracker).
+    }
+
+    private static void AsJson<T>(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<List<T>> property) =>
+        property.HasColumnType("jsonb").HasConversion(
+            value => JsonSerializer.Serialize(value, JsonOptions),
+            json => JsonSerializer.Deserialize<List<T>>(json, JsonOptions) ?? new List<T>(),
+            new ValueComparer<List<T>>(
+                (a, b) => JsonSerializer.Serialize(a, JsonOptions) == JsonSerializer.Serialize(b, JsonOptions),
+                list => JsonSerializer.Serialize(list, JsonOptions).GetHashCode(StringComparison.Ordinal),
+                list => JsonSerializer.Deserialize<List<T>>(JsonSerializer.Serialize(list, JsonOptions), JsonOptions)!));
+}

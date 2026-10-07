@@ -41,6 +41,55 @@ public sealed class AiOptions
 
     /// <summary>Read-tool limits (M09-S04).</summary>
     public AiToolOptions Tools { get; set; } = new();
+
+    /// <summary>Assistant turn budgets and limits (M09-S06, ADR-021).</summary>
+    public AiOrchestrationOptions Orchestration { get; set; } = new();
+}
+
+/// <summary>Bounds for one assistant turn and for daily use (M09-S06 Q1/Q2/Q3/Q7/Q8/Q9; values approved by the owner).</summary>
+public sealed class AiOrchestrationOptions
+{
+    /// <summary>Hard cap on model calls per turn; the shop's tool steps + 1 applies below it.</summary>
+    public int MaxModelCallsPerTurn { get; set; } = 7;
+
+    public int MaxToolCallsPerTurn { get; set; } = 8;
+
+    public int MaxToolCallsPerResponse { get; set; } = 3;
+
+    public int ModelCallTimeoutSeconds { get; set; } = 20;
+
+    public int TurnDeadlineSeconds { get; set; } = 45;
+
+    /// <summary>Instagram accepts 1,000 characters; replies stay below.</summary>
+    public int MaxReplyCharacters { get; set; } = 900;
+
+    public int MaxConversationCharacters { get; set; } = 6000;
+
+    public int MaxConversationMessages { get; set; } = 20;
+
+    public int MaxTokensPerTurn { get; set; } = 20000;
+
+    public int MaxTurnsPerTenantPerDay { get; set; } = 150;
+
+    /// <summary>Platform-wide model calls per UTC day (protects free-tier daily quotas).</summary>
+    public int MaxModelCallsPerDay { get; set; } = 800;
+
+    public int MaxConcurrentTurnsPerTenant { get; set; } = 2;
+
+    /// <summary>Corrective retries when a reply breaks a content rule (Q4).</summary>
+    public int MaxCorrectiveRetries { get; set; } = 1;
+
+    /// <summary>At most one hand-off notice per conversation in this many hours (Q3).</summary>
+    public int FallbackCooldownHours { get; set; } = 12;
+
+    public int CircuitFailureThreshold { get; set; } = 5;
+
+    public int CircuitWindowSeconds { get; set; } = 120;
+
+    public int CircuitOpenSeconds { get; set; } = 300;
+
+    /// <summary>Turn log retention (Q9).</summary>
+    public int TurnLogRetentionDays { get; set; } = 90;
 }
 
 public sealed class AiToolOptions
@@ -133,6 +182,12 @@ public sealed class AiProfileOptions
     /// Null: not sent (models that reject the field, e.g. Gemma on Google AI Studio).
     /// </summary>
     public string? ReasoningEffort { get; set; }
+
+    /// <summary>Optional USD price per million input tokens, for the turn log's cost estimate (free tier: 0).</summary>
+    public decimal InputPricePerMillionUsd { get; set; }
+
+    /// <summary>Optional USD price per million output tokens (free tier: 0).</summary>
+    public decimal OutputPricePerMillionUsd { get; set; }
 }
 
 public sealed class AiLimitsOptions
@@ -156,6 +211,12 @@ public sealed class AiDataPolicyOptions
     /// <see cref="AiProviderOptions.NoTraining"/>, and owner approval of that provider's terms (ADR-018).
     /// </summary>
     public bool AllowPersonalData { get; set; }
+
+    /// <summary>
+    /// Platform-operator list of test/demo workspaces whose conversations are synthetic by declaration (M09-S06 Q5). Only
+    /// these may use free tiers; every other workspace's conversation content counts as personal data.
+    /// </summary>
+    public List<string> SyntheticTenantIds { get; set; } = [];
 }
 
 /// <summary>Start-up validation for <see cref="AiOptions"/>; the API refuses to start on an unsafe configuration.</summary>
@@ -234,6 +295,27 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
         if (options.Tools.MaxLiveLinksPerConversation is < 1 or > 20) yield return "Ai:Tools:MaxLiveLinksPerConversation must be between 1 and 20.";
         if (options.Tools.MaxHoldsPerConversationPerDay is < 1 or > 50) yield return "Ai:Tools:MaxHoldsPerConversationPerDay must be between 1 and 50.";
         if (options.Tools.ConfirmationMinutes is < 1 or > 60) yield return "Ai:Tools:ConfirmationMinutes must be between 1 and 60.";
+        var o = options.Orchestration;
+        if (o.MaxModelCallsPerTurn is < 1 or > 10) yield return "Ai:Orchestration:MaxModelCallsPerTurn must be between 1 and 10.";
+        if (o.MaxToolCallsPerTurn is < 0 or > 20) yield return "Ai:Orchestration:MaxToolCallsPerTurn must be between 0 and 20.";
+        if (o.MaxToolCallsPerResponse is < 1 or > 5) yield return "Ai:Orchestration:MaxToolCallsPerResponse must be between 1 and 5.";
+        if (o.ModelCallTimeoutSeconds is < 1 or > 120) yield return "Ai:Orchestration:ModelCallTimeoutSeconds must be between 1 and 120.";
+        if (o.TurnDeadlineSeconds < o.ModelCallTimeoutSeconds || o.TurnDeadlineSeconds > 300) yield return "Ai:Orchestration:TurnDeadlineSeconds must be at least the model call timeout and at most 300.";
+        if (o.MaxReplyCharacters is < 100 or > 1000) yield return "Ai:Orchestration:MaxReplyCharacters must be between 100 and 1000.";
+        if (o.MaxConversationCharacters is < 500 or > 50000) yield return "Ai:Orchestration:MaxConversationCharacters must be between 500 and 50000.";
+        if (o.MaxConversationMessages is < 1 or > 100) yield return "Ai:Orchestration:MaxConversationMessages must be between 1 and 100.";
+        if (o.MaxTokensPerTurn is < 1000 or > 200000) yield return "Ai:Orchestration:MaxTokensPerTurn must be between 1000 and 200000.";
+        if (o.MaxTurnsPerTenantPerDay is < 1 or > 100000) yield return "Ai:Orchestration:MaxTurnsPerTenantPerDay must be between 1 and 100000.";
+        if (o.MaxModelCallsPerDay is < 1 or > 10000000) yield return "Ai:Orchestration:MaxModelCallsPerDay must be between 1 and 10000000.";
+        if (o.MaxConcurrentTurnsPerTenant is < 1 or > 20) yield return "Ai:Orchestration:MaxConcurrentTurnsPerTenant must be between 1 and 20.";
+        if (o.MaxCorrectiveRetries is < 0 or > 2) yield return "Ai:Orchestration:MaxCorrectiveRetries must be between 0 and 2.";
+        if (o.FallbackCooldownHours is < 0 or > 168) yield return "Ai:Orchestration:FallbackCooldownHours must be between 0 and 168.";
+        if (o.CircuitFailureThreshold < 1 || o.CircuitWindowSeconds < 1 || o.CircuitOpenSeconds < 1) yield return "Ai:Orchestration circuit settings must be positive.";
+        if (o.TurnLogRetentionDays is < 1 or > 3650) yield return "Ai:Orchestration:TurnLogRetentionDays must be between 1 and 3650.";
+        foreach (var (profileName, profile) in options.Profiles)
+        {
+            if (profile.InputPricePerMillionUsd < 0 || profile.OutputPricePerMillionUsd < 0) yield return $"Ai:Profiles:{profileName} prices cannot be negative.";
+        }
 
         if (options.Mode == AiMode.Live && !string.IsNullOrWhiteSpace(options.Embeddings.Provider))
         {
