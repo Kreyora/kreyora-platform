@@ -47,7 +47,11 @@ public sealed record CaseRun(
     string? FailureKind,
     string PromptVersion,
     DateTimeOffset RanAt,
-    long? ModelLatencyMs = null);
+    long? ModelLatencyMs = null,
+    string? Outcome = null,
+    string? ReasonCode = null,
+    IReadOnlyList<string>? ValidationCodes = null,
+    string? TurnId = null);
 
 /// <summary>Runs one case through a bounded tool loop (max model calls, total deadline) against one model.</summary>
 public sealed class CaseRunner(OpenAiCompatibleChatClient transport, FakeTools tools, string canary, string? reasoningEffort)

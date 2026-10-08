@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Conversation, ConversationAssignee, ConversationStatusAction } from "@/lib/types";
 import type { ConnectionHealth } from "@/lib/types/integrations";
 import { availableStatusActions, STATUS_ACTION_LABEL } from "./inbox-display";
+import { escalationLabel } from "@/components/assistant/assistant-display";
 
 const CONNECTION_LABEL: Record<string, { label: string; variant: "success" | "warning" | "danger" | "neutral" }> = {
   connected: { label: "Connected", variant: "success" },
@@ -61,9 +62,14 @@ export function ConversationPanel({
       <Card title="Automation">
         <p className="text-sm text-[var(--color-ink-secondary)]">
           {conversation.isAutomationActive
-            ? "Automation owns this conversation."
-            : "A team member owns this conversation. Automation is paused and won't send messages."}
+            ? "The assistant owns this conversation. Any reply or takeover by your team stops it at once."
+            : "A team member owns this conversation. The assistant is paused and won't send messages until you hand it back."}
         </p>
+        {!conversation.isAutomationActive && conversation.escalationCategory && (
+          <p className="mt-2 text-sm text-[var(--color-ink-primary)]">
+            <Badge variant="warning">Handed over</Badge> <span className="ml-1">{escalationLabel(conversation.escalationCategory)}</span>
+          </p>
+        )}
         {canWrite && (
           <Button variant="outline" className="mt-3 w-full" disabled={busy} onClick={conversation.isAutomationActive ? onTakeOver : onRelease}>
             {conversation.isAutomationActive ? "Take over" : "Hand back to automation"}

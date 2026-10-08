@@ -19,6 +19,9 @@
     "ai:probe": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- probe",
     "ai:screen": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- run --set screening --models \"GoogleAiStudio:gemini-3.5-flash-lite,GoogleAiStudio:gemini-3.5-flash@none\"",
     "ai:report": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- report",
-    "ai:full": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- run --set full --models \"GoogleAiStudio:gemini-3.5-flash-lite,GoogleAiStudio:gemini-3.5-flash@none\""
+    "ai:full": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -c Release -- run --set full --models \"GoogleAiStudio:gemini-3.5-flash-lite,GoogleAiStudio:gemini-3.5-flash@none\"",
+    "ai:eval": "node scripts/eval/run-pipeline.mjs",
+    "ai:eval:dry": "node scripts/eval/run-pipeline.mjs --fake",
+    "ai:eval:report": "dotnet run --project services/api/tools/Kreyora.AiEvaluation -- pipeline-report"
   }
 }

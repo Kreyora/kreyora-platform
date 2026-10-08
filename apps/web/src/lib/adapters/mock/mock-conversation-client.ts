@@ -67,6 +67,12 @@ export const mockConversationClient: ConversationClient = {
     if (params?.channel) filtered = filtered.filter((c) => c.channel === params.channel);
     if (params?.unreadOnly) filtered = filtered.filter((c) => c.unreadCount > 0);
     if (params?.assignedTo) filtered = filtered.filter((c) => c.assignment?.assigneeId === params.assignedTo);
+    if (params?.needsPerson) {
+      // Same rule as the server: a person owns it, it is open, and the customer is waiting; longest wait first.
+      filtered = filtered
+        .filter((c) => !c.isAutomationActive && c.waitingSince && !["resolved", "closed", "spam"].includes(c.state))
+        .sort((a, b) => (a.waitingSince ?? "").localeCompare(b.waitingSince ?? ""));
+    }
     if (params?.search) {
       const query = params.search.toLowerCase();
       filtered = filtered.filter(
@@ -130,7 +136,8 @@ export const mockConversationClient: ConversationClient = {
 
   async release(id) {
     await delay();
-    return update(id, (c) => ({ isAutomationActive: true, state: ["resolved", "closed", "spam"].includes(c.state) ? c.state : "bot_active" }));
+    // The hand-back ends the escalation (as on the server); the reason stays in the audit log.
+    return update(id, (c) => ({ isAutomationActive: true, escalationCategory: undefined, escalatedAt: undefined, waitingSince: undefined, state: ["resolved", "closed", "spam"].includes(c.state) ? c.state : "bot_active" }));
   },
 
   async assign(id, userId) {

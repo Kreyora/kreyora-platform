@@ -222,6 +222,50 @@
         }
       }
     },
+    "/v1/assistant/usage": {
+      "get": {
+        "tags": [
+          "Assistant"
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 7
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantUsageItem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantUsageItem"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantUsageItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/assistant/tools": {
       "get": {
         "tags": [
@@ -7493,6 +7537,158 @@
       "AssistantTurnOutcome": {
         "type": "integer"
       },
+      "AssistantUsageDay": {
+        "required": [
+          "date",
+          "turns",
+          "replied",
+          "handedOff",
+          "skipped",
+          "blocked",
+          "modelCalls",
+          "inputTokens",
+          "outputTokens",
+          "estimatedCostUsd",
+          "playgroundTurns"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "turns": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "replied": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "handedOff": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "skipped": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "blocked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "modelCalls": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "inputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outputTokens": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "estimatedCostUsd": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "playgroundTurns": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "AssistantUsageItem": {
+        "required": [
+          "days",
+          "daily",
+          "turnsToday",
+          "dailyTurnCap",
+          "platformEnabled",
+          "nextResetAt"
+        ],
+        "type": "object",
+        "properties": {
+          "days": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantUsageDay"
+            }
+          },
+          "turnsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyTurnCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "platformEnabled": {
+            "type": "boolean"
+          },
+          "nextResetAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AttachBody": {
         "required": [
           "productId",
@@ -8306,6 +8502,12 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "customerUsername": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8580,6 +8782,12 @@
           },
           "isErased": {
             "type": "boolean"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

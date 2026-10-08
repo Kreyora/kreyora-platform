@@ -11,6 +11,9 @@ using Microsoft.Extensions.Logging;
 //   dotnet run --project tools/Kreyora.AiEvaluation -- probe
 //   dotnet run --project tools/Kreyora.AiEvaluation -- run --set screening --models GoogleAiStudio:gemini-3.5-flash-lite,GoogleAiStudio:gemini-3.5-flash@none
 //   dotnet run --project tools/Kreyora.AiEvaluation -- report
+// M09-S08 pipeline mode (real assistant via the owner playground of a local API; see scripts/eval/run-pipeline.mjs):
+//   dotnet run --project tools/Kreyora.AiEvaluation -- pipeline --api http://localhost:5032 --set full [--interval 6]
+//   dotnet run --project tools/Kreyora.AiEvaluation -- pipeline-report [--price-in 0.10 --price-out 0.40]
 var repoRoot = FindRepoRoot();
 var dataDir = Path.Combine(repoRoot, "services", "api", "evaluation", "m09");
 var outDir = Path.Combine(repoRoot, "artifacts", "evaluations", "M09-S01");
@@ -50,8 +53,33 @@ switch (command)
     case "report":
         Report.Write(dataDir, outDir, repoRoot);
         break;
+    case "pipeline":
+    {
+        var pipelineDir = options.GetValueOrDefault("out") ?? Path.Combine(repoRoot, "artifacts", "evaluations", "M09-S08");
+        var dataset = EvalDataset.Load(Path.Combine(dataDir, "dataset.v2.json"));
+        var catalog = FakeCatalog.Load(Path.Combine(dataDir, "fake-catalog.v1.json"));
+        using var api = new ApiSession(options.GetValueOrDefault("api", "http://localhost:5032"));
+        var password = configuration["Development:Seed:DemoPassword"] ?? throw new InvalidOperationException("Set Development:Seed:DemoPassword in user secrets.");
+        await api.SignInAsync(options.GetValueOrDefault("email", "owner@kreyora.test"), password, CancellationToken.None);
+        await PipelineSeeder.SeedAsync(api, catalog, line => Console.WriteLine($"[seed] {line}"), CancellationToken.None);
+        if (options.GetValueOrDefault("seed-only") != "true")
+        {
+            await PipelineRunner.RunAsync(api, dataset, catalog, Path.Combine(pipelineDir, "runs"), options.GetValueOrDefault("set", "full"), pacer, Console.WriteLine, CancellationToken.None);
+        }
+
+        break;
+    }
+    case "pipeline-report":
+    {
+        var pipelineDir = options.GetValueOrDefault("out") ?? Path.Combine(repoRoot, "artifacts", "evaluations", "M09-S08");
+        var prices = options.TryGetValue("price-in", out var priceIn) && options.TryGetValue("price-out", out var priceOut)
+            ? (decimal.Parse(priceIn, CultureInfo.InvariantCulture), decimal.Parse(priceOut, CultureInfo.InvariantCulture))
+            : ((decimal, decimal)?)null;
+        PipelineReport.Write(EvalDataset.Load(Path.Combine(dataDir, "dataset.v2.json")), pipelineDir, repoRoot, prices);
+        break;
+    }
     default:
-        Console.WriteLine("Commands: probe [--models P:m,...] | run --set screening|full --models P:m,... [--interval seconds] | report");
+        Console.WriteLine("Commands: probe [--models P:m,...] | run --set screening|full --models P:m,... [--interval seconds] | report | pipeline --api URL [--set full|screening] [--seed-only true] | pipeline-report [--price-in X --price-out Y]");
         break;
 }
 

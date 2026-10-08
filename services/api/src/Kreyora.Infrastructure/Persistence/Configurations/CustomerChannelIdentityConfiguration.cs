@@ -17,6 +17,7 @@ public sealed class CustomerChannelIdentityConfiguration : IEntityTypeConfigurat
         builder.Property(e => e.Channel).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(e => e.ExternalUserId).IsRequired().HasMaxLength(CustomerChannelIdentity.ExternalUserIdMaxLength);
         builder.Property(e => e.DisplayName).HasMaxLength(CustomerChannelIdentity.DisplayNameMaxLength);
+        builder.Property(e => e.Username).HasMaxLength(CustomerChannelIdentity.UsernameMaxLength);
         builder.Property(e => e.CustomerId).HasMaxLength(26);
         builder.Property(e => e.FirstSeenAt).IsRequired();
         builder.Property(e => e.LastSeenAt).IsRequired();

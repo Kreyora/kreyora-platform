@@ -9,7 +9,7 @@ import {
   mockPaymentClient,
   mockConversationClient,
   mockIntegrationClient,
-  mockAIClient,
+  mockAssistantClient,
   mockBillingClient,
   mockReportingClient,
   mockAuditClient,
@@ -162,10 +162,12 @@ describe("Mock adapters implement port interfaces", () => {
     expect(connections[0].provider).toBeTruthy();
   });
 
-  it("AIClient returns assistant config", async () => {
-    const config = await mockAIClient.getAssistantConfig("test");
-    expect(typeof config.isEnabled).toBe("boolean");
-    expect(config.language).toBeTruthy();
+  it("assistant demo client returns the policy, readiness and labelled demo replies", async () => {
+    const policy = await mockAssistantClient.getPolicy();
+    expect(policy.replyStyle).toBe("matchCustomer");
+    expect((await mockAssistantClient.getReadiness()).checks.length).toBeGreaterThan(0);
+    const result = await mockAssistantClient.runPlayground([{ from: "customer", text: "hello" }]);
+    expect(result.reply).toContain("[Demo AI]");
   });
 
   it("BillingClient returns plan and subscription", async () => {

@@ -43,6 +43,9 @@ const apiEnv = {
   Development__Seed__DemoPassword: demoPassword,
   Development__Seed__E2ePersonas: "true",
   Development__Seed__SimulatorSecret: simulatorSecret,
+  // M09-S08: assistant screens run against the real API with the Fake model (no provider is ever called).
+  Ai__Enabled: "true",
+  Ai__Mode: "Fake",
 };
 
 const children = [];

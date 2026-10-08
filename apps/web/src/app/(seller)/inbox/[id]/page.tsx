@@ -20,7 +20,8 @@ import { ApiClientError } from "@/lib/api/errors";
 import { describeInboxError, type InboxErrorCopy } from "@/lib/utils/conversation-errors";
 import type { Conversation, ConversationAssignee, ConversationStatusAction, Message, PaginatedResult } from "@/lib/types";
 import type { ConnectionHealth } from "@/lib/types/integrations";
-import type { AIActionTrace } from "@/lib/types/ai";
+import type { AssistantTurn } from "@/lib/types";
+import { AiActivity } from "@/components/inbox/ai-activity";
 
 const CONVERSATION_POLL_MS = 5_000;
 
@@ -49,7 +50,7 @@ function isDefinitiveRefusal(error: unknown): boolean {
 
 export default function ConversationDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { conversation: client, integration, ai } = useClients();
+  const { conversation: client, integration, assistant } = useClients();
   const { effectiveRole, session } = useSession();
   const canWrite = effectiveRole !== "viewer";
   const currentUserId = session?.membership.userId;
@@ -62,7 +63,7 @@ export default function ConversationDetailPage() {
   const [locals, setLocals] = useState<LocalReply[]>([]);
   const [assignees, setAssignees] = useState<ConversationAssignee[]>([]);
   const [health, setHealth] = useState<ConnectionHealth | null>(null);
-  const [traces, setTraces] = useState<AIActionTrace[]>([]);
+  const [turns, setTurns] = useState<AssistantTurn[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<InboxErrorCopy | null>(null);
   const [actionError, setActionError] = useState<InboxErrorCopy | null>(null);
@@ -105,16 +106,17 @@ export default function ConversationDetailPage() {
     return () => { cancelled = true; };
   }, [apply, client, fetchAll]);
 
-  // Channel health and (demo-only) AI activity: secondary, never block the conversation.
+  // Channel health and the assistant's recent activity (M09-S08): secondary, never block the conversation.
+  // Roles without access to the assistant log simply don't see the strip.
   useEffect(() => {
     if (!conv) return;
     let cancelled = false;
     integration.getHealth(conv.connectionId).then((h) => { if (!cancelled) setHealth(h); }).catch(() => undefined);
-    if (USING_FIXTURE_ADAPTERS) {
-      ai.getActionTraces(conv.id).then((t) => { if (!cancelled) setTraces(t); }).catch(() => undefined);
-    }
+    assistant.listTurns({ conversationId: conv.id, pageSize: 5 })
+      .then((page) => { if (!cancelled) setTurns(page.items); })
+      .catch(() => { if (!cancelled) setTurns(null); });
     return () => { cancelled = true; };
-  }, [ai, integration, conv?.connectionId, conv?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [assistant, integration, conv?.connectionId, conv?.id, conv?.isAutomationActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Q4: opening a conversation with unread messages marks it read once per view (Operator and above).
   useEffect(() => {
@@ -286,19 +288,7 @@ export default function ConversationDetailPage() {
             </p>
           )}
 
-          {USING_FIXTURE_ADAPTERS && traces.length > 0 && (
-            <section className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5" aria-label="AI activity (demo)">
-              <h2 className="text-sm font-semibold text-[var(--color-ink-primary)]">AI activity (demo)</h2>
-              <ul className="mt-3 space-y-2 text-sm">
-                {traces.map((t) => (
-                  <li key={t.id} className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
-                    <p className="text-xs font-medium text-[var(--color-ink-primary)]">{t.intent}</p>
-                    <p className="mt-1 text-[10px] text-[var(--color-ink-secondary)]">{t.toolCalls.length} tool call{t.toolCalls.length !== 1 ? "s" : ""} · {t.latencyMs}ms</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          {turns && <AiActivity conversationId={conv.id} turns={turns} />}
         </div>
 
         <ConversationPanel

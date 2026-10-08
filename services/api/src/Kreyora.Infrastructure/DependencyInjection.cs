@@ -266,6 +266,10 @@ public static class DependencyInjection
         services.AddTransient<AssistantTurnJob>();
         services.AddTransient<AssistantTurnSweepJob>();
         services.AddTransient<NativeReplyCheckJob>();
+        // M09-S08 Q8: customer names for the inbox (staff-only; never sent to the assistant).
+        services.AddScoped<ICustomerProfileHook, CustomerProfileHook>();
+        services.AddScoped<ICustomerProfileLookupService, CustomerProfileLookupService>();
+        services.AddTransient<CustomerProfileLookupJob>();
         services.AddSingleton<IAssistantToolRegistry, AssistantToolRegistry>();
         services.AddScoped<IAssistantToolContextFactory, AssistantToolContextFactory>();
         services.AddScoped<IAssistantToolConsoleService, AssistantToolConsoleService>();

@@ -85,6 +85,7 @@ export const apiConversationClient: ConversationClient = {
     if (params?.state) query.set("status", toApiStatus(params.state));
     if (params?.unreadOnly) query.set("unreadOnly", "true");
     if (params?.assignedTo) query.set("assignedTo", params.assignedTo);
+    if (params?.needsPerson) query.set("needsPerson", "true");
 
     const [page, people] = await Promise.all([
       apiFetch<WirePage<WireConversationSummary>>(`/v1/conversations?${query}`, { headers: tenantHeaders() }),
