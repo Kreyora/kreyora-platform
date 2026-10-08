@@ -3,25 +3,25 @@
 ## Active position
 
 - **Milestone:** 09 — Constrained AI Assistant, RAG, and Commerce Tools
-- **Step:** S07 — Conversation integration, escalation, and takeover
-- **Status:** `REVIEW` (checkpoint `M09-S07.md`, 2026-10-07)
+- **Step:** S08 — Frontend integration and multilingual/adversarial evaluation
+- **Status:** `IN PROGRESS` (plan approved 2026-10-08)
 - **Plan state:** Milestone 08 complete (exit gate APPROVED 2026-10-06). M09 hard gates: provider ADR (S01) and approved data-processing terms before real customer content.
 - **Active milestone file:** `docs/milestones/09_AI_ASSISTANT_RAG_TOOLS.md`
 
 ## Branch and checkpoint state
 
 - **Branch:** `master` at `0e92635` (M09-S01–S06 merged, PRs #119/#121/#123/#125/#127/#129).
-- **Current checkpoint:** `artifacts/checkpoints/M09-S07.md` (REVIEW 2026-10-07)
+- **Current checkpoint:** `artifacts/checkpoints/M09-S07.md` (APPROVED 2026-10-08)
 - **Previous checkpoint:** `artifacts/checkpoints/M09-S06.md` (APPROVED 2026-10-07)
-- **Last approved state:** M09-S06 approved 2026-10-07; ADR-021 accepted.
+- **Last approved state:** M09-S07 approved 2026-10-08; ADR-022 accepted.
 
 ## Current objective
 
-Owner review of M09-S07 (`artifacts/checkpoints/M09-S07.md`); approving it accepts ADR-022 (ownership semantics).
+Plan M09-S08 (`docs/plan/M09-S08_FRONTEND_EVALUATION_PLAN.md`): real clients for the assistant screens and the inbox queue, the 72-case evaluation on the real pipeline, thresholds ADR-023, customer names, reply delay, and the pilot activation decision.
 
 ## Next permitted action
 
-Wait for the owner's review of M09-S07. After approval: M09-S08 planning (plan only), which also covers customer display names (owner decision 2026-10-07).
+Owner starts `pnpm ai:eval` (Task 7, daily until complete); then the fix loop, owner grading (Task 8), the optional live check (Task 10) and the checkpoint `M09-S08.md` (`REVIEW`).
 
 ## Next prohibited action
 
@@ -32,6 +32,10 @@ Wait for the owner's review of M09-S07. After approval: M09-S08 planning (plan o
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-08 | M09-S08 Tasks 1–6 and 9 built and verified; Task 7 (evaluation runs) waits for the owner to start `pnpm ai:eval`, Task 8 (grading) follows, Task 10 (live check) on a separate go-ahead. ADR-023 `Proposed` (thresholds; activation rule: thresholds + paid no-training endpoint + 24-case smoke re-run). Backend: `GET /v1/assistant/usage`; customer names via Instagram profile lookup (`username`, `profile_checked_at`; migration `AddCustomerProfileFields`; staff-only, never sent to the model, erased with the identity, off by default); `BackgroundJobs:PollIntervalSeconds`=2. Harness pipeline mode (real assistant via playground on a seeded synthetic shop; dataset v2 = 72 + 6 abuse/exfiltration; ADR-023 report + grading sheet); offline dry run verified. Frontend: `AssistantClient` port (API + demo adapters) replacing the demo `AIClient`; real Overview (readiness, usage, settings), Knowledge, Console, History; inbox needs-a-person view and assistant activity strip. Gates: backend 1,158 passed / 0 failed, 0 warnings, EF clean; `pnpm ci:frontend` green (471); real E2E 12/12, demo E2E 4/4; 12 screenshots in `artifacts/screenshots/M09-S08/`; OpenAPI additive; diff/secret checks clean; Docker at baseline; graphify refreshed. Status stays `IN PROGRESS`. | Claude |
+| 2026-10-08 | Project owner approved the M09-S08 plan ("ok implement"): Q1–Q11 as recommended. Status -> `IN PROGRESS`. | Project owner / Claude |
+| 2026-10-08 | Drafted the M09-S08 plan `docs/plan/M09-S08_FRONTEND_EVALUATION_PLAN.md` (plan only): `AssistantClient` port with API + fixture adapters for overview/policy, knowledge, console, history, usage (new `GET /v1/assistant/usage`); inbox needs-a-person queue and AI strip; 72-case evaluation through the real pipeline on a synthetic shop; ADR-023 thresholds and activation rule; customer names via Meta profile lookup (staff-only, never to the model); Hangfire poll interval; optional live check. Decisions Q1–Q11 pending. | Claude |
+| 2026-10-08 | Project owner approved M09-S07 ("ok approved, start the next planning"); ADR-022 accepted. Post-session cleanup verified (no sandbox processes, ports free, Docker at the M09-S07 baseline). Graphify refreshed at this approval boundary (11,063 nodes). Position set to M09-S08 planning (plan only). | Project owner / Claude |
 | 2026-10-07 | M09-S07 checkpoint written (`REVIEW`). Live sandbox session (owner present; real Instagram traffic; live Gemini, made-up content): script steps 1, 3, 4 passed plus extra checks (6 replies with grounded tools and 0 validation codes, AI escalation + hand-off notice, silence while person-owned, release, cooldown, staff reply; all outbound read; own echoes never took over). Owner decisions: skip steps 2, 5, 6, 7, 8 (gaps documented; covered by integration tests except the shared-post capture); move customer display names (Instagram profile lookup) to S08. Findings: F1 only a Facebook-side Tester role (with developer registration) produced webhooks — answers M08 U3; F2 callback first set on the Instagram-business-login page (wrong signing secret), fixed on the main Webhooks product; F3 4–18 s start delay from Hangfire polling; F4 masked customer names. Status -> `REVIEW`. | Project owner / Claude |
 | 2026-10-07 | M09-S07 Tasks 1–7 built and verified (Task 8 live session awaits the owner's go-ahead; Task 9 checkpoint after it). ADR-022 `Proposed` (ownership semantics end to end; amends ADR-017: unmatched Instagram-app echoes take over after 30 s). `AssistantSendGuard` runs before the model and again before enqueue (connection, safety, entitlement, ownership incl. `AutomationResumedAt`, readiness); post-commit debounced trigger (4 s) via the webhook hook, gated to entitled shops; `AssistantTurnJob` (system tenant scope, busy backoff, crash restart by turn key); per-minute sweeper (entitled shops with an enabled policy, filtered in SQL); native-reply check job; `needsPerson` queue with escalation reason and waiting time (fixed during build: a delivered hand-off notice had hidden escalated chats). Additive migration `AddConversationAutomationResumedAt`; OpenAPI regenerated (additive). Tests: 24 new S07 integration tests (webhook ingress → job → delivery; races incl. takeover between the delivery gate and the claim) + 8 unit tests; mutation check: disabling the second guard pass / release cut fails 6 tests. Backend 1,123 passed / 0 failed; Release build 0 warnings; EF clean; `pnpm ci:frontend` green (480); diff/secret checks clean; Docker at baseline; graphify refreshed (11,027 nodes, 30,150 edges). Status stays `IN PROGRESS`. | Claude |
 | 2026-10-07 | Date correction: entries for the M09-S06 approval, ADR-021 acceptance and the M09-S07 plan were written as 2026-10-08; the system date and the merge of `0e92635` (2026-10-07 20:18 +0545) show 2026-10-07. Corrected in this file, `M09-S06.md`, ADR-021 and the S07 plan (all uncommitted at the time). | Claude |

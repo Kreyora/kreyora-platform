@@ -12,7 +12,7 @@ import type { PaymentClient } from "@/lib/ports/payment-client";
 import type { PublicCheckoutClient, PublicStorefrontClient } from "@/lib/ports/public-storefront-client";
 import type { ConversationClient } from "@/lib/ports/conversation-client";
 import type { IntegrationClient } from "@/lib/ports/integration-client";
-import type { AIClient } from "@/lib/ports/ai-client";
+import type { AssistantClient } from "@/lib/ports/assistant-client";
 import type { BillingClient } from "@/lib/ports/billing-client";
 import type { ReportingClient } from "@/lib/ports/reporting-client";
 import type { AuditClient } from "@/lib/ports/audit-client";
@@ -27,14 +27,14 @@ import {
   mockPaymentClient,
   mockConversationClient,
   mockIntegrationClient,
-  mockAIClient,
+  mockAssistantClient,
   mockBillingClient,
   mockReportingClient,
   mockAuditClient,
   mockPublicCheckoutClient,
   mockPublicStorefrontClient,
 } from "@/lib/adapters/mock";
-import { apiAuthClient, apiAuditClient, apiCatalogClient, apiConversationClient, apiIdentityClient, apiIntegrationClient, apiInventoryClient, apiOrderClient, apiPaymentClient, apiPublicCheckoutClient, apiPublicStorefrontClient } from "@/lib/adapters/api";
+import { apiAssistantClient, apiAuthClient, apiAuditClient, apiCatalogClient, apiConversationClient, apiIdentityClient, apiIntegrationClient, apiInventoryClient, apiOrderClient, apiPaymentClient, apiPublicCheckoutClient, apiPublicStorefrontClient } from "@/lib/adapters/api";
 
 /**
  * Determined at build time from the NEXT_PUBLIC_API_URL env var.
@@ -68,7 +68,7 @@ export interface ClientSet {
   payment: PaymentClient;
   conversation: ConversationClient;
   integration: IntegrationClient;
-  ai: AIClient;
+  assistant: AssistantClient;
   billing: BillingClient;
   reporting: ReportingClient;
   audit: AuditClient;
@@ -87,7 +87,7 @@ const defaultClients: ClientSet = {
   payment: USING_FIXTURE_ADAPTERS ? mockPaymentClient : apiPaymentClient,
   conversation: USING_FIXTURE_ADAPTERS ? mockConversationClient : apiConversationClient,
   integration: USING_FIXTURE_ADAPTERS ? mockIntegrationClient : apiIntegrationClient,
-  ai: mockAIClient,
+  assistant: USING_FIXTURE_ADAPTERS ? mockAssistantClient : apiAssistantClient,
   billing: mockBillingClient,
   reporting: mockReportingClient,
   audit: USING_FIXTURE_ADAPTERS ? mockAuditClient : apiAuditClient,
@@ -152,8 +152,8 @@ export function useIntegrationClient(): IntegrationClient {
   return useContext(ClientContext).integration;
 }
 
-export function useAIClient(): AIClient {
-  return useContext(ClientContext).ai;
+export function useAssistantClient(): AssistantClient {
+  return useContext(ClientContext).assistant;
 }
 
 export function useBillingClient(): BillingClient {

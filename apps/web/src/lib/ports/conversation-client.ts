@@ -11,6 +11,8 @@ export interface ConversationListParams {
   state?: ConversationState;
   unreadOnly?: boolean;
   assignedTo?: string;
+  /** The staff queue: person-owned chats where the customer is waiting, longest wait first (M09-S07/S08). */
+  needsPerson?: boolean;
   /** 1-based page; `PaginatedResult.cursor` holds the next page number. */
   page?: number;
   pageSize?: number;

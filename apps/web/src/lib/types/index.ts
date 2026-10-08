@@ -17,7 +17,7 @@ export * from "./orders";
 export * from "./payments";
 export * from "./conversations";
 export * from "./integrations";
-export * from "./ai";
+export * from "./assistant";
 export * from "./billing";
 export * from "./reporting";
 export * from "./audit";

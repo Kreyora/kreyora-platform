@@ -131,7 +131,8 @@ public sealed record ConversationSummaryItem(
     DateTimeOffset CreatedAt,
     DateTimeOffset ModifiedAt,
     string? EscalationCategory = null,
-    DateTimeOffset? WaitingSince = null);
+    DateTimeOffset? WaitingSince = null,
+    string? CustomerUsername = null);
 
 public sealed record CustomerIdentitySummary(
     string Id,
@@ -140,7 +141,8 @@ public sealed record CustomerIdentitySummary(
     DateTimeOffset FirstSeenAt,
     DateTimeOffset LastSeenAt,
     string? CustomerId,
-    bool IsErased);
+    bool IsErased,
+    string? Username = null);
 
 public sealed record ConversationDetailItem(
     string Id,

@@ -189,6 +189,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/assistant/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    days?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AssistantUsageItem"];
+                        "application/json": components["schemas"]["AssistantUsageItem"];
+                        "text/json": components["schemas"]["AssistantUsageItem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/assistant/tools": {
         parameters: {
             query?: never;
@@ -5810,6 +5849,42 @@ export interface components {
             outboundMessageId: null | string;
         };
         AssistantTurnOutcome: number;
+        AssistantUsageDay: {
+            /** Format: date */
+            date: string;
+            /** Format: int32 */
+            turns: number | string;
+            /** Format: int32 */
+            replied: number | string;
+            /** Format: int32 */
+            handedOff: number | string;
+            /** Format: int32 */
+            skipped: number | string;
+            /** Format: int32 */
+            blocked: number | string;
+            /** Format: int32 */
+            modelCalls: number | string;
+            /** Format: int32 */
+            inputTokens: number | string;
+            /** Format: int32 */
+            outputTokens: number | string;
+            /** Format: double */
+            estimatedCostUsd: number | string;
+            /** Format: int32 */
+            playgroundTurns: number | string;
+        };
+        AssistantUsageItem: {
+            /** Format: int32 */
+            days: number | string;
+            daily: components["schemas"]["AssistantUsageDay"][];
+            /** Format: int32 */
+            turnsToday: number | string;
+            /** Format: int32 */
+            dailyTurnCap: number | string;
+            platformEnabled: boolean;
+            /** Format: date-time */
+            nextResetAt: string;
+        };
         AttachBody: {
             productId: string;
             /** Format: int32 */
@@ -6006,6 +6081,7 @@ export interface components {
             escalationCategory?: null | string;
             /** Format: date-time */
             waitingSince?: null | string;
+            customerUsername?: null | string;
         };
         CreateChannelConnectionRequest: {
             channel: components["schemas"]["ChannelType"];
@@ -6071,6 +6147,7 @@ export interface components {
             lastSeenAt: string;
             customerId: null | string;
             isErased: boolean;
+            username?: null | string;
         };
         DailyHours: {
             day: components["schemas"]["DayOfWeek"];

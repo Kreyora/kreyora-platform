@@ -12,6 +12,7 @@ public sealed class CustomerChannelIdentity : BaseEntity, ITenantOwned
 {
     public const int ExternalUserIdMaxLength = 128;
     public const int DisplayNameMaxLength = 160;
+    public const int UsernameMaxLength = 64;
 
     private CustomerChannelIdentity() { }
 
@@ -20,6 +21,10 @@ public sealed class CustomerChannelIdentity : BaseEntity, ITenantOwned
     public ChannelType Channel { get; private set; }
     public string ExternalUserId { get; private set; } = string.Empty;
     public string? DisplayName { get; private set; }
+    /// <summary>Provider handle (e.g. Instagram username), staff-only; never sent to the assistant model (M09-S08 Q8).</summary>
+    public string? Username { get; private set; }
+    /// <summary>Last provider profile lookup attempt, successful or not (M09-S08); throttles refreshes.</summary>
+    public DateTimeOffset? ProfileCheckedAt { get; private set; }
     public string? CustomerId { get; private set; }
     public DateTimeOffset FirstSeenAt { get; private set; }
     public DateTimeOffset LastSeenAt { get; private set; }
@@ -70,7 +75,32 @@ public sealed class CustomerChannelIdentity : BaseEntity, ITenantOwned
     }
 
     /// <summary>
-    /// Right-to-erasure: removes the display name. The external ID is kept so later messages from the same
+    /// Records a provider profile lookup (M09-S08): fills the name and handle when given and always stamps the attempt,
+    /// so a refused lookup is not retried on every message. Ignored after erasure.
+    /// </summary>
+    public void ApplyProfile(string? displayName, string? username, DateTimeOffset checkedAt)
+    {
+        if (ErasedAt.HasValue)
+        {
+            return;
+        }
+
+        UpdateDisplayName(displayName);
+        if (!string.IsNullOrWhiteSpace(username))
+        {
+            var trimmed = username.Trim().TrimStart('@');
+            Username = trimmed.Length > UsernameMaxLength ? trimmed[..UsernameMaxLength] : trimmed;
+        }
+
+        ProfileCheckedAt = checkedAt;
+    }
+
+    /// <summary>True when the profile was never looked up or the last attempt is older than <paramref name="refresh"/>.</summary>
+    public static bool ProfileCheckDue(DateTimeOffset? checkedAt, DateTimeOffset now, TimeSpan refresh) =>
+        checkedAt is null || now - checkedAt.Value >= refresh;
+
+    /// <summary>
+    /// Right-to-erasure: removes the display name and handle. The external ID is kept so later messages from the same
     /// account still resolve to this identity instead of silently creating a duplicate.
     /// </summary>
     public bool Erase(DateTimeOffset now)
@@ -81,6 +111,7 @@ public sealed class CustomerChannelIdentity : BaseEntity, ITenantOwned
         }
 
         DisplayName = null;
+        Username = null;
         CustomerId = null;
         ErasedAt = now;
         return true;

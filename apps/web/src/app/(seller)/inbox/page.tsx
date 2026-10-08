@@ -13,14 +13,18 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ViewerBadge } from "@/components/viewer-badge";
 import { InboxAlert } from "@/components/inbox/inbox-alert";
 import { StaleBanner } from "@/components/inbox/stale-banner";
-import { CHANNEL_MAP, STATE_MAP, relativeTime } from "@/components/inbox/inbox-display";
+import { CHANNEL_MAP, STATE_MAP, relativeTime, waitingFor } from "@/components/inbox/inbox-display";
 import { describeInboxError, type InboxErrorCopy } from "@/lib/utils/conversation-errors";
+import { escalationLabel } from "@/components/assistant/assistant-display";
 import type { Conversation, ConversationState, PaginatedResult } from "@/lib/types";
+
 
 const LIST_POLL_MS = 15_000;
 const PAGE_SIZE = 20;
 
-type View = "all" | "unread" | "mine";
+type View = "all" | "needs" | "unread" | "mine";
+
+const VIEW_LABEL: Record<View, string> = { all: "All", needs: "Needs a person", unread: "Unread", mine: "Assigned to me" };
 
 export default function InboxPage() {
   const { conversation } = useClients();
@@ -40,6 +44,7 @@ export default function InboxPage() {
     state: stateFilter || undefined,
     unreadOnly: view === "unread",
     assignedTo: view === "mine" ? currentUserId : undefined,
+    needsPerson: view === "needs",
     page: 1,
     pageSize: PAGE_SIZE * pages,
   }), [conversation, stateFilter, view, currentUserId, pages]);
@@ -86,7 +91,7 @@ export default function InboxPage() {
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Inbox view">
-        {(["all", "unread", "mine"] as View[]).map((v) => (
+        {(["all", "needs", "unread", "mine"] as View[]).map((v) => (
           <Button
             key={v}
             role="tab"
@@ -96,7 +101,7 @@ export default function InboxPage() {
             onClick={() => { setView(v); setPages(1); }}
             disabled={v === "mine" && !currentUserId}
           >
-            {v === "all" ? "All" : v === "unread" ? "Unread" : "Assigned to me"}
+            {VIEW_LABEL[v]}
           </Button>
         ))}
         <label htmlFor="state-filter" className="sr-only">Filter by status</label>
@@ -138,8 +143,8 @@ export default function InboxPage() {
           </div>
         ) : loadError ? null : visible.length === 0 ? (
           <EmptyState
-            title={view === "all" && !stateFilter ? "No conversations yet" : "No conversations match"}
-            description={view === "all" && !stateFilter ? "Messages from connected channels will appear here." : "Try a different filter."}
+            title={view === "needs" && !stateFilter ? "No one is waiting for a person" : view === "all" && !stateFilter ? "No conversations yet" : "No conversations match"}
+            description={view === "needs" && !stateFilter ? "Chats the assistant hands over, or that you take over, show here while the customer waits." : view === "all" && !stateFilter ? "Messages from connected channels will appear here." : "Try a different filter."}
             action={view === "all" && !stateFilter ? <Link href="/integrations" className="text-sm underline">Connect a channel</Link> : undefined}
           />
         ) : (
@@ -159,6 +164,7 @@ export default function InboxPage() {
                         <span className="font-medium text-[var(--color-ink-primary)]">{c.customerName}</span>
                         <Badge variant={state.variant}>{state.label}</Badge>
                         {!c.isAutomationActive && <Badge variant="warning">Human</Badge>}
+                        {c.escalationCategory && <Badge variant="neutral">{escalationLabel(c.escalationCategory)}</Badge>}
                         {c.unreadCount > 0 && (
                           <span className="ml-auto rounded-full bg-[var(--color-surface-dark)] px-2 py-0.5 text-xs font-semibold text-[var(--color-on-dark)]" aria-label={`${c.unreadCount} unread`}>
                             {c.unreadCount}
@@ -168,6 +174,7 @@ export default function InboxPage() {
                       {c.lastMessage && <p className="mt-2 line-clamp-2 text-sm text-[var(--color-ink-secondary)]">{c.lastMessage}</p>}
                       <div className="mt-2 flex flex-wrap gap-3 text-xs text-[var(--color-ink-secondary)]">
                         <span>{relativeTime(c.lastMessageAt)}</span>
+                        {c.waitingSince && !c.isAutomationActive && <span className="font-medium text-[var(--color-ink-primary)]">Waiting {waitingFor(c.waitingSince)}</span>}
                         {c.assignment && <span>Assigned to {c.assignment.assigneeName}</span>}
                         {c.labels.map((l) => <span key={l}>#{l}</span>)}
                       </div>

@@ -69,7 +69,7 @@ function stubClient(overrides: Partial<ConversationClient> = {}): ConversationCl
 
 const otherClients = {
   integration: { getHealth: vi.fn().mockResolvedValue({ status: "connected", webhookUrl: "", eventsProcessed24h: 0, eventsFailed24h: 0 }) } as never,
-  ai: { getActionTraces: vi.fn().mockResolvedValue([]) } as never,
+  assistant: { listTurns: vi.fn().mockResolvedValue({ items: [], nextCursor: null }) } as never,
 };
 
 function renderDetail(role: "owner" | "operator" | "viewer", client: ConversationClient) {
@@ -201,6 +201,25 @@ describe("inbox list", () => {
     await waitFor(() => expect(client.listConversations).toHaveBeenLastCalledWith(expect.objectContaining({ unreadOnly: true })));
     fireEvent.click(screen.getByRole("tab", { name: "Assigned to me" }));
     await waitFor(() => expect(client.listConversations).toHaveBeenLastCalledWith(expect.objectContaining({ assignedTo: "u-me" })));
+  });
+
+  it("the needs-a-person view asks the server for the queue and shows the reason and waiting time", async () => {
+    const waiting = conversation({ isAutomationActive: false, state: "human_assigned", escalationCategory: "complaint", waitingSince: new Date(Date.now() - 12 * 60_000).toISOString() });
+    const client = stubClient({ listConversations: vi.fn().mockResolvedValue({ items: [waiting], cursor: null, hasMore: false, totalCount: 1 }) });
+    render(<Wrapper role="viewer" clients={{ conversation: client }}><InboxPage /></Wrapper>);
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Needs a person" }));
+
+    await waitFor(() => expect(client.listConversations).toHaveBeenLastCalledWith(expect.objectContaining({ needsPerson: true })));
+    expect(await screen.findByText("Complaint")).toBeInTheDocument();
+    expect(screen.getByText(/Waiting 1[12] min/)).toBeInTheDocument();
+  });
+
+  it("the queue's empty state explains what appears there", async () => {
+    const client = stubClient({ listConversations: vi.fn().mockResolvedValue({ items: [], cursor: null, hasMore: false }) });
+    render(<Wrapper role="operator" clients={{ conversation: client }}><InboxPage /></Wrapper>);
+    fireEvent.click(await screen.findByRole("tab", { name: "Needs a person" }));
+    expect(await screen.findByText("No one is waiting for a person")).toBeInTheDocument();
   });
 
   it("renders empty and error states", async () => {

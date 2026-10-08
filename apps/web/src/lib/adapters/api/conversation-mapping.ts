@@ -145,8 +145,11 @@ export function toConversationFromSummary(item: WireConversationSummary, assigne
   return {
     ...base(item, assignees),
     customerName: item.customerLabel,
-    customerIdentifier: item.customerLabel,
+    customerIdentifier: item.customerUsername ? `@${item.customerUsername}` : item.customerLabel,
     lastMessage: item.lastMessagePreview ?? undefined,
+    escalationCategory: item.escalationCategory ?? undefined,
+    waitingSince: item.waitingSince ?? undefined,
+    customerUsername: item.customerUsername ?? undefined,
   };
 }
 
@@ -154,8 +157,11 @@ export function toConversationFromDetail(item: WireConversationDetail, assignees
   return {
     ...base(item, assignees),
     customerName: item.customer.customerLabel,
-    customerIdentifier: item.customer.isErased ? "Customer data erased" : item.customer.customerLabel,
+    customerIdentifier: item.customer.isErased ? "Customer data erased" : item.customer.username ? `@${item.customer.username}` : item.customer.customerLabel,
     lastCustomerMessageAt: item.lastCustomerMessageAt ?? undefined,
+    escalationCategory: item.escalationCategory ?? undefined,
+    escalatedAt: item.escalatedAt ?? undefined,
+    customerUsername: item.customer.username ?? undefined,
   };
 }
 

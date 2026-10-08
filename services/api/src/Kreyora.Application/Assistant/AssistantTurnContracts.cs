@@ -101,8 +101,36 @@ public sealed record AssistantTurnItem(
     decimal EstimatedCostUsd,
     string? OutboundMessageId);
 
-/// <summary>Owner/admin read of the redacted turn log (newest first).</summary>
+/// <summary>One UTC day of assistant usage (the day the budgets reset on). Customer turns only; playground runs counted apart.</summary>
+public sealed record AssistantUsageDay(
+    DateOnly Date,
+    int Turns,
+    int Replied,
+    int HandedOff,
+    int Skipped,
+    int Blocked,
+    int ModelCalls,
+    int InputTokens,
+    int OutputTokens,
+    decimal EstimatedCostUsd,
+    int PlaygroundTurns);
+
+/// <summary>
+/// M09-S08 usage summary: aggregates only, no content. <paramref name="TurnsToday"/> counts every turn that called the
+/// model today (the shop's daily cap counts the same way, playground included).
+/// </summary>
+public sealed record AssistantUsageItem(
+    int Days,
+    IReadOnlyList<AssistantUsageDay> Daily,
+    int TurnsToday,
+    int DailyTurnCap,
+    bool PlatformEnabled,
+    DateTimeOffset NextResetAt);
+
+/// <summary>Owner/admin read of the redacted turn log (newest first) and its usage summary.</summary>
 public interface IAssistantTurnLogQuery
 {
     Task<CursorPage<AssistantTurnItem>> ListAsync(string? conversationId, string? cursor, int pageSize, CancellationToken cancellationToken = default);
+
+    Task<AssistantUsageItem> UsageAsync(int days, CancellationToken cancellationToken = default);
 }
