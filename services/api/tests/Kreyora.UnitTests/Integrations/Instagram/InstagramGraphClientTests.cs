@@ -125,6 +125,58 @@ public sealed class InstagramGraphClientTests
         Assert.Equal(0, calls);
     }
 
+    // ---- customer profile lookup (M09-S08 Q8) ----
+
+    [Fact]
+    public async Task GetUserProfile_ReadsNameAndUsername_WithTheBearerToken()
+    {
+        HttpRequestMessage? sent = null;
+        var client = new InstagramGraphClient(new HttpClient(new FuncHandler((request, _) =>
+        {
+            sent = request;
+            return Task.FromResult(Json("{\"name\":\"Test Customer\",\"username\":\"test.customer\",\"id\":\"1234\"}"));
+        })), Options.Create(new InstagramGraphOptions()));
+
+        var result = await client.GetUserProfileAsync("pat_stub", "1234");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(("Test Customer", "test.customer"), (result.Name, result.Username));
+        Assert.Contains("/1234?fields=name,username", sent!.RequestUri!.ToString(), StringComparison.Ordinal);
+        Assert.Equal("Bearer", sent.Headers.Authorization!.Scheme);
+        Assert.DoesNotContain("pat_stub", sent.RequestUri.ToString(), StringComparison.Ordinal); // the token never goes in the URL
+    }
+
+    [Theory]
+    [InlineData("{\"error\":{\"message\":\"Denied.\",\"code\":10}}", HttpStatusCode.BadRequest, InstagramValidationKind.PermissionDenied)]
+    [InlineData("{\"error\":{\"message\":\"Slow down.\",\"code\":613}}", HttpStatusCode.BadRequest, InstagramValidationKind.Throttled)]
+    [InlineData("{\"id\":\"1234\"}", HttpStatusCode.OK, InstagramValidationKind.ProviderError)]
+    [InlineData("not json", HttpStatusCode.OK, InstagramValidationKind.ProviderError)]
+    public async Task GetUserProfile_Failures_KeepNoValues(string body, HttpStatusCode status, InstagramValidationKind expected)
+    {
+        var result = await CreateClient(Queue(Json(body, status))).GetUserProfileAsync("pat_stub", "1234");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(expected, result.Kind);
+        Assert.Null(result.Name);
+        Assert.Null(result.Username);
+    }
+
+    [Theory]
+    [InlineData("", "1234", InstagramValidationKind.PermissionDenied)]
+    [InlineData("pat_stub", "12/../me", InstagramValidationKind.IdentityMismatch)]
+    public async Task GetUserProfile_RejectsBadInput_WithoutCalling(string token, string scopedId, InstagramValidationKind expected)
+    {
+        var calls = 0;
+        var client = new InstagramGraphClient(new HttpClient(new FuncHandler((_, _) =>
+        {
+            calls++;
+            return Task.FromResult(Json("{}"));
+        })), Options.Create(new InstagramGraphOptions()));
+
+        Assert.Equal(expected, (await client.GetUserProfileAsync(token, scopedId)).Kind);
+        Assert.Equal(0, calls);
+    }
+
     private static InstagramGraphClient CreateClient(Queue<HttpResponseMessage> responses) =>
         new(new HttpClient(new FuncHandler((request, _) =>
             Task.FromResult(responses.Count > 0 ? responses.Dequeue() : Json("{}")))),

@@ -76,6 +76,47 @@ public sealed class InstagramGraphClient : IInstagramGraphClient
         return await GetAccountUsernameAsync(pageAccessToken, instagramAccountId, cancellationToken);
     }
 
+    /// <summary>
+    /// M09-S08 Q8: the Instagram user profile for a scoped user ID (fields <c>name</c>, <c>username</c>), read with the
+    /// Page token. [UNRESOLVED] confirmed against real traffic in the S08 live check; any failure keeps the masked label.
+    /// </summary>
+    public async Task<InstagramProfileResult> GetUserProfileAsync(
+        string pageAccessToken,
+        string scopedUserId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(pageAccessToken))
+        {
+            return InstagramProfileResult.Failed(InstagramValidationKind.PermissionDenied, null);
+        }
+
+        if (string.IsNullOrWhiteSpace(scopedUserId) || !scopedUserId.All(char.IsAsciiLetterOrDigit))
+        {
+            return InstagramProfileResult.Failed(InstagramValidationKind.IdentityMismatch, null);
+        }
+
+        var outcome = await GetAsync(pageAccessToken, $"{scopedUserId}?fields=name,username", cancellationToken);
+        if (!outcome.IsSuccess)
+        {
+            return InstagramProfileResult.Failed(outcome.Result.Kind, outcome.Result.ProviderErrorCode);
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(outcome.Body);
+            var root = document.RootElement;
+            var name = root.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String ? n.GetString() : null;
+            var username = root.TryGetProperty("username", out var u) && u.ValueKind == JsonValueKind.String ? u.GetString() : null;
+            return string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(username)
+                ? InstagramProfileResult.Failed(InstagramValidationKind.ProviderError, "empty_profile")
+                : InstagramProfileResult.Found(name, username);
+        }
+        catch (JsonException)
+        {
+            return InstagramProfileResult.Failed(InstagramValidationKind.ProviderError, "invalid_response");
+        }
+    }
+
     private async Task<(bool IsValid, string? AccountId, InstagramValidationResult Result)> GetLinkedInstagramAccountIdAsync(
         string pageAccessToken,
         string pageId,

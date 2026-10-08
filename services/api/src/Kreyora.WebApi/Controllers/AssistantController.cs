@@ -51,6 +51,11 @@ public sealed class AssistantController(
         [FromQuery] string? conversationId, [FromQuery] string? cursor, [FromQuery] int pageSize = 25, CancellationToken cancellationToken = default) =>
         Ok(await turnLog.ListAsync(conversationId, cursor, pageSize, cancellationToken));
 
+    /// <summary>Usage for the last <paramref name="days"/> UTC days (1-30): turns by outcome, model calls, tokens, estimated cost. Aggregates only.</summary>
+    [HttpGet("usage"), Authorize(Policy = TenantPermissions.AiConfigurationRead)]
+    public async Task<ActionResult<AssistantUsageItem>> GetUsage([FromQuery] int days = 7, CancellationToken cancellationToken = default) =>
+        Ok(await turnLog.UsageAsync(days, cancellationToken));
+
     /// <summary>The read-tool registry: names, versions, descriptions, schemas, and which are on in the policy.</summary>
     [HttpGet("tools"), Authorize(Policy = TenantPermissions.AiConfigurationRead)]
     public async Task<ActionResult<AssistantToolCatalog>> ListTools(CancellationToken cancellationToken = default) =>

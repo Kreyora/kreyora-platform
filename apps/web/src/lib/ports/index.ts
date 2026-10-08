@@ -7,7 +7,7 @@ export type { OrderClient } from "./order-client";
 export type { PaymentClient } from "./payment-client";
 export type { ConversationClient } from "./conversation-client";
 export type { IntegrationClient } from "./integration-client";
-export type { AIClient } from "./ai-client";
+export type { AssistantClient } from "./assistant-client";
 export type { BillingClient } from "./billing-client";
 export type { ReportingClient } from "./reporting-client";
 export type { AuditClient } from "./audit-client";

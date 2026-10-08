@@ -201,6 +201,7 @@ public sealed partial class WebhookProcessingService(
 
             // M09-S07: assistant work for what was just committed (turn triggers, native-reply checks). Never fails the event.
             serviceProvider?.GetService<Kreyora.Application.Assistant.IAssistantInboundHook>()?.Flush();
+            serviceProvider?.GetService<Kreyora.Application.Conversations.ICustomerProfileHook>()?.Flush();
 
             LogProcessingSuccess(logger, ev.Id, normalizedCount, ev.TenantId);
             return WebhookProcessingResult.Success(ev.Id, normalizedCount);
@@ -213,6 +214,7 @@ public sealed partial class WebhookProcessingService(
             // constraint) so recording the failure cannot fail the same way and strand the event in Processing.
             dbContext.ChangeTracker.Clear();
             serviceProvider?.GetService<Kreyora.Application.Assistant.IAssistantInboundHook>()?.Discard();
+            serviceProvider?.GetService<Kreyora.Application.Conversations.ICustomerProfileHook>()?.Discard();
             ev = await dbContext.WebhookEvents
                 .IgnoreQueryFilters()
                 .FirstAsync(e => e.Id == webhookEventId, cancellationToken);

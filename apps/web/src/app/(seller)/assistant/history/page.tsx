@@ -1,164 +1,154 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useClients } from "@/lib/providers/client-provider";
+import { useSearchParams } from "next/navigation";
+import { useClients, USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
 import { useSession } from "@/hooks/use-session";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ViewerBadge } from "@/components/viewer-badge";
-import type { AIActionTrace } from "@/lib/types";
-import type { BadgeVariant } from "@/components/ui/badge";
+import {
+  AssistantHeader,
+  ErrorNote,
+  OUTCOME_LABEL,
+  describeAssistantError,
+  formatUsd,
+  formatWhen,
+  reasonLabel,
+  type ScreenError,
+} from "@/components/assistant/assistant-display";
+import type { AssistantTurn, AssistantTurnOutcome } from "@/lib/types";
 
-const FIXTURE_CONV_ID = "conv-facebook-001";
+const WRITE_TOOLS = new Set(["ReserveInventory", "ReleaseReservation", "CreateCheckoutLink", "QuoteCart"]);
 
-const ESCALATION_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
-  none: { label: "None", variant: "neutral" },
-  pending: { label: "Pending", variant: "warning" },
-  escalated: { label: "Escalated", variant: "danger" },
-  resolved: { label: "Resolved", variant: "success" },
-};
+export default function HistoryPage() {
+  return (
+    <Suspense fallback={null}>
+      <History />
+    </Suspense>
+  );
+}
 
-const COST_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
-  low: { label: "Low", variant: "success" },
-  medium: { label: "Medium", variant: "warning" },
-  high: { label: "High", variant: "danger" },
-};
-
-const NAV_ITEMS = [
-  { label: "Overview", href: "/assistant" },
-  { label: "Knowledge", href: "/assistant/knowledge" },
-  { label: "Console", href: "/assistant/console" },
-  { label: "History", href: "/assistant/history" },
-];
-
-export default function ActionHistoryPage() {
-  const { ai } = useClients();
+function History() {
+  const { assistant } = useClients();
   const { effectiveRole } = useSession();
-  const [traces, setTraces] = useState<AIActionTrace[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const conversationId = useSearchParams().get("conversationId") ?? undefined;
+  const [turns, setTurns] = useState<AssistantTurn[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ScreenError | null>(null);
+  const [outcome, setOutcome] = useState<AssistantTurnOutcome | "">("");
+
+  const load = useCallback(async (after?: string) => {
+    setError(null);
+    try {
+      const page = await assistant.listTurns({ conversationId, cursor: after, pageSize: 25 });
+      setTurns((existing) => (after ? [...existing, ...page.items] : page.items));
+      setCursor(page.nextCursor);
+    } catch (failure) {
+      setError(describeAssistantError(failure));
+    } finally {
+      setLoading(false);
+    }
+  }, [assistant, conversationId]);
 
   useEffect(() => {
-    ai.getActionTraces(FIXTURE_CONV_ID).then((t) => {
-      setTraces(t);
-      setIsLoading(false);
-    });
-  }, [ai]);
+    let cancelled = false;
+    assistant.listTurns({ conversationId, pageSize: 25 })
+      .then((page) => { if (!cancelled) { setTurns(page.items); setCursor(page.nextCursor); setError(null); } })
+      .catch((failure: unknown) => { if (!cancelled) setError(describeAssistantError(failure)); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [assistant, conversationId]);
 
-  if (isLoading) {
-    return (
-      <div>
-        <Skeleton className="mb-2 h-8 w-40" />
-        <Skeleton className="mt-6 h-64 w-full rounded-[var(--radius-lg)]" />
-      </div>
-    );
-  }
+  const visible = useMemo(() => (outcome ? turns.filter((t) => t.outcome === outcome) : turns), [turns, outcome]);
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-heading-page text-[var(--color-ink-primary)]">AI Assistant</h1>
-        {effectiveRole === "viewer" && <ViewerBadge />}
+      <AssistantHeader
+        title="History"
+        description="Every assistant decision: what it did, which tools it used and why it stopped. Message text is never stored here."
+        actions={effectiveRole === "viewer" ? <ViewerBadge /> : undefined}
+      />
+      {USING_FIXTURE_ADAPTERS && <p role="note" className="mt-3 text-xs text-[var(--color-ink-secondary)]">Demo data.</p>}
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {conversationId && (
+          <span className="text-sm text-[var(--color-ink-secondary)]">
+            One conversation · <Link href="/assistant/history" className="inline-flex min-h-11 items-center underline">Show all</Link>
+          </span>
+        )}
+        <label htmlFor="outcome-filter" className="sr-only">Filter by outcome</label>
+        <select
+          id="outcome-filter"
+          value={outcome}
+          onChange={(e) => setOutcome(e.target.value as AssistantTurnOutcome | "")}
+          className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 text-sm"
+        >
+          <option value="">All outcomes</option>
+          {(Object.keys(OUTCOME_LABEL) as AssistantTurnOutcome[]).map((o) => <option key={o} value={o}>{OUTCOME_LABEL[o].label}</option>)}
+        </select>
+        <Button size="sm" variant="ghost" onClick={() => { setLoading(true); void load(); }}>Refresh</Button>
       </div>
 
-      <nav className="mt-4 flex gap-1 border-b border-[var(--color-border)]" aria-label="Assistant navigation">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`inline-flex min-h-11 items-center border-b-2 px-[var(--space-4)] text-sm font-medium transition-colors hover:text-[var(--color-ink-primary)] ${
-              item.href === "/assistant/history"
-                ? "border-[var(--color-ink-primary)] text-[var(--color-ink-primary)]"
-                : "border-transparent text-[var(--color-ink-secondary)]"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-
-      <h2 className="mt-6 text-base font-semibold text-[var(--color-ink-primary)]">Action History</h2>
-
-      {traces.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState title="No action traces" description="AI action traces will appear here." />
+      {error && <ErrorNote error={error} onRetry={() => void load()} />}
+      {loading ? (
+        <div className="mt-4 space-y-3" aria-busy="true" aria-label="Loading history">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-[var(--radius-lg)]" />)}
         </div>
+      ) : !error && visible.length === 0 ? (
+        <EmptyState title={turns.length === 0 ? "No assistant activity yet" : "Nothing matches this filter"} description={turns.length === 0 ? "Replies, hand-offs and console tests will appear here." : "Try another outcome."} />
       ) : (
-        <div className="mt-4 flex flex-col gap-3">
-          {traces.map((t) => {
-            const es = ESCALATION_MAP[t.escalationState] ?? { label: t.escalationState, variant: "neutral" as const };
-            const cs = COST_MAP[t.costBand] ?? { label: t.costBand, variant: "neutral" as const };
-            const isExpanded = expandedId === t.id;
-            return (
-              <div key={t.id} className="rounded-[var(--radius-lg)] border border-[var(--color-border)]">
-                <button
-                  type="button"
-                  onClick={() => setExpandedId(isExpanded ? null : t.id)}
-                  className="flex w-full items-start justify-between gap-3 p-5 text-left"
-                  aria-expanded={isExpanded}
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[var(--color-ink-primary)]">{t.intent}</p>
-                    <p className="mt-0.5 text-xs text-[var(--color-ink-secondary)]">
-                      <Link href={`/inbox/${t.conversationId}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>
-                        {t.conversationId}
-                      </Link>
-                      {" · "}{t.toolCalls.length} tool call{t.toolCalls.length !== 1 ? "s" : ""}
-                      {" · "}{(t.confidenceScore * 100).toFixed(0)}% confidence
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Badge variant={cs.variant}>{cs.label}</Badge>
-                    <Badge variant={es.variant}>{es.label}</Badge>
-                    <span className="text-xs text-[var(--color-ink-secondary)]">
-                      {t.tokenCount} tokens · {t.latencyMs}ms
-                    </span>
-                  </div>
-                </button>
-
-                {isExpanded && (
-                  <div className="border-t border-[var(--color-border)] p-5">
-                    {/* Tool calls */}
-                    <h4 className="text-xs font-semibold text-[var(--color-ink-primary)]">Tool Calls</h4>
-                    <div className="mt-2 space-y-2">
-                      {t.toolCalls.map((tc, i) => (
-                        <div key={i} className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-[var(--color-ink-primary)]">{tc.tool}</span>
-                            <span className="text-[10px] text-[var(--color-ink-secondary)]">{tc.durationMs}ms</span>
-                          </div>
-                          <div className="mt-1 rounded bg-[var(--color-canvas-subtle)] p-2 text-[10px]">
-                            <p className="text-[var(--color-ink-secondary)]">Input: {JSON.stringify(tc.input)}</p>
-                            <p className="text-[var(--color-ink-secondary)]">Output: {JSON.stringify(tc.output)}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Response preview (redacted) */}
-                    <h4 className="mt-4 text-xs font-semibold text-[var(--color-ink-primary)]">Generated Response</h4>
-                    <p className="mt-1 rounded-[var(--radius-md)] bg-[var(--color-canvas-subtle)] p-3 text-xs text-[var(--color-ink-secondary)]">
-                      {t.responseGenerated.length > 200
-                        ? `${t.responseGenerated.substring(0, 200)}...`
-                        : t.responseGenerated}
-                    </p>
-
-                    <p className="mt-2 text-[10px] text-[var(--color-ink-secondary)]">
-                      {new Date(t.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <>
+          <ul className="mt-4 space-y-3" aria-label="Assistant turns">
+            {visible.map((turn) => <TurnRow key={turn.id} turn={turn} />)}
+          </ul>
+          {cursor && (
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" onClick={() => void load(cursor)}>Load older</Button>
+            </div>
+          )}
+        </>
       )}
-
-      <p className="mt-6 text-[10px] text-[var(--color-ink-secondary)]">
-        Action traces are from fixture data. No real AI operations are logged.
-      </p>
     </div>
+  );
+}
+
+function TurnRow({ turn }: { turn: AssistantTurn }) {
+  const label = OUTCOME_LABEL[turn.outcome];
+  return (
+    <li className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <Badge variant={label.variant}>{label.label}</Badge>
+        <span className="text-[var(--color-ink-primary)]">{reasonLabel(turn.reasonCode)}</span>
+        <span className="ml-auto text-xs text-[var(--color-ink-secondary)]">{formatWhen(turn.startedAt)}</span>
+      </div>
+      <p className="mt-1 text-xs text-[var(--color-ink-secondary)]">
+        {turn.isPlayground ? "Console test" : turn.conversationId ? <Link href={`/inbox/${turn.conversationId}`} className="inline-flex min-h-11 items-center underline">Open conversation</Link> : "No conversation"}
+      </p>
+      {turn.tools.length > 0 && (
+        <ol className="mt-2 flex flex-wrap gap-2" aria-label="Tools used">
+          {turn.tools.map((t, i) => (
+            <li key={i} className="rounded-[var(--radius-full)] bg-[var(--color-canvas-subtle)] px-2.5 py-0.5 text-xs text-[var(--color-ink-primary)]">
+              {t.tool}{WRITE_TOOLS.has(t.tool) ? " (shop action)" : ""} · {t.outcome}{t.dryRun ? " · test" : ""}{t.replayed ? " · repeated" : ""}
+            </li>
+          ))}
+        </ol>
+      )}
+      {turn.validationCodes.length > 0 && <p className="mt-2 text-xs text-[var(--color-ink-secondary)]">Safety checks: {turn.validationCodes.join(", ")}</p>}
+      <details className="mt-2 text-xs text-[var(--color-ink-secondary)]">
+        <summary className="inline-flex min-h-11 cursor-pointer items-center">Details</summary>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+          <dt>AI calls</dt><dd>{turn.modelCalls}{turn.models.length > 0 && ` (${turn.models.join(", ")})`}</dd>
+          <dt>AI time</dt><dd>{(turn.providerLatencyMs / 1000).toFixed(1)} s</dd>
+          <dt>Tokens</dt><dd>{turn.inputTokens} in / {turn.outputTokens} out · {formatUsd(turn.estimatedCostUsd)}</dd>
+          <dt>Knowledge</dt><dd>{turn.citations} passage{turn.citations === 1 ? "" : "s"}</dd>
+          <dt>Versions</dt><dd>{[turn.promptVersion, turn.registryVersion, turn.policyVersion && `policy ${turn.policyVersion}`].filter(Boolean).join(" · ") || "—"}</dd>
+        </dl>
+      </details>
+    </li>
   );
 }

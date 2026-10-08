@@ -9,7 +9,7 @@ export { mockOrderClient } from "./mock-order-client";
 export { mockPaymentClient } from "./mock-payment-client";
 export { mockConversationClient, resetMockConversations } from "./mock-conversation-client";
 export { mockIntegrationClient } from "./mock-integration-client";
-export { mockAIClient } from "./mock-ai-client";
+export { mockAssistantClient } from "./mock-assistant-client";
 export { mockBillingClient } from "./mock-billing-client";
 export { mockReportingClient } from "./mock-reporting-client";
 export { mockAuditClient } from "./mock-audit-client";

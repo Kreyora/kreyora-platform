@@ -17,7 +17,8 @@ namespace Kreyora.Infrastructure.Conversations;
 public sealed partial class ConversationIngestionService(
     AppDbContext dbContext,
     ILogger<ConversationIngestionService> logger,
-    Kreyora.Application.Assistant.IAssistantInboundHook? assistantHook = null) : IConversationIngestionService
+    Kreyora.Application.Assistant.IAssistantInboundHook? assistantHook = null,
+    ICustomerProfileHook? profileHook = null) : IConversationIngestionService
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "Inbound message for connection {ConnectionId} already exists in the timeline; skipped (inbound event {InboundEventId})")]
     private static partial void LogMessageExists(ILogger logger, string connectionId, string inboundEventId);
@@ -122,6 +123,7 @@ public sealed partial class ConversationIngestionService(
         var message = createMessage(conversation.Id, DateTimeOffset.UtcNow);
         dbContext.Messages.Add(message);
         assistantHook?.CustomerMessageReceived(connection.TenantId, conversation.Id, message.Id); // scheduled only after commit (M09-S07)
+        profileHook?.IdentitySeen(connection.TenantId, identity.Id, identity.ProfileCheckedAt); // M09-S08: name lookup when due
     }
 
     /// <summary>

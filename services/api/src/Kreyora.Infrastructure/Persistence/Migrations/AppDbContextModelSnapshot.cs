@@ -1650,11 +1650,20 @@ namespace Kreyora.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modified_at");
 
+                    b.Property<DateTimeOffset?>("ProfileCheckedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("profile_checked_at");
+
                     b.Property<string>("TenantId")
                         .IsRequired()
                         .HasMaxLength(26)
                         .HasColumnType("character varying(26)")
                         .HasColumnName("tenant_id");
+
+                    b.Property<string>("Username")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("username");
 
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()

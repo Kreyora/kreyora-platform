@@ -1,232 +1,145 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useClients } from "@/lib/providers/client-provider";
+import { useState, type FormEvent } from "react";
+import { useClients, USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
+import { useSession } from "@/hooks/use-session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { AIActionTrace } from "@/lib/types";
-import type { BadgeVariant } from "@/components/ui/badge";
+import {
+  AssistantHeader,
+  ErrorNote,
+  OUTCOME_LABEL,
+  canEditAssistant,
+  describeAssistantError,
+  formatUsd,
+  reasonLabel,
+  type ScreenError,
+} from "@/components/assistant/assistant-display";
+import type { PlaygroundMessage, PlaygroundResult } from "@/lib/types";
 
-const FIXTURE_CONV_ID = "conv-facebook-001";
+const MAX_MESSAGES = 20;
+const MAX_LENGTH = 1000;
 
-const ESCALATION_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
-  none: { label: "None", variant: "neutral" },
-  pending: { label: "Pending", variant: "warning" },
-  escalated: { label: "Escalated", variant: "danger" },
-  resolved: { label: "Resolved", variant: "success" },
-};
+export default function ConsolePage() {
+  const { assistant } = useClients();
+  const { effectiveRole } = useSession();
+  const allowed = canEditAssistant(effectiveRole);
+  const [messages, setMessages] = useState<PlaygroundMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [result, setResult] = useState<PlaygroundResult | null>(null);
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState<ScreenError | null>(null);
 
-const COST_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
-  low: { label: "Low", variant: "success" },
-  medium: { label: "Medium", variant: "warning" },
-  high: { label: "High", variant: "danger" },
-};
+  async function send(event: FormEvent) {
+    event.preventDefault();
+    const text = draft.trim();
+    if (!text || running) return;
+    if (messages.length >= MAX_MESSAGES) {
+      setError({ kind: "validation", message: `A test conversation can have up to ${MAX_MESSAGES} messages. Clear it to start again.` });
+      return;
+    }
 
-const NAV_ITEMS = [
-  { label: "Overview", href: "/assistant" },
-  { label: "Knowledge", href: "/assistant/knowledge" },
-  { label: "Console", href: "/assistant/console" },
-  { label: "History", href: "/assistant/history" },
-];
-
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
-export default function TestConsolePage() {
-  const { ai } = useClients();
-  const [traces, setTraces] = useState<AIActionTrace[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [inputText, setInputText] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [showTrace, setShowTrace] = useState(false);
-  const [responding, setResponding] = useState(false);
-
-  useEffect(() => {
-    ai.getActionTraces(FIXTURE_CONV_ID).then((t) => {
-      setTraces(t);
-      setIsLoading(false);
-    });
-  }, [ai]);
-
-  const handleSend = () => {
-    if (!inputText.trim() || responding) return;
-    const userMsg: ChatMessage = { role: "user", content: inputText.trim() };
-    setChatMessages((prev) => [...prev, userMsg]);
-    setInputText("");
-    setResponding(true);
-
-    setTimeout(() => {
-      const trace = traces[0];
-      const botReply: ChatMessage = {
-        role: "assistant",
-        content: trace
-          ? trace.responseGenerated
-          : "I can help you with product information, pricing, and orders. This is a simulated response using fixture data.",
-      };
-      setChatMessages((prev) => [...prev, botReply]);
-      setResponding(false);
-      setShowTrace(true);
-    }, 800);
-  };
-
-  if (isLoading) {
-    return (
-      <div>
-        <Skeleton className="mb-2 h-8 w-40" />
-        <Skeleton className="mt-6 h-96 w-full rounded-[var(--radius-lg)]" />
-      </div>
-    );
+    const next = [...messages, { from: "customer" as const, text }];
+    setMessages(next);
+    setDraft("");
+    setRunning(true);
+    setError(null);
+    try {
+      const outcome = await assistant.runPlayground(next);
+      setResult(outcome);
+      if (outcome.reply) setMessages([...next, { from: "shop", text: outcome.reply }]);
+    } catch (failure) {
+      setError(describeAssistantError(failure));
+      setMessages(messages); // the customer's line returns to the box
+      setDraft(text);
+    } finally {
+      setRunning(false);
+    }
   }
-
-  const activeTrace = traces[0] ?? null;
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-heading-page text-[var(--color-ink-primary)]">AI Assistant</h1>
-      </div>
-
-      <nav className="mt-4 flex gap-1 border-b border-[var(--color-border)]" aria-label="Assistant navigation">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`inline-flex min-h-11 items-center border-b-2 px-[var(--space-4)] text-sm font-medium transition-colors hover:text-[var(--color-ink-primary)] ${
-              item.href === "/assistant/console"
-                ? "border-[var(--color-ink-primary)] text-[var(--color-ink-primary)]"
-                : "border-transparent text-[var(--color-ink-secondary)]"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-
-      <h2 className="mt-6 text-base font-semibold text-[var(--color-ink-primary)]">Test Console</h2>
-
-      <div className="mt-4 grid gap-6 lg:grid-cols-3">
-        {/* Chat area */}
-        <div className="lg:col-span-2">
-          <div className="min-h-[300px] rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4">
-            {chatMessages.length === 0 && !responding && (
-              <p className="text-center text-sm text-[var(--color-ink-secondary)]">
-                Send a message to test the AI assistant. Responses use fixture data.
-              </p>
-            )}
-            <div className="flex flex-col gap-3">
-              {chatMessages.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`max-w-[80%] rounded-[var(--radius-lg)] px-4 py-3 text-sm ${
-                    msg.role === "user"
-                      ? "ml-auto bg-[var(--color-surface-dark)] text-[var(--color-on-dark)]"
-                      : "mr-auto border border-[var(--color-border)] bg-[var(--color-canvas)] text-[var(--color-ink-primary)]"
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              ))}
-              {responding && (
-                <div className="mr-auto rounded-[var(--radius-lg)] border border-[var(--color-border)] px-4 py-3 text-sm text-[var(--color-ink-secondary)]">
-                  Thinking...
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-3 flex gap-2">
-            <Input
-              placeholder="Type a test message..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              aria-label="Test console input"
-              className="flex-1"
-            />
-            <Button onClick={handleSend} disabled={!inputText.trim() || responding}>
-              Send
-            </Button>
-          </div>
-        </div>
-
-        {/* Tool trace sidebar */}
-        <div className="lg:self-start">
-          {showTrace && activeTrace && (
-            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--color-ink-primary)]">Tool Trace</h3>
-
-              <div className="mt-3 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-ink-secondary)]">Intent</span>
-                  <span className="text-[var(--color-ink-primary)]">{activeTrace.intent}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-ink-secondary)]">Confidence</span>
-                  <span className="text-[var(--color-ink-primary)]">{(activeTrace.confidenceScore * 100).toFixed(0)}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-ink-secondary)]">Tokens</span>
-                  <span className="text-[var(--color-ink-primary)]">{activeTrace.tokenCount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-ink-secondary)]">Cost</span>
-                  <Badge variant={COST_MAP[activeTrace.costBand]?.variant ?? "neutral"}>
-                    {COST_MAP[activeTrace.costBand]?.label ?? activeTrace.costBand}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-ink-secondary)]">Latency</span>
-                  <span className="text-[var(--color-ink-primary)]">{activeTrace.latencyMs}ms</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-ink-secondary)]">Escalation</span>
-                  <Badge variant={ESCALATION_MAP[activeTrace.escalationState]?.variant ?? "neutral"}>
-                    {ESCALATION_MAP[activeTrace.escalationState]?.label ?? activeTrace.escalationState}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Tool calls */}
-              <h4 className="mt-4 text-xs font-semibold text-[var(--color-ink-primary)]">
-                Tool Calls ({activeTrace.toolCalls.length})
-              </h4>
-              <div className="mt-2 space-y-2">
-                {activeTrace.toolCalls.map((tc, i) => (
-                  <div key={i} className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
-                    <p className="text-xs font-medium text-[var(--color-ink-primary)]">{tc.tool}</p>
-                    <p className="mt-1 text-[10px] text-[var(--color-ink-secondary)]">{tc.durationMs}ms</p>
-                    <div className="mt-1 rounded bg-[var(--color-canvas-subtle)] p-2 text-[10px]">
-                      <p className="text-[var(--color-ink-secondary)]">
-                        In: {JSON.stringify(tc.input)}
-                      </p>
-                      <p className="text-[var(--color-ink-secondary)]">
-                        Out: {JSON.stringify(tc.output)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!showTrace && (
-            <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--color-border)] p-5 text-center">
-              <p className="text-xs text-[var(--color-ink-secondary)]">
-                Send a message to see tool traces here.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <p className="mt-6 text-[10px] text-[var(--color-ink-secondary)]">
-        This console uses fixture data. No real AI model is invoked.
+      <AssistantHeader title="Test console" description="Type messages as if you were a customer and see exactly what the assistant would do with your real catalog and settings." />
+      <p role="note" className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-canvas-subtle)] p-3 text-sm text-[var(--color-ink-primary)]">
+        Test only: nothing is sent to anyone, and no stock is held or link created. Use made-up messages — never paste a real customer&apos;s details.
+        {USING_FIXTURE_ADAPTERS && " Demo mode: replies are samples, not the real assistant."}
       </p>
+
+      {!allowed ? (
+        <ErrorNote error={{ kind: "denied", message: "Only the shop owner or an admin can use the test console." }} />
+      ) : (
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <section aria-labelledby="chat-title" className="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
+            <div className="flex items-center gap-2">
+              <h2 id="chat-title" className="text-sm font-semibold text-[var(--color-ink-primary)]">Conversation</h2>
+              {messages.length > 0 && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => { setMessages([]); setResult(null); setError(null); }}>Clear</Button>}
+            </div>
+            <ol className="mt-3 min-h-40 space-y-2" aria-label="Test messages" aria-live="polite">
+              {messages.length === 0 && <li className="text-sm text-[var(--color-ink-secondary)]">Try: “Red kurta ko price kati ho?” or “Pokhara ma delivery huncha?”</li>}
+              {messages.map((m, i) => (
+                <li key={i} className={`max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] px-3 py-2 text-sm ${m.from === "customer" ? "bg-[var(--color-canvas-subtle)] text-[var(--color-ink-primary)]" : "ml-auto bg-[var(--color-surface-dark)] text-[var(--color-on-dark)]"}`}>
+                  <span className="sr-only">{m.from === "customer" ? "Customer: " : "Assistant: "}</span>
+                  {m.text}
+                </li>
+              ))}
+              {running && <li className="text-sm text-[var(--color-ink-secondary)]" aria-busy="true">The assistant is thinking…</li>}
+            </ol>
+            <form onSubmit={send} className="mt-4 flex gap-2">
+              <label htmlFor="console-input" className="sr-only">Customer message</label>
+              <input
+                id="console-input"
+                value={draft}
+                maxLength={MAX_LENGTH}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Write as the customer…"
+                className="min-h-11 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 text-sm"
+              />
+              <Button type="submit" disabled={running || !draft.trim()}>Send</Button>
+            </form>
+            {error && <ErrorNote error={error} />}
+          </section>
+
+          <section aria-labelledby="trace-title" className="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
+            <h2 id="trace-title" className="text-sm font-semibold text-[var(--color-ink-primary)]">What happened</h2>
+            {!result ? (
+              <p className="mt-3 text-sm text-[var(--color-ink-secondary)]">Send a message to see the outcome, the tools used and the safety checks.</p>
+            ) : (
+              <div className="mt-3 space-y-3 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={OUTCOME_LABEL[result.outcome].variant}>{OUTCOME_LABEL[result.outcome].label}</Badge>
+                  <span className="text-[var(--color-ink-secondary)]">{reasonLabel(result.reasonCode)}</span>
+                </div>
+                <div>
+                  <h3 className="text-xs font-medium text-[var(--color-ink-secondary)]">Tools</h3>
+                  {result.tools.length === 0 ? (
+                    <p className="text-[var(--color-ink-secondary)]">None</p>
+                  ) : (
+                    <ol className="mt-1 space-y-1">
+                      {result.tools.map((t, i) => (
+                        <li key={i} className="flex flex-wrap gap-2">
+                          <span className="font-medium text-[var(--color-ink-primary)]">{t.tool}</span>
+                          <span className="text-[var(--color-ink-secondary)]">{t.outcome}</span>
+                          {t.dryRun && <Badge variant="neutral">test only</Badge>}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+                {result.citations > 0 && <p className="text-[var(--color-ink-secondary)]">Used {result.citations} approved knowledge passage{result.citations === 1 ? "" : "s"}.</p>}
+                {result.validationCodes.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-medium text-[var(--color-ink-secondary)]">Safety checks that fired</h3>
+                    <p>{result.validationCodes.join(", ")}</p>
+                  </div>
+                )}
+                <p className="text-xs text-[var(--color-ink-secondary)]">
+                  {result.modelCalls} AI call{result.modelCalls === 1 ? "" : "s"} · {result.inputTokens + result.outputTokens} tokens · {formatUsd(result.estimatedCostUsd)}
+                </p>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
     </div>
   );
 }

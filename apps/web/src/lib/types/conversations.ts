@@ -60,6 +60,13 @@ export interface Conversation {
   updatedAt: Timestamp;
   /** Last customer message time; the server decides reply windows, this is only a display hint. */
   lastCustomerMessageAt?: Timestamp;
+  /** Why the assistant handed this chat to a person (M09-S05 category), while a person owns it. */
+  escalationCategory?: string;
+  escalatedAt?: Timestamp;
+  /** Since when the customer has waited for a person (server-computed, M09-S07 queue). */
+  waitingSince?: Timestamp;
+  /** Provider handle (e.g. Instagram username), staff-only (M09-S08). */
+  customerUsername?: string;
 }
 
 export interface ConversationAssignee {

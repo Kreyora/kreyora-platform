@@ -1,6 +1,6 @@
 # ADR-022 — Assistant conversation integration and ownership semantics
 
-- **Status:** `Proposed` (owner acceptance at the M09-S07 checkpoint)
+- **Status:** `Accepted` (2026-10-08, with the M09-S07 approval; was `Proposed`)
 - **Date:** 2026-10-07
 - **Owner:** Platform Architect
 - **Reviewers:** Project Owner

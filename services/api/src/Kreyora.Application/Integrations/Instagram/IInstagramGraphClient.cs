@@ -69,6 +69,16 @@ public interface IInstagramGraphClient
         string text,
         string? messagingTag = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Customer profile for an Instagram-scoped user ID (M09-S08 Q8): name and username, for staff display only.
+    /// Default: not supported (test doubles and providers without the lookup keep the masked label).
+    /// </summary>
+    Task<InstagramProfileResult> GetUserProfileAsync(
+        string pageAccessToken,
+        string scopedUserId,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(InstagramProfileResult.Failed(InstagramValidationKind.Unknown, "not_supported"));
 }
 
 /// <summary>How a send attempt ended (ADR-017 delivery semantics).</summary>
@@ -97,4 +107,14 @@ public sealed record InstagramSendResult(
 
     public static InstagramSendResult Failed(InstagramSendOutcome outcome, string? code, string message) =>
         new(outcome, null, code, message);
+}
+
+/// <summary>Result of a customer profile lookup. Never logged with its values.</summary>
+public sealed record InstagramProfileResult(InstagramValidationKind Kind, string? Name, string? Username, string? ProviderErrorCode)
+{
+    public bool IsSuccess => Kind == InstagramValidationKind.Valid;
+
+    public static InstagramProfileResult Found(string? name, string? username) => new(InstagramValidationKind.Valid, name, username, null);
+
+    public static InstagramProfileResult Failed(InstagramValidationKind kind, string? providerErrorCode) => new(kind, null, null, providerErrorCode);
 }

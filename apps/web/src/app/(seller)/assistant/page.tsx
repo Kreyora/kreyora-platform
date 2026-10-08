@@ -1,113 +1,88 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useClients } from "@/lib/providers/client-provider";
+import { useCallback, useEffect, useState } from "react";
+import { useClients, USING_FIXTURE_ADAPTERS } from "@/lib/providers/client-provider";
 import { useSession } from "@/hooks/use-session";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ViewerBadge } from "@/components/viewer-badge";
-import type { AssistantConfig } from "@/lib/types";
+import { AssistantHeader, ErrorNote, canEditAssistant, describeAssistantError, type ScreenError } from "@/components/assistant/assistant-display";
+import { ReadinessCard } from "@/components/assistant/readiness-card";
+import { UsageCard } from "@/components/assistant/usage-card";
+import { PolicyForm } from "@/components/assistant/policy-form";
+import type { AssistantPolicy, AssistantReadiness, AssistantUsage } from "@/lib/types";
 
-const DEMO_TENANT_ID = "tenant-namaste-crafts";
-
-const NAV_ITEMS = [
-  { label: "Overview", href: "/assistant" },
-  { label: "Knowledge", href: "/assistant/knowledge" },
-  { label: "Console", href: "/assistant/console" },
-  { label: "History", href: "/assistant/history" },
-];
-
-export default function AssistantPolicyPage() {
-  const { ai } = useClients();
+export default function AssistantOverviewPage() {
+  const { assistant } = useClients();
   const { effectiveRole } = useSession();
-  const [config, setConfig] = useState<AssistantConfig | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [policy, setPolicy] = useState<AssistantPolicy | null>(null);
+  const [readiness, setReadiness] = useState<AssistantReadiness | null>(null);
+  const [usage, setUsage] = useState<AssistantUsage | null>(null);
+  const [error, setError] = useState<ScreenError | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [formKey, setFormKey] = useState(0);
+
+  const fetchAll = useCallback(() => Promise.all([assistant.getPolicy(), assistant.getReadiness(), assistant.getUsage(7)]), [assistant]);
+
+  const apply = useCallback(([p, r, u]: [AssistantPolicy, AssistantReadiness, AssistantUsage]) => {
+    setPolicy(p);
+    setReadiness(r);
+    setUsage(u);
+    setError(null);
+    setFormKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
-    ai.getAssistantConfig(DEMO_TENANT_ID).then((c) => {
-      setConfig(c);
-      setIsLoading(false);
-    });
-  }, [ai]);
+    let cancelled = false;
+    fetchAll()
+      .then((result) => { if (!cancelled) apply(result); })
+      .catch((failure: unknown) => { if (!cancelled) setError(describeAssistantError(failure)); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [apply, fetchAll]);
 
-  if (isLoading || !config) {
-    return (
-      <div>
-        <Skeleton className="mb-2 h-8 w-40" />
-        <Skeleton className="mt-6 h-48 w-full rounded-[var(--radius-lg)]" />
-      </div>
-    );
-  }
+  const load = async () => {
+    setLoading(true);
+    try {
+      apply(await fetchAll());
+    } catch (failure) {
+      setError(describeAssistantError(failure));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const save = async (update: Parameters<typeof assistant.updatePolicy>[0]) => {
+    const next = await assistant.updatePolicy(update);
+    setPolicy(next);
+    setReadiness(await assistant.getReadiness());
+    return next;
+  };
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-heading-page text-[var(--color-ink-primary)]">AI Assistant</h1>
-        {effectiveRole === "viewer" && <ViewerBadge />}
-      </div>
+      <AssistantHeader
+        title="Assistant"
+        description="Answers customer messages from your shop's real catalog, stock, prices and delivery rules — and hands chats to your team when needed."
+        actions={effectiveRole === "viewer" ? <ViewerBadge /> : undefined}
+      />
+      {USING_FIXTURE_ADAPTERS && <p role="note" className="mt-3 text-xs text-[var(--color-ink-secondary)]">Demo data — changes stay in this browser and nothing is sent.</p>}
 
-      {/* Sub-navigation */}
-      <nav className="mt-4 flex gap-1 border-b border-[var(--color-border)]" aria-label="Assistant navigation">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`inline-flex min-h-11 items-center border-b-2 px-[var(--space-4)] text-sm font-medium transition-colors hover:text-[var(--color-ink-primary)] ${
-              item.href === "/assistant"
-                ? "border-[var(--color-ink-primary)] text-[var(--color-ink-primary)]"
-                : "border-transparent text-[var(--color-ink-secondary)]"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-
-      {/* Config display */}
-      <div className="mt-8 space-y-6">
-        <section>
-          <h2 className="mb-4 text-base font-semibold text-[var(--color-ink-primary)]">Configuration</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ConfigCard label="Status" value={config.isEnabled ? "Enabled" : "Disabled"}>
-              <Badge variant={config.isEnabled ? "success" : "neutral"}>
-                {config.isEnabled ? "Active" : "Inactive"}
-              </Badge>
-            </ConfigCard>
-            <ConfigCard label="Language" value={config.language} />
-            <ConfigCard label="Tone" value={config.tone} />
-            <ConfigCard label="Max tool iterations" value={String(config.maxToolIterations)} />
-            <ConfigCard
-              label="Cost budget / conversation"
-              value={config.costBudgetPerConversation ? `$${config.costBudgetPerConversation.toFixed(2)}` : "No limit"}
-            />
-            <ConfigCard label="Auto-escalate on low confidence" value={config.autoEscalateOnLowConfidence ? "Yes" : "No"}>
-              <Badge variant={config.autoEscalateOnLowConfidence ? "info" : "neutral"}>
-                {config.autoEscalateOnLowConfidence ? "Enabled" : "Disabled"}
-              </Badge>
-            </ConfigCard>
+      {loading && !policy ? (
+        <div className="mt-6 space-y-4" aria-busy="true" aria-label="Loading assistant">
+          <Skeleton className="h-32 w-full rounded-[var(--radius-lg)]" />
+          <Skeleton className="h-48 w-full rounded-[var(--radius-lg)]" />
+        </div>
+      ) : error && !policy ? (
+        <ErrorNote error={error} onRetry={() => void load()} />
+      ) : policy && readiness && usage ? (
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          <div className="min-w-0 space-y-6">
+            <ReadinessCard readiness={readiness} />
+            <UsageCard usage={usage} />
           </div>
-        </section>
-
-        <p className="text-xs text-[var(--color-ink-secondary)]">
-          Last updated: {new Date(config.updatedAt).toLocaleDateString()}
-        </p>
-        <p className="text-[10px] text-[var(--color-ink-secondary)]">
-          Configuration changes are simulated. No real AI settings are modified.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function ConfigCard({ label, value, children }: { label: string; value: string; children?: React.ReactNode }) {
-  return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] px-5 py-4">
-      <p className="text-xs text-[var(--color-ink-secondary)]">{label}</p>
-      <div className="mt-1 flex items-center gap-2">
-        <span className="text-sm font-medium text-[var(--color-ink-primary)]">{value}</span>
-        {children}
-      </div>
+          <PolicyForm key={formKey} policy={policy} canEdit={canEditAssistant(effectiveRole)} onSave={save} onRefresh={() => void load()} />
+        </div>
+      ) : null}
     </div>
   );
 }

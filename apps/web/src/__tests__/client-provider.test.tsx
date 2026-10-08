@@ -28,7 +28,7 @@ describe("ClientProvider", () => {
     expect(clients.payment).toBeDefined();
     expect(clients.conversation).toBeDefined();
     expect(clients.integration).toBeDefined();
-    expect(clients.ai).toBeDefined();
+    expect(clients.assistant).toBeDefined();
     expect(clients.billing).toBeDefined();
     expect(clients.reporting).toBeDefined();
     expect(clients.audit).toBeDefined();

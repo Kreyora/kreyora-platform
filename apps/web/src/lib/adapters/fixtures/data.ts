@@ -21,9 +21,6 @@ import type {
   ChannelConnection,
   ConnectionHealth,
   WebhookEvent,
-  AssistantConfig,
-  KnowledgeDocument,
-  AIActionTrace,
   Plan,
   Subscription,
   QuotaStatus,
@@ -35,6 +32,7 @@ import type {
   CheckoutQuote,
 } from "@/lib/types";
 import type { PaymentMethod, PaymentAttempt } from "@/lib/types/payments";
+import type { AssistantPolicy, AssistantTurn, KnowledgeDocument } from "@/lib/types/assistant";
 
 // ─── IDs ─────────────────────────────────────────────────────────────────────
 
@@ -871,6 +869,9 @@ export const conversations: Conversation[] = [
     },
     labels: ["payment", "order-0042"],
     isAutomationActive: false,
+    escalationCategory: "payment_dispute",
+    escalatedAt: "2025-02-11T09:10:00Z",
+    waitingSince: "2025-02-11T09:10:00Z",
     connectionId: "conn-whatsapp-namaste",
     createdAt: "2025-02-09T13:00:00Z",
     updatedAt: "2025-02-11T09:20:00Z",
@@ -1074,76 +1075,81 @@ export const webhookEvents: WebhookEvent[] = [
   },
 ];
 
-// ─── AI ──────────────────────────────────────────────────────────────────────
+// ─── Assistant (M09-S08 demo data; same shapes as the API) ────────────────────
 
-export const assistantConfig: AssistantConfig = {
-  tenantId: TENANT_ID,
-  isEnabled: true,
-  language: "ne-NP",
-  tone: "warm and helpful",
-  maxToolIterations: 5,
-  costBudgetPerConversation: 0.15,
-  autoEscalateOnLowConfidence: true,
-  updatedAt: "2025-01-07T10:00:00Z",
+export const demoAssistantPolicy: AssistantPolicy = {
+  enabled: true,
+  replyStyle: "matchCustomer",
+  supportedLanguages: ["ne", "ne-Latn", "en"],
+  tone: "friendly",
+  brandNote: "Handmade in Nepal. Warm, short replies.",
+  businessHours: (["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const).map((day) => ({
+    day,
+    closed: day === "saturday",
+    opens: day === "saturday" ? null : "10:00",
+    closes: day === "saturday" ? null : "19:00",
+  })),
+  timeZone: "Asia/Kathmandu",
+  outsideHoursBehavior: "answerAndPromiseFollowUp",
+  unrecognizedMediaBehavior: "askForDetails",
+  escalationKeywords: ["wholesale", "refund"],
+  allowedTools: ["SearchProducts", "CheckInventory", "GetPrice", "GetShippingInfo", "GetOrderStatus", "QuoteCart", "CreateCheckoutLink"],
+  maxToolSteps: 4,
+  maxRepliesPerConversationPerHour: 20,
+  maxOutputTokens: 600,
+  reviewedAt: "2025-02-10T09:00:00Z",
+  version: "demo-1",
+  fixedEscalationCategories: ["customer_requests_person", "complaint", "refund_or_exchange", "custom_or_wholesale_order", "health_or_safety", "legal", "payment_dispute", "abusive_message"],
+  availableTools: ["SearchProducts", "CheckInventory", "GetPrice", "GetShippingInfo", "GetOrderStatus", "QuoteCart", "ReserveInventory", "ReleaseReservation", "CreateCheckoutLink"],
+  platformCaps: { maxToolSteps: 6, maxRepliesPerConversationPerHour: 60, maxOutputTokens: 800 },
 };
 
-export const knowledgeDocuments: KnowledgeDocument[] = [
+export const demoKnowledge: KnowledgeDocument[] = [
   {
     id: "kd-shipping-faq",
-    tenantId: TENANT_ID,
-    title: "Shipping & Delivery FAQ",
-    fileName: "shipping-delivery-faq.pdf",
-    fileType: "application/pdf",
-    status: "approved",
-    chunkCount: 12,
-    uploadedBy: USER_OWNER_ID,
-    approvedBy: USER_OWNER_ID,
-    createdAt: "2025-01-07T09:00:00Z",
-    updatedAt: "2025-01-07T10:00:00Z",
+    title: "Shipping & delivery",
+    category: "delivery",
+    source: "text",
+    activeVersion: { id: "kv-ship-1", versionNumber: 1, state: "active", characterCount: 412, originalFileName: null, submittedAt: "2025-01-05T09:00:00Z", reviewedAt: "2025-01-05T10:00:00Z", reviewNote: null, hasSuspiciousInstructions: false },
+    pendingVersions: [],
+    latestVersionNumber: 1,
+    createdAt: "2025-01-05T09:00:00Z",
+    modifiedAt: "2025-01-05T10:00:00Z",
+    indexStatus: { chunks: 2, indexed: 2 },
   },
   {
-    id: "kd-product-care",
-    tenantId: TENANT_ID,
-    title: "Product Care Guide — Textiles & Handicrafts",
-    fileName: "product-care-guide.pdf",
-    fileType: "application/pdf",
-    status: "approved",
-    chunkCount: 8,
-    uploadedBy: USER_OPERATOR_ID,
-    approvedBy: USER_OWNER_ID,
-    createdAt: "2025-01-08T11:00:00Z",
-    updatedAt: "2025-01-08T14:00:00Z",
+    id: "kd-returns",
+    title: "Returns & exchanges",
+    category: "returns",
+    source: "text",
+    activeVersion: null,
+    pendingVersions: [{ id: "kv-ret-1", versionNumber: 1, state: "pendingReview", characterCount: 230, originalFileName: null, submittedAt: "2025-02-11T08:00:00Z", reviewedAt: null, reviewNote: null, hasSuspiciousInstructions: false }],
+    latestVersionNumber: 1,
+    createdAt: "2025-02-11T08:00:00Z",
+    modifiedAt: "2025-02-11T08:00:00Z",
+    indexStatus: null,
   },
 ];
 
-export const aiActionTraces: AIActionTrace[] = [
+export const demoKnowledgeText: Record<string, string> = {
+  "kv-ship-1": "We deliver inside Kathmandu Valley in 1-2 days (NPR 100) and to Pokhara in 2-3 days (NPR 150). Cash on delivery inside the valley.",
+  "kv-ret-1": "Unused items with the tag on can be exchanged within 7 days. Sale items cannot be returned.",
+};
+
+export const demoAssistantTurns: AssistantTurn[] = [
   {
-    id: "trace-fb-001",
-    tenantId: TENANT_ID,
-    conversationId: "conv-facebook-001",
-    intent: "product_price_enquiry",
-    toolCalls: [
-      {
-        tool: "SearchProducts",
-        input: { query: "pashmina shawl" },
-        output: { productIds: ["prod-pashmina-shawl"], count: 1 },
-        durationMs: 120,
-      },
-      {
-        tool: "GetPrice",
-        input: { variantId: "var-pashmina-red" },
-        output: { price: 4500, currency: "NPR" },
-        durationMs: 45,
-      },
-    ],
-    responseGenerated:
-      "Namaste Priya! हातले बुनेको पश्मिना शawl Crimson Red variant ko price Rs. 4,500 ho.",
-    confidenceScore: 0.92,
-    escalationState: "none",
-    tokenCount: 340,
-    costBand: "low",
-    latencyMs: 890,
-    createdAt: "2025-02-12T11:32:00Z",
+    id: "turn-demo-1", conversationId: "conv-facebook-001", isPlayground: false, outcome: "replied", reasonCode: "replied",
+    startedAt: "2025-02-12T11:45:05Z", finishedAt: "2025-02-12T11:45:09Z", promptVersion: "assistant-system-v1+demo", registryVersion: "kreyora-tools.v2", policyVersion: "demo-1",
+    models: ["demo-model"], modelCalls: 3, providerLatencyMs: 2900,
+    tools: [{ tool: "SearchProducts", outcome: "ok", durationMs: 40, dryRun: false, replayed: false }, { tool: "GetPrice", outcome: "ok", durationMs: 22, dryRun: false, replayed: false }],
+    citations: 0, validationCodes: [], inputTokens: 5100, outputTokens: 140, estimatedCostUsd: 0,
+  },
+  {
+    id: "turn-demo-2", conversationId: "conv-whatsapp-002", isPlayground: false, outcome: "escalated", reasonCode: "model_escalation",
+    startedAt: "2025-02-12T10:20:02Z", finishedAt: "2025-02-12T10:20:05Z", promptVersion: "assistant-system-v1+demo", registryVersion: "kreyora-tools.v2", policyVersion: "demo-1",
+    models: ["demo-model"], modelCalls: 1, providerLatencyMs: 1200,
+    tools: [{ tool: "EscalateToHuman", outcome: "ok", durationMs: 15, dryRun: false, replayed: false }],
+    citations: 0, validationCodes: [], inputTokens: 1900, outputTokens: 20, estimatedCostUsd: 0,
   },
 ];
 

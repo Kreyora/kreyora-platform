@@ -99,6 +99,7 @@ public sealed class ConversationQueryService(
                     r.Conversation,
                     r.WaitingSince,
                     i.DisplayName,
+                    i.Username,
                     i.ExternalUserId,
                     LastText = dbContext.Messages
                         .Where(m => m.TenantId == tenantId && m.ConversationId == r.Conversation.Id)
@@ -127,7 +128,8 @@ public sealed class ConversationQueryService(
                 r.Conversation.CreatedAt,
                 r.Conversation.ModifiedAt,
                 r.Conversation.EscalationCategory,
-                r.WaitingSince))
+                r.WaitingSince,
+                r.Username))
             .ToList();
 
         return Result<PagedResult<ConversationSummaryItem>>.Success(new PagedResult<ConversationSummaryItem>
@@ -287,7 +289,8 @@ public sealed class ConversationQueryService(
                 i.FirstSeenAt,
                 i.LastSeenAt,
                 i.CustomerId,
-                i.ErasedAt.HasValue),
+                i.ErasedAt.HasValue,
+                i.Username),
             c.UnreadCount,
             labels.GetValueOrDefault(c.Id) ?? [],
             c.AssignedUserId,

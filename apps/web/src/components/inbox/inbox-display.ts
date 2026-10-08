@@ -66,3 +66,11 @@ export function relativeTime(iso: string | undefined, now = Date.now()): string 
   if (hours < 24) return `${hours}h ago`;
   return new Date(iso).toLocaleDateString();
 }
+
+/** "12 min", "3 h", "2 days" since the customer started waiting (display only; the server orders the queue). */
+export function waitingFor(since: string, now: number = Date.now()): string {
+  const minutes = Math.max(0, Math.floor((now - new Date(since).getTime()) / 60_000));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  return hours < 48 ? `${hours} h` : `${Math.floor(hours / 24)} days`;
+}
